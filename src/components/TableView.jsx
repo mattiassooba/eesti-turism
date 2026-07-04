@@ -3,6 +3,7 @@ import { fetchTableMeta, fetchTableData } from "../api/pxweb";
 import { flattenToRows, toChartData } from "../api/jsonStat";
 import FilterBar from "./FilterBar";
 import DataGrid from "./DataGrid";
+import ChartPanel from "./ChartPanel";
 
 function defaultQuery(variables) {
   return variables.map((v) => {
@@ -31,6 +32,7 @@ export default function TableView({ path, tableId, title }) {
   const [dataError, setDataError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [groupField, setGroupField] = useState(null);
+  const [chartType, setChartType] = useState("line");
   // Ref (not state) so the update is visible synchronously to the data-fetch
   // effect within the same commit that the metadata-reset effect runs in.
   const queryOwnerRef = useRef(null);
@@ -114,7 +116,12 @@ export default function TableView({ path, tableId, title }) {
       {loading && <div className="panel-status">Loading data…</div>}
       {!loading && !dataError && (
         <>
-          <pre>{JSON.stringify({ chartData }, null, 2)}</pre>
+          <ChartPanel
+            data={chartData.data}
+            seriesNames={chartData.seriesNames}
+            chartType={chartType}
+            onChartTypeChange={setChartType}
+          />
           <DataGrid rows={rows} />
         </>
       )}

@@ -134,9 +134,9 @@ export default function Page3Purpose({ residency, timeRangeMonths }) {
       <div className="data-card">
         <h3>Reisi kestus, sise- vs. välisreisid ({state.durationLatestLabel})</h3>
         <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={state.durationChart}>
+          <BarChart data={state.durationChart} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="x" tick={{ fontSize: 12 }} />
+            <XAxis dataKey="x" tick={{ fontSize: 12 }} interval={0} />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip />
             <Legend />

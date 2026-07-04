@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchTableMeta, fetchTableData } from "../api/pxweb";
 import { flattenToRows, toChartData } from "../api/jsonStat";
 import FilterBar from "./FilterBar";
+import DataGrid from "./DataGrid";
 
 function defaultQuery(variables) {
   return variables.map((v) => {
@@ -112,7 +113,10 @@ export default function TableView({ path, tableId, title }) {
       )}
       {loading && <div className="panel-status">Loading data…</div>}
       {!loading && !dataError && (
-        <pre>{JSON.stringify({ rowCount: rows.length, chartData }, null, 2)}</pre>
+        <>
+          <pre>{JSON.stringify({ chartData }, null, 2)}</pre>
+          <DataGrid rows={rows} />
+        </>
       )}
     </div>
   );

@@ -440,6 +440,76 @@ a {
   }
 }
 
+/* Map */
+
+.estonia-map svg {
+  width: 100%;
+  height: auto;
+  max-height: 340px;
+}
+
+.estonia-map path {
+  cursor: default;
+  transition: opacity 0.15s ease;
+}
+
+.estonia-map path:hover {
+  opacity: 0.8;
+}
+
+.estonia-map-caption {
+  margin-top: 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--slate);
+}
+
+.estonia-map-source {
+  margin-top: 4px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: #9aa5ac;
+}
+
+/* Heatmap */
+
+.heatmap-wrapper {
+  overflow-x: auto;
+}
+
+.heatmap-grid {
+  display: grid;
+  gap: 2px;
+  min-width: 600px;
+}
+
+.heatmap-corner {
+  background: transparent;
+}
+
+.heatmap-year-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--slate);
+  text-align: center;
+  writing-mode: vertical-rl;
+  padding-bottom: 4px;
+}
+
+.heatmap-month-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--slate);
+  display: flex;
+  align-items: center;
+}
+
+.heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  min-height: 14px;
+}
+
 /* Table view */
 
 .table-view h2 {

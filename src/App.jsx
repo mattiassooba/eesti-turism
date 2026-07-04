@@ -2,6 +2,7 @@ import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import TableView from "./components/TableView";
 import Dashboard from "./components/Dashboard";
+import Page2Map from "./components/Page2Map";
 import Page3Purpose from "./components/Page3Purpose";
 import Page4Residents from "./components/Page4Residents";
 import Page6Capacity from "./components/Page6Capacity";
@@ -10,6 +11,7 @@ import "./App.css";
 
 const NAV_ITEMS = [
   { key: "dashboard", label: "Ülevaade" },
+  { key: "map", label: "Kaart ja hooajalisus" },
   { key: "purpose", label: "Eesmärk ja kestus" },
   { key: "residents", label: "Residentide reisid" },
   { key: "capacity", label: "Mahutavus" },
@@ -48,6 +50,7 @@ export default function App() {
         )}
         <main className="main-panel">
           {view === "dashboard" && <Dashboard onSelectTable={handleSelectTable} />}
+          {view === "map" && <Page2Map />}
           {view === "purpose" && <Page3Purpose />}
           {view === "residents" && <Page4Residents />}
           {view === "capacity" && <Page6Capacity />}

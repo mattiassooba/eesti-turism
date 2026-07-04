@@ -33,6 +33,7 @@ export default function DataGrid({ rows }) {
   if (!rows.length) return <div className="panel-status">No data.</div>;
 
   return (
+    <div className="data-grid-wrapper">
     <table className="data-grid">
       <thead>
         {table.getHeaderGroups().map((hg) => (
@@ -58,5 +59,6 @@ export default function DataGrid({ rows }) {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }

@@ -1,5 +1,7 @@
 import * as XLSX from "xlsx";
 
+const CITATION = "Allikas: Statistikaamet (andmed.stat.ee) · CC BY-SA 4.0";
+
 function rowsToExportData(rows) {
   return rows.map((row) => {
     const out = {};
@@ -31,8 +33,17 @@ export default function ExportButtons({ rows, tableId }) {
 
   function exportXlsx() {
     const sheet = XLSX.utils.json_to_sheet(rowsToExportData(rows));
+    const sourceSheet = XLSX.utils.aoa_to_sheet([
+      ["Allikas"],
+      ["Statistikaamet (Statistics Estonia)"],
+      ["https://andmed.stat.ee/et/stat"],
+      ["Litsents"],
+      ["CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/deed.et"],
+      ["See rakendus ei ole Statistikaameti ametlik toode."],
+    ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, sheet, tableId.slice(0, 31));
+    XLSX.utils.book_append_sheet(wb, sourceSheet, "Allikas");
     XLSX.writeFile(wb, `${tableId}.xlsx`);
   }
 
@@ -44,13 +55,17 @@ export default function ExportButtons({ rows, tableId }) {
     const url = URL.createObjectURL(svgBlob);
     const img = new Image();
     img.onload = () => {
+      const captionHeight = 24;
       const canvas = document.createElement("canvas");
       canvas.width = svg.clientWidth;
-      canvas.height = svg.clientHeight;
+      canvas.height = svg.clientHeight + captionHeight;
       const ctx = canvas.getContext("2d");
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
+      ctx.fillStyle = "#5b6b7a";
+      ctx.font = "12px 'IBM Plex Sans', sans-serif";
+      ctx.fillText(CITATION, 8, svg.clientHeight + 16);
       URL.revokeObjectURL(url);
       canvas.toBlob((blob) => downloadBlob(blob, `${tableId}-chart.png`));
     };

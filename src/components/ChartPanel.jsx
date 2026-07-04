@@ -11,7 +11,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const COLORS = ["#2563eb", "#dc2626", "#16a34a", "#d97706", "#7c3aed", "#0891b2"];
+const COLORS = ["#2b6ca3", "#d98e2b", "#5b6b7a", "#0f3a57", "#9c3b26", "#4d7894"];
 
 export default function ChartPanel({ data, seriesNames, chartType, onChartTypeChange }) {
   if (!data.length) return <div className="panel-status">No data to chart.</div>;
@@ -43,7 +43,7 @@ export default function ChartPanel({ data, seriesNames, chartType, onChartTypeCh
           <Legend />
           {seriesNames.map((name, i) =>
             chartType === "bar" ? (
-              <Bar key={name} dataKey={name} fill={COLORS[i % COLORS.length]} />
+              <Bar key={name} dataKey={name} fill={COLORS[i % COLORS.length]} isAnimationActive={false} />
             ) : (
               <Line
                 key={name}
@@ -51,6 +51,7 @@ export default function ChartPanel({ data, seriesNames, chartType, onChartTypeCh
                 dataKey={name}
                 stroke={COLORS[i % COLORS.length]}
                 dot={false}
+                isAnimationActive={false}
               />
             )
           )}

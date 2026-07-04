@@ -1,4 +1,145 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #1f2937;
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  border-right: 1px solid #e5e7eb;
+  padding: 12px;
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+.sidebar ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 12px;
+}
+
+.sidebar > ul {
+  padding-left: 0;
+}
+
+.folder-toggle,
+.table-leaf {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 4px 6px;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.folder-toggle:hover,
+.table-leaf:hover {
+  background: #f3f4f6;
+}
+
+.table-leaf.selected {
+  background: #dbeafe;
+  font-weight: 600;
+}
+
+.tree-status {
+  padding: 2px 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.tree-error {
+  color: #b91c1c;
+}
+
+.main-panel {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+.panel-status {
+  color: #6b7280;
+}
+
+.panel-error {
+  color: #b91c1c;
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 12px 0;
+}
+
+.filter-bar label {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  gap: 4px;
+}
+
+.chart-panel {
+  margin: 16px 0;
+}
+
+.chart-toggle button {
+  margin-right: 8px;
+  padding: 4px 10px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.chart-toggle button.active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.export-buttons button {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.data-grid {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+
+.data-grid th,
+.data-grid td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.data-grid th {
+  background: #f9fafb;
+  cursor: pointer;
 }

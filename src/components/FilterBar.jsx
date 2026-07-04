@@ -32,7 +32,7 @@ export default function FilterBar({
         <label>
           {timeVar.text}:{" "}
           <select
-            defaultValue="24"
+            value={query.find((q) => q.code === timeVar.code)?.selection.values[0] ?? "24"}
             onChange={(e) => updateTimeTop(timeVar.code, e.target.value)}
           >
             {TIME_TOP_OPTIONS.map((n) => (

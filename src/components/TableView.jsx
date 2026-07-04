@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchTableMeta, fetchTableData } from "../api/pxweb";
 import { flattenToRows, toChartData } from "../api/jsonStat";
 import FilterBar from "./FilterBar";
@@ -15,6 +15,13 @@ function defaultQuery(variables) {
   });
 }
 
+// Identifies which table a `query` state value belongs to, so the data-fetch
+// effect can tell a fresh query for the current table apart from a stale
+// leftover query from whichever table was previously selected.
+function tableKey(path, tableId) {
+  return `${path.join("/")}::${tableId}`;
+}
+
 export default function TableView({ path, tableId, title }) {
   const [meta, setMeta] = useState(null);
   const [metaError, setMetaError] = useState(null);
@@ -23,6 +30,9 @@ export default function TableView({ path, tableId, title }) {
   const [dataError, setDataError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [groupField, setGroupField] = useState(null);
+  // Ref (not state) so the update is visible synchronously to the data-fetch
+  // effect within the same commit that the metadata-reset effect runs in.
+  const queryOwnerRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,11 +40,13 @@ export default function TableView({ path, tableId, title }) {
     setMetaError(null);
     setDataset(null);
     setQuery(null);
+    queryOwnerRef.current = null;
 
     fetchTableMeta(path, tableId)
       .then((m) => {
         if (cancelled) return;
         setMeta(m);
+        queryOwnerRef.current = tableKey(path, tableId);
         setQuery(defaultQuery(m.variables));
         const firstNonTime = m.variables.find((v) => !v.time);
         setGroupField(firstNonTime ? firstNonTime.code : null);
@@ -48,6 +60,12 @@ export default function TableView({ path, tableId, title }) {
 
   useEffect(() => {
     if (!query) return;
+    // Guard against the stale-query race: when `path`/`tableId` change, this
+    // effect can still run in the same commit as the metadata-reset effect
+    // above, seeing the *previous* table's `query` (state updates from that
+    // effect haven't been applied to this closure yet). Skip firing until
+    // `query` is confirmed to belong to the table currently selected.
+    if (queryOwnerRef.current !== tableKey(path, tableId)) return;
     let cancelled = false;
     setLoading(true);
     setDataError(null);

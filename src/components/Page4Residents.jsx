@@ -14,6 +14,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import RankedBarList from "./RankedBarList";
+import ChartTooltip from "./ChartTooltip";
 
 const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
 
@@ -42,7 +43,7 @@ const ACCOMMODATION_LABELS = {
 };
 
 export default function Page4Residents({ timeRangeMonths }) {
-  const [state, setState] = useState({ status: "loading" });
+  const [state, setState] = useState({ data: null, loading: true, error: null });
   // This page's tables are quarterly, but the global time-range control is
   // defined in months (it applies to monthly pages too) — convert here.
   const quarters = timeRangeMonths ? Math.max(Math.ceil(Number(timeRangeMonths) / 3), 4) : 999;
@@ -50,6 +51,7 @@ export default function Page4Residents({ timeRangeMonths }) {
 
   useEffect(() => {
     let cancelled = false;
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     async function load() {
       try {
@@ -140,15 +142,13 @@ export default function Page4Residents({ timeRangeMonths }) {
 
         if (!cancelled) {
           setState({
-            status: "ready",
-            tripsChart,
-            countries,
-            spendChart,
-            accommodation,
+            data: { tripsChart, countries, spendChart, accommodation },
+            loading: false,
+            error: null,
           });
         }
       } catch (err) {
-        if (!cancelled) setState({ status: "error", message: err.message });
+        if (!cancelled) setState((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     }
 
@@ -158,20 +158,22 @@ export default function Page4Residents({ timeRangeMonths }) {
     };
   }, [timeRangeMonths]);
 
-  if (state.status === "loading") return <div className="panel-status">Laen…</div>;
-  if (state.status === "error")
-    return <div className="panel-error">Andmete laadimine ebaõnnestus: {state.message}</div>;
+  if (!state.data && state.loading) return <div className="panel-status">Laen…</div>;
+  if (!state.data && state.error)
+    return <div className="panel-error">Andmete laadimine ebaõnnestus: {state.error}</div>;
+
+  const { data } = state;
 
   return (
-    <div className="dashboard">
+    <div className={"dashboard" + (state.loading ? " refetching" : "")}>
       <div className="data-card">
-        <h3>Sise- ja välisreisid kvartalite kaupa (tuhat reisi, viimased {quarters === 999 ? state.tripsChart.length : quarters} kvartalit)</h3>
+        <h3>Sise- ja välisreisid kvartalite kaupa (tuhat reisi, viimased {quarters === 999 ? data.tripsChart.length : quarters} kvartalit)</h3>
         <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={state.tripsChart}>
+          <BarChart data={data.tripsChart}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="x" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={40} />
             <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
+            <Tooltip content={<ChartTooltip unit="tuh" />} />
             <Legend />
             <Bar dataKey="Sisereisid" fill={COLORS[0]} isAnimationActive={false} />
             <Bar dataKey="Välisreisid" fill={COLORS[1]} isAnimationActive={false} />
@@ -182,23 +184,23 @@ export default function Page4Residents({ timeRangeMonths }) {
       <div className="tile-row-split">
         <div className="data-card">
           <h3>Enim külastatud sihtriigid (viimased {originQuarters === 999 ? "kõik" : originQuarters} kvartalit, tuhat reisi)</h3>
-          <RankedBarList items={state.countries} />
+          <RankedBarList items={data.countries} unit="tuh reisi" />
         </div>
 
         <div className="data-card">
           <h3>Majutuse liik reisidel (viimane kvartal, tuhat ööbimist)</h3>
-          <RankedBarList items={state.accommodation} />
+          <RankedBarList items={data.accommodation} unit="tuh ööbimist" />
         </div>
       </div>
 
       <div className="data-card">
-        <h3>Reisikulutused, sise- vs. välisreis (eurot, viimased {quarters === 999 ? state.spendChart.length : quarters} kvartalit)</h3>
+        <h3>Reisikulutused, sise- vs. välisreis (eurot, viimased {quarters === 999 ? data.spendChart.length : quarters} kvartalit)</h3>
         <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={state.spendChart}>
+          <LineChart data={data.spendChart}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="x" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={40} />
             <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
+            <Tooltip content={<ChartTooltip unit="€" />} />
             <Legend />
             <Line
               type="monotone"

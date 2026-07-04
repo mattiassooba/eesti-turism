@@ -138,6 +138,35 @@ a {
   padding-left: 0;
 }
 
+.sidebar-search {
+  width: 100%;
+  padding: 7px 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--paper);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+.sidebar-search::placeholder {
+  color: rgba(238, 240, 238, 0.45);
+}
+
+.sidebar-search:focus {
+  outline: none;
+  border-color: var(--midsummer);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.search-result-path {
+  display: block;
+  font-size: 11px;
+  color: rgba(238, 240, 238, 0.5);
+  margin-top: 1px;
+}
+
 .folder-toggle,
 .table-leaf {
   background: none;
@@ -294,6 +323,7 @@ a {
   font-size: 56px;
   font-weight: 600;
   line-height: 1;
+  letter-spacing: -0.01em;
 }
 
 .hero-delta {
@@ -326,6 +356,23 @@ a {
 .seasonality-current {
   outline: 2px solid var(--paper);
   outline-offset: 2px;
+}
+
+.seasonality-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: rgba(238, 240, 238, 0.6);
+}
+
+.seasonality-legend-gradient {
+  width: 60px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, rgb(77, 120, 148), rgb(217, 142, 43));
 }
 
 .tile-row {
@@ -395,6 +442,56 @@ a {
   box-shadow: 0 0 0 1px var(--sea);
 }
 
+/* Chart tooltip (shared across all Recharts <Tooltip>) */
+
+.chart-tooltip {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  box-shadow: 0 4px 16px rgba(16, 27, 38, 0.25);
+  min-width: 140px;
+}
+
+.chart-tooltip-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: rgba(238, 240, 238, 0.75);
+}
+
+.chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.chart-tooltip-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.chart-tooltip-name {
+  flex: 1;
+}
+
+.chart-tooltip-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+/* Refetch indicator: dim existing content instead of blanking it */
+
+.refetching {
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
 /* Data pages (Purpose/Residents/Capacity) */
 
 .data-card {
@@ -404,15 +501,35 @@ a {
   padding: 20px 24px;
 }
 
-.clear-selection {
-  background: none;
+.selection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sea);
+  color: #fff;
   border: none;
-  color: var(--sea);
+  border-radius: 999px;
+  padding: 5px 8px 5px 14px;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 12.5px;
   cursor: pointer;
-  padding: 0 0 12px;
-  display: block;
+  margin-bottom: 12px;
+}
+
+.selection-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.selection-chip:hover .selection-chip-x {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .data-card h3 {
@@ -437,7 +554,7 @@ a {
 
 .ranked-bar-row {
   display: grid;
-  grid-template-columns: 140px 1fr 90px;
+  grid-template-columns: 140px 1fr 120px;
   align-items: center;
   gap: 10px;
   font-family: var(--font-body);
@@ -470,13 +587,20 @@ a {
   text-align: right;
 }
 
+.ranked-bar-unit {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 11px;
+  opacity: 0.75;
+}
+
 @media (max-width: 720px) {
   .tile-row-split {
     grid-template-columns: 1fr;
   }
 
   .ranked-bar-row {
-    grid-template-columns: 100px 1fr 70px;
+    grid-template-columns: 100px 1fr 90px;
   }
 }
 
@@ -584,6 +708,16 @@ a {
   border-radius: 6px;
   background: #fff;
   color: var(--ink);
+}
+
+.filter-bar select[multiple] {
+  font-family: var(--font-body);
+}
+
+.filter-hint {
+  font-size: 11px;
+  color: var(--slate);
+  font-style: italic;
 }
 
 .chart-panel {

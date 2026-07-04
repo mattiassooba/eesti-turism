@@ -13,6 +13,7 @@ import {
   Legend,
   CartesianGrid,
 } from "recharts";
+import ChartTooltip from "./ChartTooltip";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
@@ -29,12 +30,13 @@ const RESIDENCY_TITLE = {
 };
 
 export default function Page3Purpose({ residency, timeRangeMonths }) {
-  const [state, setState] = useState({ status: "loading" });
+  const [state, setState] = useState({ data: null, loading: true, error: null });
   const windowSize = timeRangeMonths ? Number(timeRangeMonths) : 999;
 
   useEffect(() => {
     let cancelled = false;
     const nightsCode = NIGHTS_CODE[residency] ?? "OCC_NI";
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     async function load() {
       try {
@@ -77,16 +79,19 @@ export default function Page3Purpose({ residency, timeRangeMonths }) {
 
         if (!cancelled) {
           setState({
-            status: "ready",
-            purposeChart,
-            purposeNames,
-            durationChart,
-            durationLatestLabel,
-            windowSize: monthKeys.length,
+            data: {
+              purposeChart,
+              purposeNames,
+              durationChart,
+              durationLatestLabel,
+              windowSize: monthKeys.length,
+            },
+            loading: false,
+            error: null,
           });
         }
       } catch (err) {
-        if (!cancelled) setState({ status: "error", message: err.message });
+        if (!cancelled) setState((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     }
 
@@ -96,26 +101,27 @@ export default function Page3Purpose({ residency, timeRangeMonths }) {
     };
   }, [residency, timeRangeMonths]);
 
-  if (state.status === "loading") return <div className="panel-status">Laen…</div>;
-  if (state.status === "error")
-    return <div className="panel-error">Andmete laadimine ebaõnnestus: {state.message}</div>;
+  if (!state.data && state.loading) return <div className="panel-status">Laen…</div>;
+  if (!state.data && state.error)
+    return <div className="panel-error">Andmete laadimine ebaõnnestus: {state.error}</div>;
 
   const title = RESIDENCY_TITLE[residency] ?? RESIDENCY_TITLE.all;
+  const { data } = state;
 
   return (
-    <div className="dashboard">
+    <div className={"dashboard" + (state.loading ? " refetching" : "")}>
       <div className="data-card">
         <h3>
-          {title} reisi eesmärgi järgi (viimased {state.windowSize} kuud)
+          {title} reisi eesmärgi järgi (viimased {data.windowSize} kuud)
         </h3>
         <ResponsiveContainer width="100%" height={340}>
-          <AreaChart data={state.purposeChart}>
+          <AreaChart data={data.purposeChart}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="x" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={40} />
             <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
+            <Tooltip content={<ChartTooltip />} />
             <Legend />
-            {state.purposeNames.map((name, i) => (
+            {data.purposeNames.map((name, i) => (
               <Area
                 key={name}
                 type="monotone"
@@ -132,13 +138,13 @@ export default function Page3Purpose({ residency, timeRangeMonths }) {
       </div>
 
       <div className="data-card">
-        <h3>Reisi kestus, sise- vs. välisreisid ({state.durationLatestLabel})</h3>
+        <h3>Reisi kestus, sise- vs. välisreisid ({data.durationLatestLabel})</h3>
         <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={state.durationChart} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+          <BarChart data={data.durationChart} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="x" tick={{ fontSize: 12 }} interval={0} />
             <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
+            <Tooltip content={<ChartTooltip />} />
             <Legend />
             <Bar dataKey="Sisereisid" fill={COLORS[0]} isAnimationActive={false} />
             <Bar dataKey="Välisreisid" fill={COLORS[1]} isAnimationActive={false} />

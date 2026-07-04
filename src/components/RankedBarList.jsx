@@ -11,7 +11,7 @@ export default function RankedBarList({ items, unit }) {
           </div>
           <div className="ranked-bar-value">
             {item.value.toLocaleString("et-EE")}
-            {unit ? ` ${unit}` : ""}
+            {unit ? <span className="ranked-bar-unit"> {unit}</span> : null}
           </div>
         </div>
       ))}

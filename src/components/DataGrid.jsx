@@ -17,7 +17,7 @@ export default function DataGrid({ rows }) {
         accessorKey: key,
         header: key.replace(/_label$/, ""),
       })),
-      { accessorKey: "value", header: "Value" },
+      { accessorKey: "value", header: "Väärtus" },
     ];
   }, [rows]);
 
@@ -30,7 +30,7 @@ export default function DataGrid({ rows }) {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  if (!rows.length) return <div className="panel-status">No data.</div>;
+  if (!rows.length) return <div className="panel-status">Andmed puuduvad.</div>;
 
   return (
     <div className="data-grid-wrapper">

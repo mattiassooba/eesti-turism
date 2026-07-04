@@ -100,7 +100,12 @@ export default function App() {
           {view === "capacity" && <Page6Capacity />}
           {view === "browse" &&
             (selected ? (
-              <TableView path={selected.path} tableId={selected.tableId} title={selected.title} />
+              <TableView
+                path={selected.path}
+                tableId={selected.tableId}
+                title={selected.title}
+                initialTimeRangeMonths={timeRangeMonths}
+              />
             ) : (
               <div className="panel-status">Vali tabel küljel olevast loendist.</div>
             ))}

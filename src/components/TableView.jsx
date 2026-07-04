@@ -6,10 +6,10 @@ import DataGrid from "./DataGrid";
 import ChartPanel from "./ChartPanel";
 import ExportButtons from "./ExportButtons";
 
-function defaultQuery(variables) {
+function defaultQuery(variables, initialTimeTop) {
   return variables.map((v) => {
     if (v.time) {
-      return { code: v.code, selection: { filter: "top", values: ["24"] } };
+      return { code: v.code, selection: { filter: "top", values: [String(initialTimeTop ?? "24")] } };
     }
     if (v.elimination) {
       return { code: v.code, selection: { filter: "item", values: [v.values[0]] } };
@@ -25,7 +25,7 @@ function tableKey(path, tableId) {
   return `${path.join("/")}::${tableId}`;
 }
 
-export default function TableView({ path, tableId, title }) {
+export default function TableView({ path, tableId, title, initialTimeRangeMonths }) {
   const [meta, setMeta] = useState(null);
   const [metaError, setMetaError] = useState(null);
   const [query, setQuery] = useState(null);
@@ -51,7 +51,13 @@ export default function TableView({ path, tableId, title }) {
         if (cancelled) return;
         setMeta(m);
         queryOwnerRef.current = tableKey(path, tableId);
-        setQuery(defaultQuery(m.variables));
+        // initialTimeRangeMonths is a one-time hint carried over from the
+        // dashboard's global time-range filter (e.g. via a quick-link click),
+        // not a live sync — Browse has its own FilterBar for ongoing control.
+        const initialTop = initialTimeRangeMonths
+          ? Math.min(Number(initialTimeRangeMonths), 120)
+          : undefined;
+        setQuery(defaultQuery(m.variables, initialTop));
         const firstNonTime = m.variables.find((v) => !v.time);
         setGroupField(firstNonTime ? firstNonTime.code : null);
       })
@@ -60,6 +66,7 @@ export default function TableView({ path, tableId, title }) {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, tableId]);
 
   useEffect(() => {
@@ -92,10 +99,10 @@ export default function TableView({ path, tableId, title }) {
   }, [rows, timeField, groupField]);
 
   if (metaError) {
-    return <div className="panel-error">Failed to load table: {metaError}</div>;
+    return <div className="panel-error">Tabeli laadimine ebaõnnestus: {metaError}</div>;
   }
   if (!meta || !query) {
-    return <div className="panel-status">Loading table…</div>;
+    return <div className="panel-status">Laen tabelit…</div>;
   }
 
   return (
@@ -110,13 +117,13 @@ export default function TableView({ path, tableId, title }) {
       />
       {dataError && (
         <div className="panel-error">
-          Failed to load data: {dataError}{" "}
-          <button onClick={() => setQuery([...query])}>Retry</button>
+          Andmete laadimine ebaõnnestus: {dataError}{" "}
+          <button onClick={() => setQuery([...query])}>Proovi uuesti</button>
         </div>
       )}
-      {loading && <div className="panel-status">Loading data…</div>}
-      {!loading && !dataError && (
-        <>
+      {!dataset && loading && <div className="panel-status">Laen andmeid…</div>}
+      {!dataError && dataset && (
+        <div className={loading ? "refetching" : ""}>
           <ChartPanel
             data={chartData.data}
             seriesNames={chartData.seriesNames}
@@ -125,7 +132,7 @@ export default function TableView({ path, tableId, title }) {
           />
           <ExportButtons rows={rows} tableId={tableId} />
           <DataGrid rows={rows} />
-        </>
+        </div>
       )}
     </div>
   );

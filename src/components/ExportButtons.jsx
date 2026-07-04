@@ -10,7 +10,7 @@ function rowsToExportData(rows) {
         out[key.replace(/_label$/, "")] = row[key];
       }
     });
-    out.value = row.value;
+    out["Väärtus"] = row.value;
     return out;
   });
 }
@@ -74,9 +74,9 @@ export default function ExportButtons({ rows, tableId }) {
 
   return (
     <div className="export-buttons">
-      <button onClick={exportCsv}>Export CSV</button>
-      <button onClick={exportXlsx}>Export XLSX</button>
-      <button onClick={exportPng}>Export PNG</button>
+      <button onClick={exportCsv}>Laadi alla CSV</button>
+      <button onClick={exportXlsx}>Laadi alla XLSX</button>
+      <button onClick={exportPng}>Laadi alla PNG</button>
     </div>
   );
 }

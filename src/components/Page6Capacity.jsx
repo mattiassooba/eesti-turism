@@ -12,6 +12,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import ChartTooltip from "./ChartTooltip";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 
@@ -98,7 +99,7 @@ export default function Page6Capacity() {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="x" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
+            <Tooltip content={<ChartTooltip />} />
             <Bar dataKey="Voodikohad" fill="#2b6ca3" isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
@@ -112,7 +113,7 @@ export default function Page6Capacity() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="x" tick={{ fontSize: 10 }} interval={4} />
               <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
+              <Tooltip content={<ChartTooltip />} />
               <Line
                 type="monotone"
                 dataKey="Voodikohad"
@@ -131,7 +132,7 @@ export default function Page6Capacity() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="x" tick={{ fontSize: 10 }} interval={2} />
               <YAxis tick={{ fontSize: 11 }} unit="%" />
-              <Tooltip />
+              <Tooltip content={<ChartTooltip />} />
               <Line
                 type="monotone"
                 dataKey="Täituvus, %"

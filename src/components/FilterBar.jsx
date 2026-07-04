@@ -37,7 +37,7 @@ export default function FilterBar({
           >
             {TIME_TOP_OPTIONS.map((n) => (
               <option key={n} value={n}>
-                last {n}
+                viimased {n}
               </option>
             ))}
           </select>
@@ -46,8 +46,10 @@ export default function FilterBar({
       {nonTimeVars.map((v) => (
         <label key={v.code}>
           {v.text}:{" "}
+          <span className="filter-hint">(mitme valimiseks hoia all Ctrl/Cmd)</span>
           <select
             multiple
+            size={Math.min(v.values.length, 6)}
             value={query.find((q) => q.code === v.code)?.selection.values ?? []}
             onChange={(e) =>
               updateVariable(
@@ -66,12 +68,12 @@ export default function FilterBar({
       ))}
       {nonTimeVars.length > 0 && (
         <label>
-          Group chart by:{" "}
+          Rühmita graafik:{" "}
           <select
             value={groupField ?? ""}
             onChange={(e) => onGroupFieldChange(e.target.value || null)}
           >
-            <option value="">(none)</option>
+            <option value="">(puudub)</option>
             {nonTimeVars.map((v) => (
               <option key={v.code} value={v.code}>
                 {v.text}

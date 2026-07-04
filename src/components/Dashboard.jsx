@@ -58,12 +58,13 @@ function periodDelta(series, latestIndex, offset, label) {
 }
 
 export default function Dashboard({ onSelectTable, residency, timeRangeMonths, deltaMode }) {
-  const [state, setState] = useState({ status: "loading" });
+  const [state, setState] = useState({ data: null, loading: true, error: null });
 
   useEffect(() => {
     let cancelled = false;
     const fetchCount = timeRangeMonths ? Math.max(Number(timeRangeMonths), 25) : 999;
     const residencyCode = RESIDENCY[residency]?.code ?? "WORLD";
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     async function load() {
       try {
@@ -129,23 +130,26 @@ export default function Dashboard({ onSelectTable, residency, timeRangeMonths, d
 
         if (!cancelled) {
           setState({
-            status: "ready",
-            latestLabel: latest.label,
-            totalGuests,
-            totalNights,
-            domesticGuests,
-            foreignGuests,
-            avgNightsPerGuest,
-            guestsDelta: periodDelta(guestsSeries, latestIdx, deltaOffset, deltaCompareLabel),
-            nightsDelta: periodDelta(nightsSeries, latestIdx, deltaOffset, deltaCompareLabel),
-            months,
-            nightsSparkline,
-            sparkWindow,
-            topCounty,
+            data: {
+              latestLabel: latest.label,
+              totalGuests,
+              totalNights,
+              domesticGuests,
+              foreignGuests,
+              avgNightsPerGuest,
+              guestsDelta: periodDelta(guestsSeries, latestIdx, deltaOffset, deltaCompareLabel),
+              nightsDelta: periodDelta(nightsSeries, latestIdx, deltaOffset, deltaCompareLabel),
+              months,
+              nightsSparkline,
+              sparkWindow,
+              topCounty,
+            },
+            loading: false,
+            error: null,
           });
         }
       } catch (err) {
-        if (!cancelled) setState({ status: "error", message: err.message });
+        if (!cancelled) setState((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     }
 
@@ -155,14 +159,15 @@ export default function Dashboard({ onSelectTable, residency, timeRangeMonths, d
     };
   }, [residency, timeRangeMonths, deltaMode]);
 
-  if (state.status === "loading") {
+  if (!state.data && state.loading) {
     return <div className="panel-status">Laen ülevaadet…</div>;
   }
-  if (state.status === "error") {
-    return <div className="panel-error">Ülevaate laadimine ebaõnnestus: {state.message}</div>;
+  if (!state.data && state.error) {
+    return <div className="panel-error">Ülevaate laadimine ebaõnnestus: {state.error}</div>;
   }
 
   const labels = RESIDENCY[residency] ?? RESIDENCY.all;
+  const data = state.data;
 
   function deltaText(delta) {
     if (!delta) return null;
@@ -170,41 +175,46 @@ export default function Dashboard({ onSelectTable, residency, timeRangeMonths, d
   }
 
   return (
-    <div className="dashboard">
+    <div className={"dashboard" + (state.loading ? " refetching" : "")}>
       <div className="kpi-row">
         <div className="hero-card">
           <div className="hero-label">
-            {labels.guestsLabel} · {state.latestLabel}
+            {labels.guestsLabel} · {data.latestLabel}
           </div>
-          <div className="hero-number">{state.totalGuests.toLocaleString("et-EE")}</div>
-          {state.guestsDelta && (
-            <div className={"hero-delta " + (state.guestsDelta.pct >= 0 ? "delta-up" : "delta-down")}>
-              {deltaText(state.guestsDelta)}
+          <div className="hero-number">{data.totalGuests.toLocaleString("et-EE")}</div>
+          {data.guestsDelta && (
+            <div className={"hero-delta " + (data.guestsDelta.pct >= 0 ? "delta-up" : "delta-down")}>
+              {deltaText(data.guestsDelta)}
             </div>
           )}
-          <SeasonalityStrip months={state.months} />
+          <SeasonalityStrip months={data.months} />
+          <div className="seasonality-legend">
+            <span>Vaikne hooaeg</span>
+            <span className="seasonality-legend-gradient" />
+            <span>Tipphooaeg</span>
+          </div>
         </div>
 
         <div className="hero-card">
           <div className="hero-label">
-            {labels.nightsLabel} · {state.latestLabel}
+            {labels.nightsLabel} · {data.latestLabel}
           </div>
-          <div className="hero-number">{state.totalNights.toLocaleString("et-EE")}</div>
-          {state.nightsDelta && (
-            <div className={"hero-delta " + (state.nightsDelta.pct >= 0 ? "delta-up" : "delta-down")}>
-              {deltaText(state.nightsDelta)}
+          <div className="hero-number">{data.totalNights.toLocaleString("et-EE")}</div>
+          {data.nightsDelta && (
+            <div className={"hero-delta " + (data.nightsDelta.pct >= 0 ? "delta-up" : "delta-down")}>
+              {deltaText(data.nightsDelta)}
             </div>
           )}
-          <Sparkline data={state.nightsSparkline} />
-          <div className="hero-caption">Viimased {state.sparkWindow} kuud</div>
+          <Sparkline data={data.nightsSparkline} />
+          <div className="hero-caption">Viimased {data.sparkWindow} kuud</div>
         </div>
       </div>
 
       {residency === "all" && (
         <SplitBar
           segments={[
-            { label: "Eesti elanikud", value: state.domesticGuests, color: "#5b6b7a" },
-            { label: "Väliskülastajad", value: state.foreignGuests, color: "#d98e2b" },
+            { label: "Eesti elanikud", value: data.domesticGuests, color: "#5b6b7a" },
+            { label: "Väliskülastajad", value: data.foreignGuests, color: "#d98e2b" },
           ]}
         />
       )}
@@ -212,11 +222,11 @@ export default function Dashboard({ onSelectTable, residency, timeRangeMonths, d
       <div className="tile-row">
         <div className="stat-tile">
           <div className="tile-label">Enim külastatud maakond</div>
-          <div className="tile-number tile-number-small">{state.topCounty?.label ?? "—"}</div>
+          <div className="tile-number tile-number-small">{data.topCounty?.label ?? "—"}</div>
         </div>
         <div className="stat-tile">
           <div className="tile-label">Keskmine ööbimiste arv külastaja kohta</div>
-          <div className="tile-number">{state.avgNightsPerGuest.toFixed(2)}</div>
+          <div className="tile-number">{data.avgNightsPerGuest.toFixed(2)}</div>
         </div>
       </div>
 

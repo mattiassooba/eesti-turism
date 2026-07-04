@@ -14,6 +14,7 @@ import {
 import EstoniaMap from "./EstoniaMap";
 import SeasonalityHeatmap from "./SeasonalityHeatmap";
 import RankedBarList from "./RankedBarList";
+import ChartTooltip from "./ChartTooltip";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 
@@ -65,8 +66,8 @@ const ORIGIN_COUNTRY_LABELS = {
 };
 
 export default function Page2Map({ residency, timeRangeMonths }) {
-  const [base, setBase] = useState({ status: "loading" });
-  const [origins, setOrigins] = useState({ status: "loading" });
+  const [base, setBase] = useState({ data: null, loading: true, error: null });
+  const [origins, setOrigins] = useState({ data: null, loading: true, error: null });
   const [selectedCounty, setSelectedCounty] = useState(null); // { mkood, label } | null
 
   const windowSize = timeRangeMonths ? Number(timeRangeMonths) : 999;
@@ -74,6 +75,7 @@ export default function Page2Map({ residency, timeRangeMonths }) {
   useEffect(() => {
     let cancelled = false;
     const residencyCode = RESIDENCY_CODE[residency] ?? "WORLD";
+    setBase((prev) => ({ ...prev, loading: true, error: null }));
 
     async function load() {
       try {
@@ -141,10 +143,10 @@ export default function Page2Map({ residency, timeRangeMonths }) {
         const years = Array.from(yearSet).sort();
 
         if (!cancelled) {
-          setBase({ status: "ready", countyTotals, historyChart, years, grid });
+          setBase({ data: { countyTotals, historyChart, years, grid }, loading: false, error: null });
         }
       } catch (err) {
-        if (!cancelled) setBase({ status: "error", message: err.message });
+        if (!cancelled) setBase((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     }
 
@@ -158,6 +160,7 @@ export default function Page2Map({ residency, timeRangeMonths }) {
     let cancelled = false;
     const maakond = selectedCounty ? toStatCode(selectedCounty.mkood) : "EE";
     const originWindow = Math.min(windowSize, 12);
+    setOrigins((prev) => ({ ...prev, loading: true, error: null }));
 
     async function load() {
       try {
@@ -183,9 +186,9 @@ export default function Page2Map({ residency, timeRangeMonths }) {
           .map(([code, value]) => ({ label: ORIGIN_COUNTRY_LABELS[code] ?? code, value }))
           .sort((a, b) => b.value - a.value);
 
-        if (!cancelled) setOrigins({ status: "ready", list });
+        if (!cancelled) setOrigins({ data: list, loading: false, error: null });
       } catch (err) {
-        if (!cancelled) setOrigins({ status: "error", message: err.message });
+        if (!cancelled) setOrigins((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     }
 
@@ -195,17 +198,17 @@ export default function Page2Map({ residency, timeRangeMonths }) {
     };
   }, [timeRangeMonths, selectedCounty]);
 
-  if (base.status === "loading") return <div className="panel-status">Laen…</div>;
-  if (base.status === "error")
-    return <div className="panel-error">Andmete laadimine ebaõnnestus: {base.message}</div>;
+  if (!base.data && base.loading) return <div className="panel-status">Laen…</div>;
+  if (!base.data && base.error)
+    return <div className="panel-error">Andmete laadimine ebaõnnestus: {base.error}</div>;
 
   return (
-    <div className="dashboard">
+    <div className={"dashboard" + (base.loading ? " refetching" : "")}>
       <div className="tile-row-split">
         <div className="data-card">
           <h3>Ööbimised maakonna järgi (viimased {Math.min(windowSize, 24)} kuud kokku)</h3>
           <EstoniaMap
-            valuesByMkood={base.countyTotals}
+            valuesByMkood={base.data.countyTotals}
             unit="ööd"
             selectedMkood={selectedCounty?.mkood}
             onSelectCounty={(mkood, label) =>
@@ -215,39 +218,39 @@ export default function Page2Map({ residency, timeRangeMonths }) {
         </div>
 
         <div className="data-card">
-          <h3>
-            Enim külastajaid saatvad riigid
-            {selectedCounty ? ` — ${selectedCounty.label}` : ""} (viimased{" "}
-            {Math.min(windowSize, 12)} kuud)
-          </h3>
+          <h3>Enim külastajaid saatvad riigid (viimased {Math.min(windowSize, 12)} kuud)</h3>
           {selectedCounty && (
-            <button className="clear-selection" onClick={() => setSelectedCounty(null)}>
-              × Tagasi terve Eesti juurde
+            <button className="selection-chip" onClick={() => setSelectedCounty(null)}>
+              {selectedCounty.label}
+              <span className="selection-chip-x">×</span>
             </button>
           )}
-          {origins.status === "loading" && <div className="panel-status">Laen…</div>}
-          {origins.status === "error" && (
-            <div className="panel-error">Andmete laadimine ebaõnnestus: {origins.message}</div>
+          {!origins.data && origins.loading && <div className="panel-status">Laen…</div>}
+          {!origins.data && origins.error && (
+            <div className="panel-error">Andmete laadimine ebaõnnestus: {origins.error}</div>
           )}
-          {origins.status === "ready" &&
-            (origins.list.length ? (
-              <RankedBarList items={origins.list} />
-            ) : (
-              <div className="panel-status">Selle maakonna kohta andmed puuduvad.</div>
-            ))}
+          {origins.data && (
+            <div className={origins.loading ? "refetching" : ""}>
+              {origins.data.length ? (
+                <RankedBarList items={origins.data} unit="külastajat" />
+              ) : (
+                <div className="panel-status">Selle maakonna kohta andmed puuduvad.</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       <div className="data-card">
         <h3>
-          Eesti elanikud vs. väliskülastajad (viimased {base.historyChart.length} kuud)
+          Eesti elanikud vs. väliskülastajad (viimased {base.data.historyChart.length} kuud)
         </h3>
         <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={base.historyChart} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+          <LineChart data={base.data.historyChart} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="x" tick={{ fontSize: 9 }} interval="preserveStartEnd" minTickGap={40} />
             <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
+            <Tooltip content={<ChartTooltip />} />
             <Legend />
             <Line
               type="monotone"
@@ -269,7 +272,7 @@ export default function Page2Map({ residency, timeRangeMonths }) {
 
       <div className="data-card">
         <h3>Hooajalisus: majutatute arv kuu ja aasta järgi</h3>
-        <SeasonalityHeatmap years={base.years} grid={base.grid} />
+        <SeasonalityHeatmap years={base.data.years} grid={base.data.grid} />
       </div>
     </div>
   );

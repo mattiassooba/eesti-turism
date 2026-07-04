@@ -10,11 +10,12 @@ import {
   Legend,
   CartesianGrid,
 } from "recharts";
+import ChartTooltip from "./ChartTooltip";
 
 const COLORS = ["#2b6ca3", "#d98e2b", "#5b6b7a", "#0f3a57", "#9c3b26", "#4d7894"];
 
 export default function ChartPanel({ data, seriesNames, chartType, onChartTypeChange }) {
-  if (!data.length) return <div className="panel-status">No data to chart.</div>;
+  if (!data.length) return <div className="panel-status">Graafiku jaoks andmed puuduvad.</div>;
 
   const Chart = chartType === "bar" ? BarChart : LineChart;
 
@@ -25,13 +26,13 @@ export default function ChartPanel({ data, seriesNames, chartType, onChartTypeCh
           className={chartType === "line" ? "active" : ""}
           onClick={() => onChartTypeChange("line")}
         >
-          Line
+          Joon
         </button>
         <button
           className={chartType === "bar" ? "active" : ""}
           onClick={() => onChartTypeChange("bar")}
         >
-          Bar
+          Tulp
         </button>
       </div>
       <ResponsiveContainer width="100%" height={360}>
@@ -39,7 +40,7 @@ export default function ChartPanel({ data, seriesNames, chartType, onChartTypeCh
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="x" />
           <YAxis />
-          <Tooltip />
+          <Tooltip content={<ChartTooltip />} />
           <Legend />
           {seriesNames.map((name, i) =>
             chartType === "bar" ? (

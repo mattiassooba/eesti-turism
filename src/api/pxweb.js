@@ -35,3 +35,17 @@ export async function fetchTableData(pathSegments, tableId, query) {
   }
   return res.json();
 }
+
+// Search is scoped to pathSegments (e.g. the tourism folder) so results
+// don't include unrelated statistics domains. The API returns each
+// result's own path relative to that scope (e.g. "/eesti-elanike-reisimine"),
+// which the caller must prepend pathSegments to before using with
+// fetchTableMeta/fetchTableData.
+export async function searchTables(pathSegments, query) {
+  const url = `${buildUrl(pathSegments)}?query=${encodeURIComponent(query)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to search tables ${url}: ${res.status}`);
+  }
+  return res.json();
+}

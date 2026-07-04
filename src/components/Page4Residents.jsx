@@ -1,0 +1,218 @@
+import { useEffect, useState } from "react";
+import { fetchTableData } from "../api/pxweb";
+import { flattenToRows } from "../api/jsonStat";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  CartesianGrid,
+} from "recharts";
+import RankedBarList from "./RankedBarList";
+
+const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
+
+const COLORS = ["#2b6ca3", "#d98e2b", "#5b6b7a", "#0f3a57"];
+const NAITAJA_SHORT = { TR_DOM: "Sisereisid", TR_OUT: "Välisreisid" };
+
+const COUNTRY_LABELS = {
+  LT: "Leedu",
+  LV: "Läti",
+  SE: "Rootsi",
+  FI: "Soome",
+  RU: "Venemaa",
+  DE: "Saksamaa",
+  IT: "Itaalia",
+  TR: "Türgi",
+  ES: "Hispaania",
+};
+
+const ACCOMMODATION_LABELS = {
+  R_HOT: "Hotellid",
+  R_CAMP: "Laagriplatsid, haagissuvilad",
+  R_OTH: "Muu tasuline majutus",
+  NR_OWN: "Endale kuuluv eluruum",
+  NR_RF: "Tuttavate/sugulaste juures",
+  NR_OTH: "Muu tasuta majutus",
+};
+
+export default function Page4Residents() {
+  const [state, setState] = useState({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const tripsData = await fetchTableData(REISIMINE_PATH, "TU51.PX", [
+          { code: "Näitaja", selection: { filter: "item", values: ["TR_DOM", "TR_OUT"] } },
+          { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
+          { code: "Vaatlusperiood", selection: { filter: "top", values: ["12"] } },
+        ]);
+        const tripsRows = flattenToRows(tripsData);
+        const byQuarter = new Map();
+        for (const row of tripsRows) {
+          if (!byQuarter.has(row.Vaatlusperiood)) {
+            byQuarter.set(row.Vaatlusperiood, { x: row.Vaatlusperiood_label });
+          }
+          byQuarter.get(row.Vaatlusperiood)[NAITAJA_SHORT[row.Näitaja] ?? row.Näitaja] =
+            row.value;
+        }
+        const quarterKeys = Array.from(byQuarter.keys()).sort();
+        const tripsChart = quarterKeys.map((k) => byQuarter.get(k));
+
+        const countryData = await fetchTableData(REISIMINE_PATH, "TU63.PX", [
+          {
+            code: "Sihtriik",
+            selection: { filter: "item", values: Object.keys(COUNTRY_LABELS) },
+          },
+          { code: "Vaatlusperiood", selection: { filter: "top", values: ["4"] } },
+        ]);
+        const countryRows = flattenToRows(countryData);
+        // Statistikaamet suppresses cells with too few observations (returned
+        // as null, not 0) — summing null as 0 would misreport "data withheld"
+        // as "confirmed zero visitors." Skip nulls, and drop a country
+        // entirely if it has no reported quarters at all.
+        const countryTotals = new Map();
+        for (const row of countryRows) {
+          if (row.value === null) continue;
+          countryTotals.set(row.Sihtriik, (countryTotals.get(row.Sihtriik) ?? 0) + row.value);
+        }
+        const countries = Array.from(countryTotals.entries())
+          .map(([code, value]) => ({ label: COUNTRY_LABELS[code] ?? code, value }))
+          .sort((a, b) => b.value - a.value);
+
+        const domesticSpend = await fetchTableData(REISIMINE_PATH, "TU56.PX", [
+          { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
+          { code: "Vaatlusperiood", selection: { filter: "top", values: ["24"] } },
+        ]);
+        const foreignSpend = await fetchTableData(REISIMINE_PATH, "TU661.PX", [
+          { code: "Näitaja", selection: { filter: "item", values: ["EXP_OUT"] } },
+          { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
+          { code: "Vaatlusperiood", selection: { filter: "top", values: ["24"] } },
+        ]);
+        const domesticRows = flattenToRows(domesticSpend);
+        const foreignRows = flattenToRows(foreignSpend);
+        const bySpendQuarter = new Map();
+        for (const row of domesticRows) {
+          if (!bySpendQuarter.has(row.Vaatlusperiood)) {
+            bySpendQuarter.set(row.Vaatlusperiood, { x: row.Vaatlusperiood_label });
+          }
+          bySpendQuarter.get(row.Vaatlusperiood)["Sisereis"] = row.value;
+        }
+        for (const row of foreignRows) {
+          if (!bySpendQuarter.has(row.Vaatlusperiood)) {
+            bySpendQuarter.set(row.Vaatlusperiood, { x: row.Vaatlusperiood_label });
+          }
+          bySpendQuarter.get(row.Vaatlusperiood)["Välisreis"] = row.value;
+        }
+        const spendKeys = Array.from(bySpendQuarter.keys()).sort();
+        const spendChart = spendKeys.map((k) => bySpendQuarter.get(k));
+
+        const accommodationData = await fetchTableData(REISIMINE_PATH, "TU551.PX", [
+          { code: "Näitaja", selection: { filter: "item", values: ["N_DOM", "N_OUT"] } },
+          {
+            code: "Majutuse liik",
+            selection: { filter: "item", values: Object.keys(ACCOMMODATION_LABELS) },
+          },
+          { code: "Vaatlusperiood", selection: { filter: "top", values: ["1"] } },
+        ]);
+        const accommodationRows = flattenToRows(accommodationData);
+        // Same null-suppression handling as the country ranking above.
+        const accommodationTotals = new Map();
+        for (const row of accommodationRows) {
+          if (row.value === null) continue;
+          const key = row["Majutuse liik"];
+          accommodationTotals.set(key, (accommodationTotals.get(key) ?? 0) + row.value);
+        }
+        const accommodation = Array.from(accommodationTotals.entries())
+          .map(([code, value]) => ({ label: ACCOMMODATION_LABELS[code] ?? code, value }))
+          .sort((a, b) => b.value - a.value);
+
+        if (!cancelled) {
+          setState({
+            status: "ready",
+            tripsChart,
+            countries,
+            spendChart,
+            accommodation,
+          });
+        }
+      } catch (err) {
+        if (!cancelled) setState({ status: "error", message: err.message });
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (state.status === "loading") return <div className="panel-status">Laen…</div>;
+  if (state.status === "error")
+    return <div className="panel-error">Andmete laadimine ebaõnnestus: {state.message}</div>;
+
+  return (
+    <div className="dashboard">
+      <div className="data-card">
+        <h3>Sise- ja välisreisid kvartalite kaupa (tuhat reisi)</h3>
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={state.tripsChart}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="x" tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11 }} />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="Sisereisid" fill={COLORS[0]} isAnimationActive={false} />
+            <Bar dataKey="Välisreisid" fill={COLORS[1]} isAnimationActive={false} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="tile-row-split">
+        <div className="data-card">
+          <h3>Enim külastatud sihtriigid (viimased 4 kvartalit, tuhat reisi)</h3>
+          <RankedBarList items={state.countries} />
+        </div>
+
+        <div className="data-card">
+          <h3>Majutuse liik reisidel (viimane kvartal, tuhat ööbimist)</h3>
+          <RankedBarList items={state.accommodation} />
+        </div>
+      </div>
+
+      <div className="data-card">
+        <h3>Reisikulutused, sise- vs. välisreis (eurot, viimased 24 kvartalit)</h3>
+        <ResponsiveContainer width="100%" height={280}>
+          <LineChart data={state.spendChart}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="x" tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 11 }} />
+            <Tooltip />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="Sisereis"
+              stroke={COLORS[0]}
+              dot={false}
+              isAnimationActive={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="Välisreis"
+              stroke={COLORS[1]}
+              dot={false}
+              isAnimationActive={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}

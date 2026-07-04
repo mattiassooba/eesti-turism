@@ -2,11 +2,22 @@ import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import TableView from "./components/TableView";
 import Dashboard from "./components/Dashboard";
+import Page3Purpose from "./components/Page3Purpose";
+import Page4Residents from "./components/Page4Residents";
+import Page6Capacity from "./components/Page6Capacity";
 import SourceFooter from "./components/SourceFooter";
 import "./App.css";
 
+const NAV_ITEMS = [
+  { key: "dashboard", label: "Ülevaade" },
+  { key: "purpose", label: "Eesmärk ja kestus" },
+  { key: "residents", label: "Residentide reisid" },
+  { key: "capacity", label: "Mahutavus" },
+  { key: "browse", label: "Kõik tabelid" },
+];
+
 export default function App() {
-  const [view, setView] = useState("dashboard"); // "dashboard" | "browse"
+  const [view, setView] = useState("dashboard");
   const [selected, setSelected] = useState(null);
 
   function handleSelectTable(path, tableId, title) {
@@ -19,18 +30,15 @@ export default function App() {
       <header className="top-nav">
         <div className="top-nav-title">Eesti Turism</div>
         <nav className="top-nav-tabs">
-          <button
-            className={"top-nav-tab" + (view === "dashboard" ? " active" : "")}
-            onClick={() => setView("dashboard")}
-          >
-            Ülevaade
-          </button>
-          <button
-            className={"top-nav-tab" + (view === "browse" ? " active" : "")}
-            onClick={() => setView("browse")}
-          >
-            Kõik tabelid
-          </button>
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.key}
+              className={"top-nav-tab" + (view === item.key ? " active" : "")}
+              onClick={() => setView(item.key)}
+            >
+              {item.label}
+            </button>
+          ))}
         </nav>
       </header>
 
@@ -40,6 +48,9 @@ export default function App() {
         )}
         <main className="main-panel">
           {view === "dashboard" && <Dashboard onSelectTable={handleSelectTable} />}
+          {view === "purpose" && <Page3Purpose />}
+          {view === "residents" && <Page4Residents />}
+          {view === "capacity" && <Page6Capacity />}
           {view === "browse" &&
             (selected ? (
               <TableView path={selected.path} tableId={selected.tableId} title={selected.title} />

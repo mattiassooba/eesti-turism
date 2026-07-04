@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { fetchTableData } from "../api/pxweb";
 import { flattenToRows } from "../api/jsonStat";
 import SeasonalityStrip from "./SeasonalityStrip";
+import SplitBar from "./SplitBar";
+import Sparkline from "./Sparkline";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 
@@ -36,6 +38,15 @@ const QUICK_LINKS = [
   },
 ];
 
+function yoyDelta(series, latestIndex) {
+  const yearAgoIndex = latestIndex - 12;
+  if (yearAgoIndex < 0) return null;
+  const latest = series[latestIndex];
+  const yearAgo = series[yearAgoIndex];
+  if (!yearAgo) return null;
+  return ((latest - yearAgo) / yearAgo) * 100;
+}
+
 export default function Dashboard({ onSelectTable }) {
   const [state, setState] = useState({ status: "loading" });
 
@@ -44,42 +55,56 @@ export default function Dashboard({ onSelectTable }) {
 
     async function load() {
       try {
-        const tu121 = await fetchTableData(MAJUTUS_PATH, "TU121.PX", [
-          { code: "Vaatlusperiood", selection: { filter: "top", values: ["13"] } },
+        const national = await fetchTableData(MAJUTUS_PATH, "TU131.PX", [
+          { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR", "OCC_NI"] } },
+          { code: "Maakond", selection: { filter: "item", values: ["EE"] } },
+          {
+            code: "Elukohariik",
+            selection: { filter: "item", values: ["WORLD", "EE", "FOR"] },
+          },
+          { code: "Vaatlusperiood", selection: { filter: "top", values: ["25"] } },
         ]);
-        const tu121Rows = flattenToRows(tu121);
+        const rows = flattenToRows(national);
 
         const byPeriod = new Map();
-        for (const row of tu121Rows) {
+        for (const row of rows) {
           if (!byPeriod.has(row.Vaatlusperiood)) {
             byPeriod.set(row.Vaatlusperiood, { label: row.Vaatlusperiood_label });
           }
-          byPeriod.get(row.Vaatlusperiood)[row.Näitaja] = row.value;
+          const bucket = byPeriod.get(row.Vaatlusperiood);
+          const key = `${row.Näitaja}_${row.Elukohariik}`;
+          bucket[key] = row.value;
         }
         const periods = Array.from(byPeriod.keys()).sort();
-        const latestKey = periods[periods.length - 1];
-        const prevKey = periods[periods.length - 2];
-        const latest = byPeriod.get(latestKey);
-        const prev = prevKey ? byPeriod.get(prevKey) : null;
+        const latestIdx = periods.length - 1;
+        const latest = byPeriod.get(periods[latestIdx]);
 
-        const months = periods.slice(-12).map((key) => ({
-          label: byPeriod.get(key).label,
-          value: byPeriod.get(key).OCC_ARR ?? 0,
+        const guestsSeries = periods.map((p) => byPeriod.get(p).OCC_ARR_WORLD ?? 0);
+        const nightsSeries = periods.map((p) => byPeriod.get(p).OCC_NI_WORLD ?? 0);
+
+        const totalGuests = latest.OCC_ARR_WORLD ?? 0;
+        const totalNights = latest.OCC_NI_WORLD ?? 0;
+        const domesticGuests = latest.OCC_ARR_EE ?? 0;
+        const foreignGuests = latest.OCC_ARR_FOR ?? 0;
+        const avgNightsPerGuest = totalGuests ? totalNights / totalGuests : 0;
+
+        const months = periods.slice(-12).map((p) => ({
+          label: byPeriod.get(p).label,
+          value: byPeriod.get(p).OCC_ARR_WORLD ?? 0,
+        }));
+        const nightsSparkline = periods.slice(-24).map((p) => ({
+          value: byPeriod.get(p).OCC_NI_WORLD ?? 0,
         }));
 
-        const total = latest.OCC_ARR ?? 0;
-        const prevTotal = prev?.OCC_ARR ?? null;
-        const deltaPct = prevTotal ? ((total - prevTotal) / prevTotal) * 100 : null;
-
-        const tu131 = await fetchTableData(MAJUTUS_PATH, "TU131.PX", [
+        const county = await fetchTableData(MAJUTUS_PATH, "TU131.PX", [
           { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
           { code: "Maakond", selection: { filter: "item", values: REAL_COUNTY_CODES } },
           { code: "Elukohariik", selection: { filter: "item", values: ["WORLD"] } },
           { code: "Vaatlusperiood", selection: { filter: "top", values: ["1"] } },
         ]);
-        const tu131Rows = flattenToRows(tu131);
+        const countyRows = flattenToRows(county);
         let topCounty = null;
-        for (const row of tu131Rows) {
+        for (const row of countyRows) {
           if (!topCounty || row.value > topCounty.value) {
             topCounty = { label: row.Maakond_label, value: row.value };
           }
@@ -89,11 +114,15 @@ export default function Dashboard({ onSelectTable }) {
           setState({
             status: "ready",
             latestLabel: latest.label,
-            total,
-            deltaPct,
-            residents: latest.OCC_ARR_RES ?? 0,
-            nonResidents: latest.OCC_ARR_NONRES ?? 0,
+            totalGuests,
+            totalNights,
+            domesticGuests,
+            foreignGuests,
+            avgNightsPerGuest,
+            guestsYoy: yoyDelta(guestsSeries, latestIdx),
+            nightsYoy: yoyDelta(nightsSeries, latestIdx),
             months,
+            nightsSparkline,
             topCounty,
           });
         }
@@ -112,41 +141,56 @@ export default function Dashboard({ onSelectTable }) {
     return <div className="panel-status">Laen ülevaadet…</div>;
   }
   if (state.status === "error") {
-    return (
-      <div className="panel-error">Ülevaate laadimine ebaõnnestus: {state.message}</div>
-    );
+    return <div className="panel-error">Ülevaate laadimine ebaõnnestus: {state.message}</div>;
   }
 
-  const deltaText =
-    state.deltaPct === null
-      ? null
-      : `${state.deltaPct >= 0 ? "▲" : "▼"} ${Math.abs(state.deltaPct).toFixed(1)}% eelmisest kuust`;
+  function deltaLabel(pct) {
+    if (pct === null) return null;
+    return `${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct).toFixed(1)}% vs eelmine aasta`;
+  }
 
   return (
     <div className="dashboard">
-      <div className="hero-card">
-        <div className="hero-label">Majutatud külastajad · {state.latestLabel}</div>
-        <div className="hero-number">{state.total.toLocaleString("et-EE")}</div>
-        {deltaText && (
-          <div className={"hero-delta " + (state.deltaPct >= 0 ? "delta-up" : "delta-down")}>
-            {deltaText}
-          </div>
-        )}
-        <SeasonalityStrip months={state.months} />
+      <div className="kpi-row">
+        <div className="hero-card">
+          <div className="hero-label">Majutatud külastajad · {state.latestLabel}</div>
+          <div className="hero-number">{state.totalGuests.toLocaleString("et-EE")}</div>
+          {state.guestsYoy !== null && (
+            <div className={"hero-delta " + (state.guestsYoy >= 0 ? "delta-up" : "delta-down")}>
+              {deltaLabel(state.guestsYoy)}
+            </div>
+          )}
+          <SeasonalityStrip months={state.months} />
+        </div>
+
+        <div className="hero-card">
+          <div className="hero-label">Ööbimised · {state.latestLabel}</div>
+          <div className="hero-number">{state.totalNights.toLocaleString("et-EE")}</div>
+          {state.nightsYoy !== null && (
+            <div className={"hero-delta " + (state.nightsYoy >= 0 ? "delta-up" : "delta-down")}>
+              {deltaLabel(state.nightsYoy)}
+            </div>
+          )}
+          <Sparkline data={state.nightsSparkline} />
+          <div className="hero-caption">Viimased 24 kuud</div>
+        </div>
       </div>
+
+      <SplitBar
+        segments={[
+          { label: "Eesti elanikud", value: state.domesticGuests, color: "#5b6b7a" },
+          { label: "Väliskülastajad", value: state.foreignGuests, color: "#d98e2b" },
+        ]}
+      />
 
       <div className="tile-row">
         <div className="stat-tile">
-          <div className="tile-label">Eesti elanikud</div>
-          <div className="tile-number">{state.residents.toLocaleString("et-EE")}</div>
-        </div>
-        <div className="stat-tile">
-          <div className="tile-label">Väliskülastajad</div>
-          <div className="tile-number">{state.nonResidents.toLocaleString("et-EE")}</div>
-        </div>
-        <div className="stat-tile">
           <div className="tile-label">Enim külastatud maakond</div>
           <div className="tile-number tile-number-small">{state.topCounty?.label ?? "—"}</div>
+        </div>
+        <div className="stat-tile">
+          <div className="tile-label">Keskmine ööbimiste arv külastaja kohta</div>
+          <div className="tile-number">{state.avgNightsPerGuest.toFixed(2)}</div>
         </div>
       </div>
 

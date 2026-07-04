@@ -81,6 +81,35 @@ a {
   border-bottom-color: var(--midsummer);
 }
 
+.global-filters {
+  flex-shrink: 0;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  background: #fff;
+  border-bottom: 1px solid #dbe0df;
+  padding: 10px 32px;
+}
+
+.global-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--slate);
+}
+
+.global-filter select {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 4px 8px;
+  border: 1px solid #cdd3d2;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+}
+
 .app-body {
   flex: 1;
   display: flex;
@@ -96,7 +125,7 @@ a {
   color: var(--paper);
   padding: 16px 12px;
   overflow-y: auto;
-  max-height: calc(100vh - 96px);
+  max-height: calc(100vh - 140px);
 }
 
 .sidebar ul {
@@ -161,7 +190,7 @@ a {
   flex: 1;
   padding: 28px 32px;
   overflow-y: auto;
-  max-height: calc(100vh - 96px);
+  max-height: calc(100vh - 140px);
 }
 
 .panel-status {
@@ -373,6 +402,17 @@ a {
   border: 1px solid #dbe0df;
   border-radius: 10px;
   padding: 20px 24px;
+}
+
+.clear-selection {
+  background: none;
+  border: none;
+  color: var(--sea);
+  font-family: var(--font-body);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0 0 12px;
+  display: block;
 }
 
 .data-card h3 {

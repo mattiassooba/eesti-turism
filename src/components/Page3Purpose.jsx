@@ -21,20 +21,28 @@ const COLORS = ["#2b6ca3", "#d98e2b", "#5b6b7a", "#0f3a57", "#9c3b26"];
 const PURPOSE_CODES = ["HOL", "BSNS", "BSNS_CONF", "BSNS_O", "_O"];
 const DURATION_ORDER = ["1 kuni 3 ööd", "4 kuni 7 ööd", "Üle 7 öö"];
 const NAITAJA_SHORT = { TR_DOM: "Sisereisid", TR_OUT: "Välisreisid" };
+const NIGHTS_CODE = { all: "OCC_NI", domestic: "OCC_NI_RES", foreign: "OCC_NI_NONRES" };
+const RESIDENCY_TITLE = {
+  all: "Ööbimised",
+  domestic: "Eesti elanike ööbimised",
+  foreign: "Väliskülastajate ööbimised",
+};
 
-export default function Page3Purpose() {
+export default function Page3Purpose({ residency, timeRangeMonths }) {
   const [state, setState] = useState({ status: "loading" });
+  const windowSize = timeRangeMonths ? Number(timeRangeMonths) : 999;
 
   useEffect(() => {
     let cancelled = false;
+    const nightsCode = NIGHTS_CODE[residency] ?? "OCC_NI";
 
     async function load() {
       try {
         const purposeData = await fetchTableData(MAJUTUS_PATH, "TU133.PX", [
-          { code: "Näitaja", selection: { filter: "item", values: ["OCC_NI"] } },
+          { code: "Näitaja", selection: { filter: "item", values: [nightsCode] } },
           { code: "Maakond", selection: { filter: "item", values: ["EE"] } },
           { code: "Reisi eesmärk", selection: { filter: "item", values: PURPOSE_CODES } },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: ["24"] } },
+          { code: "Vaatlusperiood", selection: { filter: "top", values: [String(windowSize)] } },
         ]);
         const purposeRows = flattenToRows(purposeData);
         const byMonth = new Map();
@@ -74,6 +82,7 @@ export default function Page3Purpose() {
             purposeNames,
             durationChart,
             durationLatestLabel,
+            windowSize: monthKeys.length,
           });
         }
       } catch (err) {
@@ -85,20 +94,24 @@ export default function Page3Purpose() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [residency, timeRangeMonths]);
 
   if (state.status === "loading") return <div className="panel-status">Laen…</div>;
   if (state.status === "error")
     return <div className="panel-error">Andmete laadimine ebaõnnestus: {state.message}</div>;
 
+  const title = RESIDENCY_TITLE[residency] ?? RESIDENCY_TITLE.all;
+
   return (
     <div className="dashboard">
       <div className="data-card">
-        <h3>Ööbimised reisi eesmärgi järgi (viimased 24 kuud)</h3>
+        <h3>
+          {title} reisi eesmärgi järgi (viimased {state.windowSize} kuud)
+        </h3>
         <ResponsiveContainer width="100%" height={340}>
           <AreaChart data={state.purposeChart}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="x" tick={{ fontSize: 11 }} />
+            <XAxis dataKey="x" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={40} />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip />
             <Legend />

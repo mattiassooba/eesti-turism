@@ -41,8 +41,12 @@ const ACCOMMODATION_LABELS = {
   NR_OTH: "Muu tasuta majutus",
 };
 
-export default function Page4Residents() {
+export default function Page4Residents({ timeRangeMonths }) {
   const [state, setState] = useState({ status: "loading" });
+  // This page's tables are quarterly, but the global time-range control is
+  // defined in months (it applies to monthly pages too) — convert here.
+  const quarters = timeRangeMonths ? Math.max(Math.ceil(Number(timeRangeMonths) / 3), 4) : 999;
+  const originQuarters = timeRangeMonths ? Math.max(Math.ceil(Number(timeRangeMonths) / 3), 1) : 999;
 
   useEffect(() => {
     let cancelled = false;
@@ -52,7 +56,7 @@ export default function Page4Residents() {
         const tripsData = await fetchTableData(REISIMINE_PATH, "TU51.PX", [
           { code: "Näitaja", selection: { filter: "item", values: ["TR_DOM", "TR_OUT"] } },
           { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: ["12"] } },
+          { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
         ]);
         const tripsRows = flattenToRows(tripsData);
         const byQuarter = new Map();
@@ -71,7 +75,7 @@ export default function Page4Residents() {
             code: "Sihtriik",
             selection: { filter: "item", values: Object.keys(COUNTRY_LABELS) },
           },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: ["4"] } },
+          { code: "Vaatlusperiood", selection: { filter: "top", values: [String(originQuarters)] } },
         ]);
         const countryRows = flattenToRows(countryData);
         // Statistikaamet suppresses cells with too few observations (returned
@@ -89,12 +93,12 @@ export default function Page4Residents() {
 
         const domesticSpend = await fetchTableData(REISIMINE_PATH, "TU56.PX", [
           { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: ["24"] } },
+          { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
         ]);
         const foreignSpend = await fetchTableData(REISIMINE_PATH, "TU661.PX", [
           { code: "Näitaja", selection: { filter: "item", values: ["EXP_OUT"] } },
           { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: ["24"] } },
+          { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
         ]);
         const domesticRows = flattenToRows(domesticSpend);
         const foreignRows = flattenToRows(foreignSpend);
@@ -152,7 +156,7 @@ export default function Page4Residents() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [timeRangeMonths]);
 
   if (state.status === "loading") return <div className="panel-status">Laen…</div>;
   if (state.status === "error")
@@ -161,11 +165,11 @@ export default function Page4Residents() {
   return (
     <div className="dashboard">
       <div className="data-card">
-        <h3>Sise- ja välisreisid kvartalite kaupa (tuhat reisi)</h3>
+        <h3>Sise- ja välisreisid kvartalite kaupa (tuhat reisi, viimased {quarters === 999 ? state.tripsChart.length : quarters} kvartalit)</h3>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={state.tripsChart}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="x" tick={{ fontSize: 11 }} />
+            <XAxis dataKey="x" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={40} />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip />
             <Legend />
@@ -177,7 +181,7 @@ export default function Page4Residents() {
 
       <div className="tile-row-split">
         <div className="data-card">
-          <h3>Enim külastatud sihtriigid (viimased 4 kvartalit, tuhat reisi)</h3>
+          <h3>Enim külastatud sihtriigid (viimased {originQuarters === 999 ? "kõik" : originQuarters} kvartalit, tuhat reisi)</h3>
           <RankedBarList items={state.countries} />
         </div>
 
@@ -188,11 +192,11 @@ export default function Page4Residents() {
       </div>
 
       <div className="data-card">
-        <h3>Reisikulutused, sise- vs. välisreis (eurot, viimased 24 kvartalit)</h3>
+        <h3>Reisikulutused, sise- vs. välisreis (eurot, viimased {quarters === 999 ? state.spendChart.length : quarters} kvartalit)</h3>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={state.spendChart}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="x" tick={{ fontSize: 10 }} />
+            <XAxis dataKey="x" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={40} />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip />
             <Legend />

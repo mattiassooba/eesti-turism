@@ -15,7 +15,7 @@ function interpolate(t) {
 const WIDTH = 520;
 const HEIGHT = 340;
 
-export default function EstoniaMap({ valuesByMkood, unit }) {
+export default function EstoniaMap({ valuesByMkood, unit, selectedMkood, onSelectCounty }) {
   const [topology, setTopology] = useState(null);
   const [error, setError] = useState(null);
   const [hovered, setHovered] = useState(null);
@@ -63,15 +63,18 @@ export default function EstoniaMap({ valuesByMkood, unit }) {
           const value = valuesByMkood[f.properties.MKOOD];
           const hasValue = typeof value === "number";
           const t = hasValue ? (value - min) / range : 0;
+          const isSelected = selectedMkood === f.properties.MKOOD;
           return (
             <path
               key={f.properties.MKOOD}
               d={path(f)}
               fill={hasValue ? interpolate(t) : "#dbe0df"}
-              stroke="#eef0ee"
-              strokeWidth={1}
+              stroke={isSelected ? "#101b26" : "#eef0ee"}
+              strokeWidth={isSelected ? 2.5 : 1}
               onMouseEnter={() => setHovered(f.properties)}
               onMouseLeave={() => setHovered(null)}
+              onClick={() => onSelectCounty?.(f.properties.MKOOD, f.properties.MNIMI)}
+              style={{ cursor: onSelectCounty ? "pointer" : "default" }}
             >
               <title>
                 {f.properties.MNIMI}
@@ -88,7 +91,7 @@ export default function EstoniaMap({ valuesByMkood, unit }) {
                 ? valuesByMkood[hovered.MKOOD].toLocaleString("et-EE") + (unit ? ` ${unit}` : "")
                 : "andmed puuduvad"
             }`
-          : "Liigu hiirega maakonna kohal"}
+          : "Liigu hiirega maakonna kohal, kliki valimiseks"}
       </div>
       <div className="estonia-map-source">Piirid: Maa-amet, seisuga 01.09.2018</div>
     </div>

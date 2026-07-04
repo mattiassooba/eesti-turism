@@ -38,20 +38,32 @@ const QUICK_LINKS = [
   },
 ];
 
-function yoyDelta(series, latestIndex) {
-  const yearAgoIndex = latestIndex - 12;
-  if (yearAgoIndex < 0) return null;
+const RESIDENCY = {
+  all: { code: "WORLD", guestsLabel: "Majutatud külastajad", nightsLabel: "Ööbimised" },
+  domestic: { code: "EE", guestsLabel: "Eesti elanikud", nightsLabel: "Eesti elanike ööbimised" },
+  foreign: {
+    code: "FOR",
+    guestsLabel: "Väliskülastajad",
+    nightsLabel: "Väliskülastajate ööbimised",
+  },
+};
+
+function periodDelta(series, latestIndex, offset, label) {
+  const compareIndex = latestIndex - offset;
+  if (compareIndex < 0) return null;
   const latest = series[latestIndex];
-  const yearAgo = series[yearAgoIndex];
-  if (!yearAgo) return null;
-  return ((latest - yearAgo) / yearAgo) * 100;
+  const compare = series[compareIndex];
+  if (!compare) return null;
+  return { pct: ((latest - compare) / compare) * 100, label };
 }
 
-export default function Dashboard({ onSelectTable }) {
+export default function Dashboard({ onSelectTable, residency, timeRangeMonths, deltaMode }) {
   const [state, setState] = useState({ status: "loading" });
 
   useEffect(() => {
     let cancelled = false;
+    const fetchCount = timeRangeMonths ? Math.max(Number(timeRangeMonths), 25) : 999;
+    const residencyCode = RESIDENCY[residency]?.code ?? "WORLD";
 
     async function load() {
       try {
@@ -62,7 +74,7 @@ export default function Dashboard({ onSelectTable }) {
             code: "Elukohariik",
             selection: { filter: "item", values: ["WORLD", "EE", "FOR"] },
           },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: ["25"] } },
+          { code: "Vaatlusperiood", selection: { filter: "top", values: [String(fetchCount)] } },
         ]);
         const rows = flattenToRows(national);
 
@@ -79,32 +91,37 @@ export default function Dashboard({ onSelectTable }) {
         const latestIdx = periods.length - 1;
         const latest = byPeriod.get(periods[latestIdx]);
 
-        const guestsSeries = periods.map((p) => byPeriod.get(p).OCC_ARR_WORLD ?? 0);
-        const nightsSeries = periods.map((p) => byPeriod.get(p).OCC_NI_WORLD ?? 0);
+        const guestsSeries = periods.map((p) => byPeriod.get(p)[`OCC_ARR_${residencyCode}`] ?? 0);
+        const nightsSeries = periods.map((p) => byPeriod.get(p)[`OCC_NI_${residencyCode}`] ?? 0);
 
-        const totalGuests = latest.OCC_ARR_WORLD ?? 0;
-        const totalNights = latest.OCC_NI_WORLD ?? 0;
+        const totalGuests = latest[`OCC_ARR_${residencyCode}`] ?? 0;
+        const totalNights = latest[`OCC_NI_${residencyCode}`] ?? 0;
         const domesticGuests = latest.OCC_ARR_EE ?? 0;
         const foreignGuests = latest.OCC_ARR_FOR ?? 0;
         const avgNightsPerGuest = totalGuests ? totalNights / totalGuests : 0;
 
         const months = periods.slice(-12).map((p) => ({
           label: byPeriod.get(p).label,
-          value: byPeriod.get(p).OCC_ARR_WORLD ?? 0,
+          value: byPeriod.get(p)[`OCC_ARR_${residencyCode}`] ?? 0,
         }));
-        const nightsSparkline = periods.slice(-24).map((p) => ({
-          value: byPeriod.get(p).OCC_NI_WORLD ?? 0,
+        const sparkWindow = timeRangeMonths ? Number(timeRangeMonths) : periods.length;
+        const nightsSparkline = periods.slice(-sparkWindow).map((p) => ({
+          value: byPeriod.get(p)[`OCC_NI_${residencyCode}`] ?? 0,
         }));
+
+        const deltaOffset = deltaMode === "mom" ? 1 : 12;
+        const deltaCompareLabel = deltaMode === "mom" ? "eelmine kuu" : "aasta tagasi";
 
         const county = await fetchTableData(MAJUTUS_PATH, "TU131.PX", [
           { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
           { code: "Maakond", selection: { filter: "item", values: REAL_COUNTY_CODES } },
-          { code: "Elukohariik", selection: { filter: "item", values: ["WORLD"] } },
+          { code: "Elukohariik", selection: { filter: "item", values: [residencyCode] } },
           { code: "Vaatlusperiood", selection: { filter: "top", values: ["1"] } },
         ]);
         const countyRows = flattenToRows(county);
         let topCounty = null;
         for (const row of countyRows) {
+          if (row.value === null) continue;
           if (!topCounty || row.value > topCounty.value) {
             topCounty = { label: row.Maakond_label, value: row.value };
           }
@@ -119,10 +136,11 @@ export default function Dashboard({ onSelectTable }) {
             domesticGuests,
             foreignGuests,
             avgNightsPerGuest,
-            guestsYoy: yoyDelta(guestsSeries, latestIdx),
-            nightsYoy: yoyDelta(nightsSeries, latestIdx),
+            guestsDelta: periodDelta(guestsSeries, latestIdx, deltaOffset, deltaCompareLabel),
+            nightsDelta: periodDelta(nightsSeries, latestIdx, deltaOffset, deltaCompareLabel),
             months,
             nightsSparkline,
+            sparkWindow,
             topCounty,
           });
         }
@@ -135,7 +153,7 @@ export default function Dashboard({ onSelectTable }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [residency, timeRangeMonths, deltaMode]);
 
   if (state.status === "loading") {
     return <div className="panel-status">Laen ülevaadet…</div>;
@@ -144,44 +162,52 @@ export default function Dashboard({ onSelectTable }) {
     return <div className="panel-error">Ülevaate laadimine ebaõnnestus: {state.message}</div>;
   }
 
-  function deltaLabel(pct) {
-    if (pct === null) return null;
-    return `${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct).toFixed(1)}% vs eelmine aasta`;
+  const labels = RESIDENCY[residency] ?? RESIDENCY.all;
+
+  function deltaText(delta) {
+    if (!delta) return null;
+    return `${delta.pct >= 0 ? "▲" : "▼"} ${Math.abs(delta.pct).toFixed(1)}% vs ${delta.label}`;
   }
 
   return (
     <div className="dashboard">
       <div className="kpi-row">
         <div className="hero-card">
-          <div className="hero-label">Majutatud külastajad · {state.latestLabel}</div>
+          <div className="hero-label">
+            {labels.guestsLabel} · {state.latestLabel}
+          </div>
           <div className="hero-number">{state.totalGuests.toLocaleString("et-EE")}</div>
-          {state.guestsYoy !== null && (
-            <div className={"hero-delta " + (state.guestsYoy >= 0 ? "delta-up" : "delta-down")}>
-              {deltaLabel(state.guestsYoy)}
+          {state.guestsDelta && (
+            <div className={"hero-delta " + (state.guestsDelta.pct >= 0 ? "delta-up" : "delta-down")}>
+              {deltaText(state.guestsDelta)}
             </div>
           )}
           <SeasonalityStrip months={state.months} />
         </div>
 
         <div className="hero-card">
-          <div className="hero-label">Ööbimised · {state.latestLabel}</div>
+          <div className="hero-label">
+            {labels.nightsLabel} · {state.latestLabel}
+          </div>
           <div className="hero-number">{state.totalNights.toLocaleString("et-EE")}</div>
-          {state.nightsYoy !== null && (
-            <div className={"hero-delta " + (state.nightsYoy >= 0 ? "delta-up" : "delta-down")}>
-              {deltaLabel(state.nightsYoy)}
+          {state.nightsDelta && (
+            <div className={"hero-delta " + (state.nightsDelta.pct >= 0 ? "delta-up" : "delta-down")}>
+              {deltaText(state.nightsDelta)}
             </div>
           )}
           <Sparkline data={state.nightsSparkline} />
-          <div className="hero-caption">Viimased 24 kuud</div>
+          <div className="hero-caption">Viimased {state.sparkWindow} kuud</div>
         </div>
       </div>
 
-      <SplitBar
-        segments={[
-          { label: "Eesti elanikud", value: state.domesticGuests, color: "#5b6b7a" },
-          { label: "Väliskülastajad", value: state.foreignGuests, color: "#d98e2b" },
-        ]}
-      />
+      {residency === "all" && (
+        <SplitBar
+          segments={[
+            { label: "Eesti elanikud", value: state.domesticGuests, color: "#5b6b7a" },
+            { label: "Väliskülastajad", value: state.foreignGuests, color: "#d98e2b" },
+          ]}
+        />
+      )}
 
       <div className="tile-row">
         <div className="stat-tile">

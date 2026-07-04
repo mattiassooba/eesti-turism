@@ -4,6 +4,7 @@ import { flattenToRows, toChartData } from "../api/jsonStat";
 import FilterBar from "./FilterBar";
 import DataGrid from "./DataGrid";
 import ChartPanel from "./ChartPanel";
+import ExportButtons from "./ExportButtons";
 
 function defaultQuery(variables) {
   return variables.map((v) => {
@@ -122,6 +123,7 @@ export default function TableView({ path, tableId, title }) {
             chartType={chartType}
             onChartTypeChange={setChartType}
           />
+          <ExportButtons rows={rows} tableId={tableId} />
           <DataGrid rows={rows} />
         </>
       )}

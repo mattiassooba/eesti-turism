@@ -2,9 +2,14 @@
 
 .data-card {
   background: #fff;
-  border: 1px solid #dbe0df;
-  border-radius: 10px;
-  padding: 20px 24px;
+  border-radius: var(--radius-md);
+  padding: 22px 26px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s var(--ease);
+}
+
+.data-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .selection-chip {
@@ -20,6 +25,18 @@
   font-size: 12.5px;
   cursor: pointer;
   margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s var(--ease), transform 0.15s var(--ease);
+}
+
+.selection-chip:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.selection-chip:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 .selection-chip-x {

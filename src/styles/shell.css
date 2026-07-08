@@ -7,18 +7,25 @@
 }
 
 .top-nav {
+  position: relative;
+  z-index: 2;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--ink);
   color: var(--paper);
-  padding: 14px 24px;
+  padding: 16px 24px;
   gap: 16px;
   flex-wrap: wrap;
+  box-shadow: 0 2px 12px rgba(16, 27, 38, 0.25);
 }
 
 .top-nav-title {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 19px;
@@ -26,46 +33,67 @@
   text-transform: uppercase;
 }
 
+.top-nav-title::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--midsummer);
+  box-shadow: 0 0 0 3px rgba(217, 142, 43, 0.25);
+}
+
 .top-nav-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 2px;
 }
 
 .top-nav-tab {
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-radius: 999px;
   color: rgba(238, 240, 238, 0.65);
   font-family: var(--font-body);
   font-size: 14px;
-  padding: 8px 14px;
+  padding: 8px 16px;
   cursor: pointer;
+  transition: color 0.15s var(--ease), background-color 0.15s var(--ease);
 }
 
 .top-nav-tab:hover {
   color: var(--paper);
+  background: rgba(238, 240, 238, 0.06);
 }
 
 .top-nav-tab.active {
-  color: var(--paper);
-  border-bottom-color: var(--midsummer);
+  color: var(--ink);
+  background: var(--midsummer);
+  font-weight: 600;
+}
+
+.top-nav-tab:focus-visible {
+  outline: 2px solid var(--midsummer);
+  outline-offset: 2px;
 }
 
 .global-filters {
   flex-shrink: 0;
   display: flex;
+  align-items: center;
   gap: 24px;
   flex-wrap: wrap;
-  background: #fff;
-  border-bottom: 1px solid #dbe0df;
-  padding: 10px 32px;
+  background: var(--paper);
+  padding: 14px 32px;
 }
 
 .global-filter {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 8px 6px 16px;
+  box-shadow: var(--shadow-sm);
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--slate);
@@ -73,12 +101,18 @@
 
 .global-filter select {
   font-family: var(--font-mono);
-  font-size: 13px;
-  padding: 4px 8px;
-  border: 1px solid #cdd3d2;
-  border-radius: 6px;
-  background: #fff;
+  font-size: 12.5px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 999px;
+  background: var(--paper);
   color: var(--ink);
+  cursor: pointer;
+}
+
+.global-filter select:focus-visible {
+  outline: 2px solid var(--sea);
+  outline-offset: 1px;
 }
 
 .app-body {
@@ -111,14 +145,15 @@
 
 .sidebar-search {
   width: 100%;
-  padding: 7px 10px;
+  padding: 8px 12px;
   margin-bottom: 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.08);
   color: var(--paper);
   font-family: var(--font-body);
   font-size: 13px;
+  transition: background-color 0.15s var(--ease), border-color 0.15s var(--ease);
 }
 
 .sidebar-search::placeholder {
@@ -145,12 +180,13 @@
   text-align: left;
   width: 100%;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-body);
   font-size: 13.5px;
   line-height: 1.35;
   padding: 6px 8px;
   color: rgba(238, 240, 238, 0.85);
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
 }
 
 .folder-toggle:hover,
@@ -163,6 +199,7 @@
   background: var(--midsummer);
   color: var(--ink);
   font-weight: 600;
+  box-shadow: var(--shadow-sm);
 }
 
 .tree-status {
@@ -229,14 +266,18 @@
 .app-crash button {
   font-family: var(--font-body);
   font-weight: 600;
-  padding: 10px 18px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 6px;
+  border-radius: 999px;
   background: var(--sea);
   color: #fff;
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.15s var(--ease), transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
 }
 
 .app-crash button:hover {
   background: var(--sea-deep);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }

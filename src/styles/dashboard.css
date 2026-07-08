@@ -5,6 +5,7 @@
   flex-direction: column;
   gap: 24px;
   max-width: 1080px;
+  margin: 0 auto;
 }
 
 .kpi-row {
@@ -14,12 +15,21 @@
 }
 
 .hero-card {
+  position: relative;
+  overflow: hidden;
   flex: 1;
   min-width: 320px;
-  background: var(--sea-deep);
+  /* Deep-sea gradient with a faint midsummer glow in the corner — the
+     signature treatment: evening sun over the water, tying the hero
+     cards directly to the seasonality-strip color story below them. */
+  background:
+    radial-gradient(480px 320px at 100% -10%, rgba(217, 142, 43, 0.22), transparent 60%),
+    linear-gradient(155deg, #164a6e 0%, var(--sea-deep) 55%, #0b2e45 100%);
+  background-color: var(--sea-deep);
   color: var(--paper);
-  border-radius: 14px;
-  padding: 28px 32px;
+  border-radius: var(--radius-lg);
+  padding: 30px 32px;
+  box-shadow: var(--shadow-hero);
 }
 
 .hero-caption {
@@ -35,9 +45,9 @@
 
 .split-bar {
   background: #fff;
-  border: 1px solid #dbe0df;
-  border-radius: 10px;
-  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  padding: 18px 22px;
+  box-shadow: var(--shadow-sm);
 }
 
 .split-bar-track {
@@ -77,19 +87,19 @@
 
 .hero-label {
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 13px;
   color: rgba(238, 240, 238, 0.7);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
 }
 
 .hero-number {
   font-family: var(--font-mono);
-  font-size: 56px;
+  font-size: 60px;
   font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .hero-number-text {
@@ -101,7 +111,7 @@
 .hero-delta {
   font-family: var(--font-body);
   font-size: 14px;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .delta-up {
@@ -114,20 +124,27 @@
 
 .seasonality-strip {
   display: flex;
+  align-items: flex-end;
   gap: 4px;
-  margin-top: 20px;
-  height: 36px;
+  margin-top: 22px;
+  height: 40px;
 }
 
 .seasonality-cell {
   flex: 1;
-  border-radius: 4px;
-  border: 1px solid rgba(238, 240, 238, 0.25);
+  height: 100%;
+  border-radius: 5px 5px 2px 2px;
+  border: 1px solid rgba(238, 240, 238, 0.2);
+  transition: transform 0.15s var(--ease);
+}
+
+.seasonality-cell:hover {
+  transform: translateY(-2px);
 }
 
 .seasonality-current {
-  outline: 2px solid var(--paper);
-  outline-offset: 2px;
+  border-color: var(--paper);
+  box-shadow: 0 0 0 2px rgba(238, 240, 238, 0.5), 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .seasonality-legend {
@@ -157,9 +174,15 @@
   flex: 1;
   min-width: 180px;
   background: #fff;
-  border: 1px solid #dbe0df;
-  border-radius: 10px;
-  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
+}
+
+.stat-tile:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .tile-label {
@@ -200,18 +223,25 @@
 .quick-link-card {
   text-align: left;
   background: #fff;
-  border: 1px solid #dbe0df;
-  border-radius: 8px;
-  padding: 12px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 13px 15px;
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--ink);
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
 }
 
 .quick-link-card:hover {
-  border-color: var(--sea);
-  box-shadow: 0 0 0 1px var(--sea);
+  box-shadow: var(--shadow-md), 0 0 0 1px var(--sea);
+  transform: translateY(-2px);
+}
+
+.quick-link-card:focus-visible {
+  outline: 2px solid var(--sea);
+  outline-offset: 2px;
 }
 
 /* Chart tooltip (shared across all Recharts <Tooltip>) */
@@ -219,11 +249,11 @@
 .chart-tooltip {
   background: var(--ink);
   color: var(--paper);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 10px 14px;
   font-family: var(--font-body);
   font-size: 12.5px;
-  box-shadow: 0 4px 16px rgba(16, 27, 38, 0.25);
+  box-shadow: var(--shadow-lg);
   min-width: 140px;
 }
 

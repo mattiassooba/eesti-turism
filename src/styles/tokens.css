@@ -10,6 +10,21 @@
   --font-display: "Space Grotesk", sans-serif;
   --font-body: "IBM Plex Sans", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
+
+  /* Elevation — ink-tinted, not neutral grey, so shadows read as this
+     app's rather than a UI kit default. Two-layer (tight + diffuse) for
+     a softer falloff than a single box-shadow gives. */
+  --shadow-sm: 0 1px 2px rgba(16, 27, 38, 0.06), 0 1px 1px rgba(16, 27, 38, 0.04);
+  --shadow-md: 0 6px 16px rgba(16, 27, 38, 0.09), 0 2px 6px rgba(16, 27, 38, 0.06);
+  --shadow-lg: 0 16px 40px rgba(16, 27, 38, 0.16), 0 6px 16px rgba(16, 27, 38, 0.08);
+  --shadow-hero: 0 20px 48px rgba(15, 58, 87, 0.35), 0 4px 12px rgba(15, 58, 87, 0.2);
+
+  /* Radius scale — consolidates what was ad hoc 4/6/7/8/10/14px. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
 * {
@@ -20,9 +35,52 @@ body {
   margin: 0;
   font-family: var(--font-body);
   color: var(--ink);
-  background: var(--paper);
+  /* Faint radial wash instead of a flat fill — keeps the paper tone but
+     avoids the dead, uniform-grey feel of a single solid color. */
+  background:
+    radial-gradient(ellipse 1200px 700px at 15% -10%, rgba(43, 108, 163, 0.05), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 100% 0%, rgba(217, 142, 43, 0.04), transparent 55%),
+    var(--paper);
+  background-attachment: fixed;
 }
 
 a {
   color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
+}
+
+/* Thin, quiet scrollbars instead of the OS default chrome. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(16, 27, 38, 0.18);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 27, 38, 0.3);
+  background-clip: padding-box;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(238, 240, 238, 0.22);
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(238, 240, 238, 0.35);
 }

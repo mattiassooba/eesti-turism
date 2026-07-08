@@ -27,11 +27,17 @@
 .filter-bar select {
   font-family: var(--font-mono);
   font-size: 13px;
-  padding: 6px 8px;
-  border: 1px solid #cdd3d2;
-  border-radius: 6px;
+  padding: 7px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
   background: #fff;
   color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-bar select:focus-visible {
+  outline: 2px solid var(--sea);
+  outline-offset: 1px;
 }
 
 .filter-bar select[multiple] {
@@ -47,27 +53,33 @@
 .chart-panel {
   margin: 20px 0;
   background: #fff;
-  border: 1px solid #dbe0df;
-  border-radius: 10px;
-  padding: 16px;
+  border-radius: var(--radius-md);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
 }
 
 .chart-toggle button {
-  margin-right: 8px;
-  padding: 5px 12px;
-  border: 1px solid #cdd3d2;
-  background: #fff;
-  border-radius: 6px;
+  margin-right: 6px;
+  padding: 6px 14px;
+  border: none;
+  background: var(--paper);
+  border-radius: 999px;
   cursor: pointer;
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--ink);
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
 }
 
 .chart-toggle button.active {
   background: var(--sea);
   color: #fff;
-  border-color: var(--sea);
+}
+
+.chart-toggle button:focus-visible,
+.export-buttons button:focus-visible {
+  outline: 2px solid var(--sea);
+  outline-offset: 2px;
 }
 
 .export-buttons {
@@ -77,25 +89,28 @@
 }
 
 .export-buttons button {
-  padding: 7px 14px;
-  border: 1px solid #cdd3d2;
+  padding: 8px 16px;
+  border: none;
   background: #fff;
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s var(--ease), color 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .export-buttons button:hover {
-  border-color: var(--sea);
   color: var(--sea);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .data-grid-wrapper {
   overflow-x: auto;
-  border-radius: 10px;
-  border: 1px solid #dbe0df;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .data-grid {

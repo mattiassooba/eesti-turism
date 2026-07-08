@@ -5,30 +5,31 @@ function buildUrl(pathSegments, tableId) {
   return parts.length ? `${API_BASE}/${parts.join("/")}` : API_BASE;
 }
 
-export async function fetchLevel(pathSegments) {
+export async function fetchLevel(pathSegments, { signal } = {}) {
   const url = buildUrl(pathSegments);
-  const res = await fetch(url);
+  const res = await fetch(url, { signal });
   if (!res.ok) {
     throw new Error(`Failed to fetch level ${url}: ${res.status}`);
   }
   return res.json();
 }
 
-export async function fetchTableMeta(pathSegments, tableId) {
+export async function fetchTableMeta(pathSegments, tableId, { signal } = {}) {
   const url = buildUrl(pathSegments, tableId);
-  const res = await fetch(url);
+  const res = await fetch(url, { signal });
   if (!res.ok) {
     throw new Error(`Failed to fetch table metadata ${url}: ${res.status}`);
   }
   return res.json();
 }
 
-export async function fetchTableData(pathSegments, tableId, query) {
+export async function fetchTableData(pathSegments, tableId, query, { signal } = {}) {
   const url = buildUrl(pathSegments, tableId);
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query, response: { format: "json-stat2" } }),
+    signal,
   });
   if (!res.ok) {
     throw new Error(`Failed to fetch table data ${url}: ${res.status}`);
@@ -41,11 +42,17 @@ export async function fetchTableData(pathSegments, tableId, query) {
 // result's own path relative to that scope (e.g. "/eesti-elanike-reisimine"),
 // which the caller must prepend pathSegments to before using with
 // fetchTableMeta/fetchTableData.
-export async function searchTables(pathSegments, query) {
+export async function searchTables(pathSegments, query, { signal } = {}) {
   const url = `${buildUrl(pathSegments)}?query=${encodeURIComponent(query)}`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal });
   if (!res.ok) {
     throw new Error(`Failed to search tables ${url}: ${res.status}`);
   }
   return res.json();
+}
+
+// True when a caught error is just an intentionally-aborted stale request
+// (a superseded fetch), not a real failure that should be shown to the user.
+export function isAbortError(err) {
+  return err?.name === "AbortError";
 }

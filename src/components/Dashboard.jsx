@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
-import { fetchTableData } from "../api/pxweb";
+import { useState } from "react";
+import { fetchTableData, isAbortError } from "../api/pxweb";
 import { flattenToRows } from "../api/jsonStat";
+import { useAbortableEffect } from "../hooks/useAbortableEffect";
 import SeasonalityStrip from "./SeasonalityStrip";
 import SplitBar from "./SplitBar";
 import Sparkline from "./Sparkline";
+import { DOMESTIC_COLOR, FOREIGN_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 
@@ -60,23 +62,43 @@ function periodDelta(series, latestIndex, offset, label) {
 export default function Dashboard({ onSelectTable, residency, timeRangeMonths, deltaMode }) {
   const [state, setState] = useState({ data: null, loading: true, error: null });
 
-  useEffect(() => {
-    let cancelled = false;
-    const fetchCount = timeRangeMonths ? Math.max(Number(timeRangeMonths), 25) : 999;
-    const residencyCode = RESIDENCY[residency]?.code ?? "WORLD";
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+  useAbortableEffect(
+    async (signal, isActive) => {
+      const fetchCount = timeRangeMonths ? Math.max(Number(timeRangeMonths), 25) : 999;
+      const residencyCode = RESIDENCY[residency]?.code ?? "WORLD";
+      setState((prev) => ({ ...prev, loading: true, error: null }));
 
-    async function load() {
       try {
-        const national = await fetchTableData(MAJUTUS_PATH, "TU131.PX", [
-          { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR", "OCC_NI"] } },
-          { code: "Maakond", selection: { filter: "item", values: ["EE"] } },
-          {
-            code: "Elukohariik",
-            selection: { filter: "item", values: ["WORLD", "EE", "FOR"] },
-          },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: [String(fetchCount)] } },
+        // Independent queries — run concurrently instead of two sequential
+        // round-trips.
+        const [national, county] = await Promise.all([
+          fetchTableData(
+            MAJUTUS_PATH,
+            "TU131.PX",
+            [
+              { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR", "OCC_NI"] } },
+              { code: "Maakond", selection: { filter: "item", values: ["EE"] } },
+              {
+                code: "Elukohariik",
+                selection: { filter: "item", values: ["WORLD", "EE", "FOR"] },
+              },
+              { code: "Vaatlusperiood", selection: { filter: "top", values: [String(fetchCount)] } },
+            ],
+            { signal }
+          ),
+          fetchTableData(
+            MAJUTUS_PATH,
+            "TU131.PX",
+            [
+              { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
+              { code: "Maakond", selection: { filter: "item", values: REAL_COUNTY_CODES } },
+              { code: "Elukohariik", selection: { filter: "item", values: [residencyCode] } },
+              { code: "Vaatlusperiood", selection: { filter: "top", values: ["1"] } },
+            ],
+            { signal }
+          ),
         ]);
+
         const rows = flattenToRows(national);
 
         const byPeriod = new Map();
@@ -113,12 +135,6 @@ export default function Dashboard({ onSelectTable, residency, timeRangeMonths, d
         const deltaOffset = deltaMode === "mom" ? 1 : 12;
         const deltaCompareLabel = deltaMode === "mom" ? "eelmine kuu" : "aasta tagasi";
 
-        const county = await fetchTableData(MAJUTUS_PATH, "TU131.PX", [
-          { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
-          { code: "Maakond", selection: { filter: "item", values: REAL_COUNTY_CODES } },
-          { code: "Elukohariik", selection: { filter: "item", values: [residencyCode] } },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: ["1"] } },
-        ]);
         const countyRows = flattenToRows(county);
         let topCounty = null;
         for (const row of countyRows) {
@@ -128,7 +144,7 @@ export default function Dashboard({ onSelectTable, residency, timeRangeMonths, d
           }
         }
 
-        if (!cancelled) {
+        if (isActive()) {
           setState({
             data: {
               latestLabel: latest.label,
@@ -149,15 +165,12 @@ export default function Dashboard({ onSelectTable, residency, timeRangeMonths, d
           });
         }
       } catch (err) {
-        if (!cancelled) setState((prev) => ({ ...prev, loading: false, error: err.message }));
+        if (isAbortError(err)) return;
+        if (isActive()) setState((prev) => ({ ...prev, loading: false, error: err.message }));
       }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [residency, timeRangeMonths, deltaMode]);
+    },
+    [residency, timeRangeMonths, deltaMode]
+  );
 
   if (!state.data && state.loading) {
     return <div className="panel-status">Laen ülevaadet…</div>;
@@ -213,8 +226,8 @@ export default function Dashboard({ onSelectTable, residency, timeRangeMonths, d
       {residency === "all" && (
         <SplitBar
           segments={[
-            { label: "Eesti elanikud", value: data.domesticGuests, color: "#5b6b7a" },
-            { label: "Väliskülastajad", value: data.foreignGuests, color: "#d98e2b" },
+            { label: "Eesti elanikud", value: data.domesticGuests, color: DOMESTIC_COLOR },
+            { label: "Väliskülastajad", value: data.foreignGuests, color: FOREIGN_COLOR },
           ]}
         />
       )}

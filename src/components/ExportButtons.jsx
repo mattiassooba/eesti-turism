@@ -1,5 +1,3 @@
-import * as XLSX from "xlsx";
-
 const CITATION = "Allikas: Statistikaamet (andmed.stat.ee) · CC BY-SA 4.0";
 
 function rowsToExportData(rows) {
@@ -25,13 +23,17 @@ function downloadBlob(blob, filename) {
 }
 
 export default function ExportButtons({ rows, tableId }) {
-  function exportCsv() {
+  // xlsx is a large dependency used only when a user actually exports —
+  // load it on demand instead of paying for it in the main bundle.
+  async function exportCsv() {
+    const XLSX = await import("xlsx");
     const sheet = XLSX.utils.json_to_sheet(rowsToExportData(rows));
     const csv = XLSX.utils.sheet_to_csv(sheet);
     downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8;" }), `${tableId}.csv`);
   }
 
-  function exportXlsx() {
+  async function exportXlsx() {
+    const XLSX = await import("xlsx");
     const sheet = XLSX.utils.json_to_sheet(rowsToExportData(rows));
     const sourceSheet = XLSX.utils.aoa_to_sheet([
       ["Allikas"],

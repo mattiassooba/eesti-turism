@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { fetchLevel, searchTables } from "../api/pxweb";
+import { useEffect, useRef, useState } from "react";
+import { fetchLevel, searchTables, isAbortError } from "../api/pxweb";
 
 const ROOT_PATH = ["majandus"];
 const ROOT_ID = "turism-ja-majutus";
@@ -11,19 +11,33 @@ function FolderNode({ path, id, text, onSelectTable, selectedTableId }) {
   const [children, setChildren] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // Not effect-driven (loadChildren fires from a click handler), so
+  // cancellation is wired by hand: abort any in-flight request of this
+  // node's own before starting a new one, and on unmount.
+  const controllerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      controllerRef.current?.abort();
+    };
+  }, []);
 
   const fullPath = [...path, id];
 
   async function loadChildren() {
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
     setLoading(true);
     setError(null);
     try {
-      const items = await fetchLevel(fullPath);
+      const items = await fetchLevel(fullPath, { signal: controller.signal });
       setChildren(items);
     } catch (err) {
+      if (isAbortError(err)) return;
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }
 
@@ -88,18 +102,21 @@ export default function Sidebar({ onSelectTable, selectedTableId }) {
       return;
     }
     let cancelled = false;
+    const controller = new AbortController();
     setSearch({ status: "loading" });
     const timer = setTimeout(async () => {
       try {
-        const results = await searchTables(ROOT_FULL_PATH, trimmed);
+        const results = await searchTables(ROOT_FULL_PATH, trimmed, { signal: controller.signal });
         if (!cancelled) setSearch({ status: "ready", results });
       } catch (err) {
+        if (isAbortError(err)) return;
         if (!cancelled) setSearch({ status: "error", message: err.message });
       }
     }, 300);
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      controller.abort();
     };
   }, [term]);
 

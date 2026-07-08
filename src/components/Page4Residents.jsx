@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { fetchTableData } from "../api/pxweb";
+import { useState } from "react";
+import { fetchTableData, isAbortError } from "../api/pxweb";
 import { flattenToRows } from "../api/jsonStat";
+import { useAbortableEffect } from "../hooks/useAbortableEffect";
 import {
   ResponsiveContainer,
   BarChart,
@@ -15,10 +16,10 @@ import {
 } from "recharts";
 import RankedBarList from "./RankedBarList";
 import ChartTooltip from "./ChartTooltip";
+import { DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
 
-const COLORS = ["#2b6ca3", "#d98e2b", "#5b6b7a", "#0f3a57"];
 const NAITAJA_SHORT = { TR_DOM: "Sisereisid", TR_OUT: "Välisreisid" };
 
 const COUNTRY_LABELS = {
@@ -49,17 +50,75 @@ export default function Page4Residents({ timeRangeMonths }) {
   const quarters = timeRangeMonths ? Math.max(Math.ceil(Number(timeRangeMonths) / 3), 4) : 999;
   const originQuarters = timeRangeMonths ? Math.max(Math.ceil(Number(timeRangeMonths) / 3), 1) : 999;
 
-  useEffect(() => {
-    let cancelled = false;
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+  useAbortableEffect(
+    async (signal, isActive) => {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
 
-    async function load() {
       try {
-        const tripsData = await fetchTableData(REISIMINE_PATH, "TU51.PX", [
-          { code: "Näitaja", selection: { filter: "item", values: ["TR_DOM", "TR_OUT"] } },
-          { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
-        ]);
+        // All five queries are independent (different tables, no data
+        // dependency between them) — fire them concurrently instead of
+        // paying for five sequential round-trips.
+        const [tripsData, countryData, domesticSpend, foreignSpend, accommodationData] =
+          await Promise.all([
+            fetchTableData(
+              REISIMINE_PATH,
+              "TU51.PX",
+              [
+                { code: "Näitaja", selection: { filter: "item", values: ["TR_DOM", "TR_OUT"] } },
+                { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
+                { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
+              ],
+              { signal }
+            ),
+            fetchTableData(
+              REISIMINE_PATH,
+              "TU63.PX",
+              [
+                {
+                  code: "Sihtriik",
+                  selection: { filter: "item", values: Object.keys(COUNTRY_LABELS) },
+                },
+                {
+                  code: "Vaatlusperiood",
+                  selection: { filter: "top", values: [String(originQuarters)] },
+                },
+              ],
+              { signal }
+            ),
+            fetchTableData(
+              REISIMINE_PATH,
+              "TU56.PX",
+              [
+                { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
+                { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
+              ],
+              { signal }
+            ),
+            fetchTableData(
+              REISIMINE_PATH,
+              "TU661.PX",
+              [
+                { code: "Näitaja", selection: { filter: "item", values: ["EXP_OUT"] } },
+                { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
+                { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
+              ],
+              { signal }
+            ),
+            fetchTableData(
+              REISIMINE_PATH,
+              "TU551.PX",
+              [
+                { code: "Näitaja", selection: { filter: "item", values: ["N_DOM", "N_OUT"] } },
+                {
+                  code: "Majutuse liik",
+                  selection: { filter: "item", values: Object.keys(ACCOMMODATION_LABELS) },
+                },
+                { code: "Vaatlusperiood", selection: { filter: "top", values: ["1"] } },
+              ],
+              { signal }
+            ),
+          ]);
+
         const tripsRows = flattenToRows(tripsData);
         const byQuarter = new Map();
         for (const row of tripsRows) {
@@ -72,13 +131,6 @@ export default function Page4Residents({ timeRangeMonths }) {
         const quarterKeys = Array.from(byQuarter.keys()).sort();
         const tripsChart = quarterKeys.map((k) => byQuarter.get(k));
 
-        const countryData = await fetchTableData(REISIMINE_PATH, "TU63.PX", [
-          {
-            code: "Sihtriik",
-            selection: { filter: "item", values: Object.keys(COUNTRY_LABELS) },
-          },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: [String(originQuarters)] } },
-        ]);
         const countryRows = flattenToRows(countryData);
         // Statistikaamet suppresses cells with too few observations (returned
         // as null, not 0) — summing null as 0 would misreport "data withheld"
@@ -93,15 +145,6 @@ export default function Page4Residents({ timeRangeMonths }) {
           .map(([code, value]) => ({ label: COUNTRY_LABELS[code] ?? code, value }))
           .sort((a, b) => b.value - a.value);
 
-        const domesticSpend = await fetchTableData(REISIMINE_PATH, "TU56.PX", [
-          { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
-        ]);
-        const foreignSpend = await fetchTableData(REISIMINE_PATH, "TU661.PX", [
-          { code: "Näitaja", selection: { filter: "item", values: ["EXP_OUT"] } },
-          { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
-        ]);
         const domesticRows = flattenToRows(domesticSpend);
         const foreignRows = flattenToRows(foreignSpend);
         const bySpendQuarter = new Map();
@@ -120,14 +163,6 @@ export default function Page4Residents({ timeRangeMonths }) {
         const spendKeys = Array.from(bySpendQuarter.keys()).sort();
         const spendChart = spendKeys.map((k) => bySpendQuarter.get(k));
 
-        const accommodationData = await fetchTableData(REISIMINE_PATH, "TU551.PX", [
-          { code: "Näitaja", selection: { filter: "item", values: ["N_DOM", "N_OUT"] } },
-          {
-            code: "Majutuse liik",
-            selection: { filter: "item", values: Object.keys(ACCOMMODATION_LABELS) },
-          },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: ["1"] } },
-        ]);
         const accommodationRows = flattenToRows(accommodationData);
         // Same null-suppression handling as the country ranking above.
         const accommodationTotals = new Map();
@@ -140,7 +175,7 @@ export default function Page4Residents({ timeRangeMonths }) {
           .map(([code, value]) => ({ label: ACCOMMODATION_LABELS[code] ?? code, value }))
           .sort((a, b) => b.value - a.value);
 
-        if (!cancelled) {
+        if (isActive()) {
           setState({
             data: { tripsChart, countries, spendChart, accommodation },
             loading: false,
@@ -148,15 +183,12 @@ export default function Page4Residents({ timeRangeMonths }) {
           });
         }
       } catch (err) {
-        if (!cancelled) setState((prev) => ({ ...prev, loading: false, error: err.message }));
+        if (isAbortError(err)) return;
+        if (isActive()) setState((prev) => ({ ...prev, loading: false, error: err.message }));
       }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [timeRangeMonths]);
+    },
+    [timeRangeMonths]
+  );
 
   if (!state.data && state.loading) return <div className="panel-status">Laen…</div>;
   if (!state.data && state.error)
@@ -164,19 +196,42 @@ export default function Page4Residents({ timeRangeMonths }) {
 
   const { data } = state;
 
+  const topCountry = data.countries[0] ?? null;
+
   return (
     <div className={"dashboard" + (state.loading ? " refetching" : "")}>
+      {topCountry && (
+        <div className="hero-card">
+          <div className="hero-label">Populaarseim sihtriik</div>
+          <div className="hero-number hero-number-text">{topCountry.label}</div>
+          <div className="hero-caption">
+            {topCountry.value.toLocaleString("et-EE")} tuh reisi
+          </div>
+        </div>
+      )}
+
       <div className="data-card">
         <h3>Sise- ja välisreisid kvartalite kaupa (tuhat reisi, viimased {quarters === 999 ? data.tripsChart.length : quarters} kvartalit)</h3>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={data.tripsChart}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="x" tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={40} />
-            <YAxis tick={{ fontSize: 11 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+            <XAxis
+              dataKey="x"
+              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+              axisLine={{ stroke: CHART_GRID_COLOR }}
+              tickLine={{ stroke: CHART_GRID_COLOR }}
+              interval="preserveStartEnd"
+              minTickGap={40}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+              axisLine={{ stroke: CHART_GRID_COLOR }}
+              tickLine={{ stroke: CHART_GRID_COLOR }}
+            />
             <Tooltip content={<ChartTooltip unit="tuh" />} />
             <Legend />
-            <Bar dataKey="Sisereisid" fill={COLORS[0]} isAnimationActive={false} />
-            <Bar dataKey="Välisreisid" fill={COLORS[1]} isAnimationActive={false} />
+            <Bar dataKey="Sisereisid" fill={DOMESTIC_COLOR} isAnimationActive={false} />
+            <Bar dataKey="Välisreisid" fill={FOREIGN_COLOR} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -197,22 +252,33 @@ export default function Page4Residents({ timeRangeMonths }) {
         <h3>Reisikulutused, sise- vs. välisreis (eurot, viimased {quarters === 999 ? data.spendChart.length : quarters} kvartalit)</h3>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={data.spendChart}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="x" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={40} />
-            <YAxis tick={{ fontSize: 11 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+            <XAxis
+              dataKey="x"
+              tick={{ fontSize: 10, fill: CHART_AXIS_COLOR }}
+              axisLine={{ stroke: CHART_GRID_COLOR }}
+              tickLine={{ stroke: CHART_GRID_COLOR }}
+              interval="preserveStartEnd"
+              minTickGap={40}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+              axisLine={{ stroke: CHART_GRID_COLOR }}
+              tickLine={{ stroke: CHART_GRID_COLOR }}
+            />
             <Tooltip content={<ChartTooltip unit="€" />} />
             <Legend />
             <Line
               type="monotone"
               dataKey="Sisereis"
-              stroke={COLORS[0]}
+              stroke={DOMESTIC_COLOR}
               dot={false}
               isAnimationActive={false}
             />
             <Line
               type="monotone"
               dataKey="Välisreis"
-              stroke={COLORS[1]}
+              stroke={FOREIGN_COLOR}
               dot={false}
               isAnimationActive={false}
             />

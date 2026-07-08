@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchTableMeta, fetchTableData } from "../api/pxweb";
+import { useMemo, useRef, useState } from "react";
+import { fetchTableMeta, fetchTableData, isAbortError } from "../api/pxweb";
 import { flattenToRows, toChartData } from "../api/jsonStat";
+import { useAbortableEffect } from "../hooks/useAbortableEffect";
 import FilterBar from "./FilterBar";
 import DataGrid from "./DataGrid";
 import ChartPanel from "./ChartPanel";
@@ -38,17 +39,17 @@ export default function TableView({ path, tableId, title, initialTimeRangeMonths
   // effect within the same commit that the metadata-reset effect runs in.
   const queryOwnerRef = useRef(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    setMeta(null);
-    setMetaError(null);
-    setDataset(null);
-    setQuery(null);
-    queryOwnerRef.current = null;
+  useAbortableEffect(
+    async (signal, isActive) => {
+      setMeta(null);
+      setMetaError(null);
+      setDataset(null);
+      setQuery(null);
+      queryOwnerRef.current = null;
 
-    fetchTableMeta(path, tableId)
-      .then((m) => {
-        if (cancelled) return;
+      try {
+        const m = await fetchTableMeta(path, tableId, { signal });
+        if (!isActive()) return;
         setMeta(m);
         queryOwnerRef.current = tableKey(path, tableId);
         // initialTimeRangeMonths is a one-time hint carried over from the
@@ -60,36 +61,38 @@ export default function TableView({ path, tableId, title, initialTimeRangeMonths
         setQuery(defaultQuery(m.variables, initialTop));
         const firstNonTime = m.variables.find((v) => !v.time);
         setGroupField(firstNonTime ? firstNonTime.code : null);
-      })
-      .catch((err) => !cancelled && setMetaError(err.message));
+      } catch (err) {
+        if (isAbortError(err)) return;
+        if (isActive()) setMetaError(err.message);
+      }
+    },
+    [path, tableId]
+  );
 
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path, tableId]);
+  useAbortableEffect(
+    async (signal, isActive) => {
+      if (!query) return;
+      // Guard against the stale-query race: when `path`/`tableId` change, this
+      // effect can still run in the same commit as the metadata-reset effect
+      // above, seeing the *previous* table's `query` (state updates from that
+      // effect haven't been applied to this closure yet). Skip firing until
+      // `query` is confirmed to belong to the table currently selected.
+      if (queryOwnerRef.current !== tableKey(path, tableId)) return;
+      setLoading(true);
+      setDataError(null);
 
-  useEffect(() => {
-    if (!query) return;
-    // Guard against the stale-query race: when `path`/`tableId` change, this
-    // effect can still run in the same commit as the metadata-reset effect
-    // above, seeing the *previous* table's `query` (state updates from that
-    // effect haven't been applied to this closure yet). Skip firing until
-    // `query` is confirmed to belong to the table currently selected.
-    if (queryOwnerRef.current !== tableKey(path, tableId)) return;
-    let cancelled = false;
-    setLoading(true);
-    setDataError(null);
-
-    fetchTableData(path, tableId, query)
-      .then((d) => !cancelled && setDataset(d))
-      .catch((err) => !cancelled && setDataError(err.message))
-      .finally(() => !cancelled && setLoading(false));
-
-    return () => {
-      cancelled = true;
-    };
-  }, [path, tableId, query]);
+      try {
+        const d = await fetchTableData(path, tableId, query, { signal });
+        if (isActive()) setDataset(d);
+      } catch (err) {
+        if (isAbortError(err)) return;
+        if (isActive()) setDataError(err.message);
+      } finally {
+        if (isActive()) setLoading(false);
+      }
+    },
+    [path, tableId, query]
+  );
 
   const rows = useMemo(() => (dataset ? flattenToRows(dataset) : []), [dataset]);
   const timeField = meta?.variables.find((v) => v.time)?.code ?? null;

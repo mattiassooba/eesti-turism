@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { fetchTableData } from "../api/pxweb";
+import { useState } from "react";
+import { fetchTableData, isAbortError } from "../api/pxweb";
 import { flattenToRows } from "../api/jsonStat";
+import { useAbortableEffect } from "../hooks/useAbortableEffect";
 import {
   ResponsiveContainer,
   LineChart,
@@ -15,6 +16,7 @@ import EstoniaMap from "./EstoniaMap";
 import SeasonalityHeatmap from "./SeasonalityHeatmap";
 import RankedBarList from "./RankedBarList";
 import ChartTooltip from "./ChartTooltip";
+import { DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 
@@ -45,6 +47,24 @@ function toStatCode(mkood) {
   return `EE${mkood}0000000000`;
 }
 
+const MKOOD_LABELS = {
+  "0037": "Harju maakond",
+  "0039": "Hiiu maakond",
+  "0045": "Ida-Viru maakond",
+  "0050": "Jõgeva maakond",
+  "0052": "Järva maakond",
+  "0056": "Lääne maakond",
+  "0060": "Lääne-Viru maakond",
+  "0064": "Põlva maakond",
+  "0068": "Pärnu maakond",
+  "0071": "Rapla maakond",
+  "0074": "Saare maakond",
+  "0079": "Tartu maakond",
+  "0081": "Valga maakond",
+  "0084": "Viljandi maakond",
+  "0087": "Võru maakond",
+};
+
 const RESIDENCY_CODE = { all: "WORLD", domestic: "EE", foreign: "FOR" };
 
 const ORIGIN_COUNTRY_LABELS = {
@@ -72,22 +92,47 @@ export default function Page2Map({ residency, timeRangeMonths }) {
 
   const windowSize = timeRangeMonths ? Number(timeRangeMonths) : 999;
 
-  useEffect(() => {
-    let cancelled = false;
-    const residencyCode = RESIDENCY_CODE[residency] ?? "WORLD";
-    setBase((prev) => ({ ...prev, loading: true, error: null }));
+  useAbortableEffect(
+    async (signal, isActive) => {
+      const residencyCode = RESIDENCY_CODE[residency] ?? "WORLD";
+      setBase((prev) => ({ ...prev, loading: true, error: null }));
 
-    async function load() {
       try {
-        const countyData = await fetchTableData(MAJUTUS_PATH, "TU131.PX", [
-          { code: "Näitaja", selection: { filter: "item", values: ["OCC_NI"] } },
-          { code: "Maakond", selection: { filter: "item", values: REAL_COUNTY_CODES } },
-          { code: "Elukohariik", selection: { filter: "item", values: [residencyCode] } },
-          {
-            code: "Vaatlusperiood",
-            selection: { filter: "top", values: [String(Math.min(windowSize, 24))] },
-          },
+        // Independent queries — run concurrently instead of two sequential
+        // round-trips. The second is fetched at full history regardless of
+        // the time-range filter: the heatmap below only makes sense across
+        // many years (that's how the COVID-era anomaly becomes visible), so
+        // it's exempt from the control the same way Page6's long-run charts
+        // are. The line chart below it, which DOES respect the time range,
+        // just slices the tail of this same fetch instead of a second call.
+        const [countyData, historyData] = await Promise.all([
+          fetchTableData(
+            MAJUTUS_PATH,
+            "TU131.PX",
+            [
+              { code: "Näitaja", selection: { filter: "item", values: ["OCC_NI"] } },
+              { code: "Maakond", selection: { filter: "item", values: REAL_COUNTY_CODES } },
+              { code: "Elukohariik", selection: { filter: "item", values: [residencyCode] } },
+              {
+                code: "Vaatlusperiood",
+                selection: { filter: "top", values: [String(Math.min(windowSize, 24))] },
+              },
+            ],
+            { signal }
+          ),
+          fetchTableData(
+            MAJUTUS_PATH,
+            "TU131.PX",
+            [
+              { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
+              { code: "Maakond", selection: { filter: "item", values: ["EE"] } },
+              { code: "Elukohariik", selection: { filter: "item", values: ["EE", "FOR"] } },
+              { code: "Vaatlusperiood", selection: { filter: "top", values: ["256"] } },
+            ],
+            { signal }
+          ),
         ]);
+
         const countyRows = flattenToRows(countyData);
         const countyTotals = {};
         for (const row of countyRows) {
@@ -95,19 +140,13 @@ export default function Page2Map({ residency, timeRangeMonths }) {
           const mkood = toMkood(row.Maakond);
           countyTotals[mkood] = (countyTotals[mkood] ?? 0) + row.value;
         }
+        let topCounty = null;
+        for (const [mkood, value] of Object.entries(countyTotals)) {
+          if (!topCounty || value > topCounty.value) {
+            topCounty = { label: MKOOD_LABELS[mkood] ?? mkood, value };
+          }
+        }
 
-        // Fetched at full history regardless of the time-range filter: the
-        // heatmap below only makes sense across many years (that's how the
-        // COVID-era anomaly becomes visible), so it's exempt from the
-        // control the same way Page6's long-run charts are. The line chart
-        // below it, which DOES respect the time range, just slices the
-        // tail of this same fetch instead of a second API call.
-        const historyData = await fetchTableData(MAJUTUS_PATH, "TU131.PX", [
-          { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
-          { code: "Maakond", selection: { filter: "item", values: ["EE"] } },
-          { code: "Elukohariik", selection: { filter: "item", values: ["EE", "FOR"] } },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: ["256"] } },
-        ]);
         const historyRows = flattenToRows(historyData);
 
         const byPeriod = new Map();
@@ -142,37 +181,42 @@ export default function Page2Map({ residency, timeRangeMonths }) {
         }
         const years = Array.from(yearSet).sort();
 
-        if (!cancelled) {
-          setBase({ data: { countyTotals, historyChart, years, grid }, loading: false, error: null });
+        if (isActive()) {
+          setBase({
+            data: { countyTotals, topCounty, historyChart, years, grid },
+            loading: false,
+            error: null,
+          });
         }
       } catch (err) {
-        if (!cancelled) setBase((prev) => ({ ...prev, loading: false, error: err.message }));
+        if (isAbortError(err)) return;
+        if (isActive()) setBase((prev) => ({ ...prev, loading: false, error: err.message }));
       }
-    }
+    },
+    [residency, timeRangeMonths]
+  );
 
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [residency, timeRangeMonths]);
+  useAbortableEffect(
+    async (signal, isActive) => {
+      const maakond = selectedCounty ? toStatCode(selectedCounty.mkood) : "EE";
+      const originWindow = Math.min(windowSize, 12);
+      setOrigins((prev) => ({ ...prev, loading: true, error: null }));
 
-  useEffect(() => {
-    let cancelled = false;
-    const maakond = selectedCounty ? toStatCode(selectedCounty.mkood) : "EE";
-    const originWindow = Math.min(windowSize, 12);
-    setOrigins((prev) => ({ ...prev, loading: true, error: null }));
-
-    async function load() {
       try {
-        const originData = await fetchTableData(MAJUTUS_PATH, "TU131.PX", [
-          { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
-          { code: "Maakond", selection: { filter: "item", values: [maakond] } },
-          {
-            code: "Elukohariik",
-            selection: { filter: "item", values: Object.keys(ORIGIN_COUNTRY_LABELS) },
-          },
-          { code: "Vaatlusperiood", selection: { filter: "top", values: [String(originWindow)] } },
-        ]);
+        const originData = await fetchTableData(
+          MAJUTUS_PATH,
+          "TU131.PX",
+          [
+            { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
+            { code: "Maakond", selection: { filter: "item", values: [maakond] } },
+            {
+              code: "Elukohariik",
+              selection: { filter: "item", values: Object.keys(ORIGIN_COUNTRY_LABELS) },
+            },
+            { code: "Vaatlusperiood", selection: { filter: "top", values: [String(originWindow)] } },
+          ],
+          { signal }
+        );
         const originRows = flattenToRows(originData);
         const originTotals = new Map();
         for (const row of originRows) {
@@ -186,17 +230,14 @@ export default function Page2Map({ residency, timeRangeMonths }) {
           .map(([code, value]) => ({ label: ORIGIN_COUNTRY_LABELS[code] ?? code, value }))
           .sort((a, b) => b.value - a.value);
 
-        if (!cancelled) setOrigins({ data: list, loading: false, error: null });
+        if (isActive()) setOrigins({ data: list, loading: false, error: null });
       } catch (err) {
-        if (!cancelled) setOrigins((prev) => ({ ...prev, loading: false, error: err.message }));
+        if (isAbortError(err)) return;
+        if (isActive()) setOrigins((prev) => ({ ...prev, loading: false, error: err.message }));
       }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [timeRangeMonths, selectedCounty]);
+    },
+    [timeRangeMonths, selectedCounty]
+  );
 
   if (!base.data && base.loading) return <div className="panel-status">Laen…</div>;
   if (!base.data && base.error)
@@ -204,6 +245,16 @@ export default function Page2Map({ residency, timeRangeMonths }) {
 
   return (
     <div className={"dashboard" + (base.loading ? " refetching" : "")}>
+      {base.data.topCounty && (
+        <div className="hero-card">
+          <div className="hero-label">Enim ööbimisi</div>
+          <div className="hero-number hero-number-text">{base.data.topCounty.label}</div>
+          <div className="hero-caption">
+            {base.data.topCounty.value.toLocaleString("et-EE")} ööd
+          </div>
+        </div>
+      )}
+
       <div className="tile-row-split">
         <div className="data-card">
           <h3>Ööbimised maakonna järgi (viimased {Math.min(windowSize, 24)} kuud kokku)</h3>
@@ -247,22 +298,33 @@ export default function Page2Map({ residency, timeRangeMonths }) {
         </h3>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={base.data.historyChart} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="x" tick={{ fontSize: 9 }} interval="preserveStartEnd" minTickGap={40} />
-            <YAxis tick={{ fontSize: 11 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+            <XAxis
+              dataKey="x"
+              tick={{ fontSize: 9, fill: CHART_AXIS_COLOR }}
+              axisLine={{ stroke: CHART_GRID_COLOR }}
+              tickLine={{ stroke: CHART_GRID_COLOR }}
+              interval="preserveStartEnd"
+              minTickGap={40}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+              axisLine={{ stroke: CHART_GRID_COLOR }}
+              tickLine={{ stroke: CHART_GRID_COLOR }}
+            />
             <Tooltip content={<ChartTooltip />} />
             <Legend />
             <Line
               type="monotone"
               dataKey="Eesti elanikud"
-              stroke="#5b6b7a"
+              stroke={DOMESTIC_COLOR}
               dot={false}
               isAnimationActive={false}
             />
             <Line
               type="monotone"
               dataKey="Väliskülastajad"
-              stroke="#d98e2b"
+              stroke={FOREIGN_COLOR}
               dot={false}
               isAnimationActive={false}
             />

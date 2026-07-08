@@ -1,0 +1,111 @@
+/* Data pages (Purpose/Residents/Capacity) */
+
+.data-card {
+  background: #fff;
+  border: 1px solid #dbe0df;
+  border-radius: 10px;
+  padding: 20px 24px;
+}
+
+.selection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sea);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 8px 5px 14px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.selection-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.selection-chip:hover .selection-chip-x {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.data-card h3 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 14px;
+}
+
+.tile-row-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.ranked-bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ranked-bar-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 120px;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+.ranked-bar-label {
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranked-bar-track {
+  background: var(--paper);
+  border-radius: 4px;
+  height: 12px;
+  overflow: hidden;
+}
+
+.ranked-bar-fill {
+  height: 100%;
+  background: var(--sea);
+  border-radius: 4px;
+}
+
+.ranked-bar-value {
+  font-family: var(--font-mono);
+  color: var(--slate);
+  text-align: right;
+}
+
+.ranked-bar-unit {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+@media (max-width: 720px) {
+  .tile-row-split {
+    grid-template-columns: 1fr;
+  }
+
+  .ranked-bar-row {
+    grid-template-columns: 100px 1fr 90px;
+  }
+}

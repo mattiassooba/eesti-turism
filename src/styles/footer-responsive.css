@@ -1,0 +1,44 @@
+/* Footer */
+
+.source-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  background: var(--ink);
+  color: rgba(238, 240, 238, 0.75);
+  font-family: var(--font-body);
+  font-size: 12px;
+  padding: 10px 24px;
+}
+
+.source-footer a {
+  color: var(--midsummer);
+  text-decoration: none;
+}
+
+.source-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+
+@media (max-width: 720px) {
+  .app-body {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    max-height: 260px;
+  }
+
+  .main-panel {
+    max-height: none;
+  }
+
+  .hero-number {
+    font-size: 40px;
+  }
+}

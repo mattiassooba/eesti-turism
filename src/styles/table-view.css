@@ -1,0 +1,126 @@
+/* Table view */
+
+.table-view h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.filter-bar label {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  color: var(--slate);
+  gap: 4px;
+}
+
+.filter-bar select {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid #cdd3d2;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.filter-bar select[multiple] {
+  font-family: var(--font-body);
+}
+
+.filter-hint {
+  font-size: 11px;
+  color: var(--slate);
+  font-style: italic;
+}
+
+.chart-panel {
+  margin: 20px 0;
+  background: #fff;
+  border: 1px solid #dbe0df;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.chart-toggle button {
+  margin-right: 8px;
+  padding: 5px 12px;
+  border: 1px solid #cdd3d2;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.chart-toggle button.active {
+  background: var(--sea);
+  color: #fff;
+  border-color: var(--sea);
+}
+
+.export-buttons {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.export-buttons button {
+  padding: 7px 14px;
+  border: 1px solid #cdd3d2;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.export-buttons button:hover {
+  border-color: var(--sea);
+  color: var(--sea);
+}
+
+.data-grid-wrapper {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #dbe0df;
+}
+
+.data-grid {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: #fff;
+}
+
+.data-grid th,
+.data-grid td {
+  border: 1px solid #e3e7e6;
+  padding: 7px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-grid th {
+  background: var(--paper);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--slate);
+  text-transform: uppercase;
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+}

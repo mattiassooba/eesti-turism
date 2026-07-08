@@ -1,16 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { feature } from "topojson-client";
 import { geoMercator, geoPath } from "d3-geo";
-
-const QUIET = [77, 120, 148];
-const MIDSUMMER = [217, 142, 43];
-
-function interpolate(t) {
-  const r = Math.round(QUIET[0] + (MIDSUMMER[0] - QUIET[0]) * t);
-  const g = Math.round(QUIET[1] + (MIDSUMMER[1] - QUIET[1]) * t);
-  const b = Math.round(QUIET[2] + (MIDSUMMER[2] - QUIET[2]) * t);
-  return `rgb(${r}, ${g}, ${b})`;
-}
+import { seasonalityColor } from "../colorScale";
 
 const WIDTH = 520;
 const HEIGHT = 340;
@@ -56,6 +47,10 @@ export default function EstoniaMap({ valuesByMkood, unit, selectedMkood, onSelec
 
   const range = max - min || 1;
 
+  function selectCounty(f) {
+    onSelectCounty?.(f.properties.MKOOD, f.properties.MNIMI);
+  }
+
   return (
     <div className="estonia-map">
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label="Eesti maakondade kaart">
@@ -68,12 +63,24 @@ export default function EstoniaMap({ valuesByMkood, unit, selectedMkood, onSelec
             <path
               key={f.properties.MKOOD}
               d={path(f)}
-              fill={hasValue ? interpolate(t) : "#dbe0df"}
+              fill={hasValue ? seasonalityColor(t) : "#dbe0df"}
               stroke={isSelected ? "#101b26" : "#eef0ee"}
               strokeWidth={isSelected ? 2.5 : 1}
               onMouseEnter={() => setHovered(f.properties)}
               onMouseLeave={() => setHovered(null)}
-              onClick={() => onSelectCounty?.(f.properties.MKOOD, f.properties.MNIMI)}
+              onFocus={() => setHovered(f.properties)}
+              onBlur={() => setHovered(null)}
+              onClick={() => selectCounty(f)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  selectCounty(f);
+                }
+              }}
+              tabIndex={onSelectCounty ? 0 : -1}
+              role={onSelectCounty ? "button" : undefined}
+              aria-label={onSelectCounty ? f.properties.MNIMI : undefined}
+              aria-pressed={onSelectCounty ? isSelected : undefined}
               style={{ cursor: onSelectCounty ? "pointer" : "default" }}
             >
               <title>

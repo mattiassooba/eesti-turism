@@ -1,0 +1,242 @@
+/* Shell */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.top-nav {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 14px 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.top-nav-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.top-nav-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.top-nav-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgba(238, 240, 238, 0.65);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.top-nav-tab:hover {
+  color: var(--paper);
+}
+
+.top-nav-tab.active {
+  color: var(--paper);
+  border-bottom-color: var(--midsummer);
+}
+
+.global-filters {
+  flex-shrink: 0;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  background: #fff;
+  border-bottom: 1px solid #dbe0df;
+  padding: 10px 32px;
+}
+
+.global-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--slate);
+}
+
+.global-filter select {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 4px 8px;
+  border: 1px solid #cdd3d2;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.app-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+/* Sidebar */
+
+.sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  background: var(--sea-deep);
+  color: var(--paper);
+  padding: 16px 12px;
+  overflow-y: auto;
+  max-height: calc(100vh - 140px);
+}
+
+.sidebar ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 14px;
+}
+
+.sidebar > ul {
+  padding-left: 0;
+}
+
+.sidebar-search {
+  width: 100%;
+  padding: 7px 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--paper);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+.sidebar-search::placeholder {
+  color: rgba(238, 240, 238, 0.45);
+}
+
+.sidebar-search:focus {
+  outline: none;
+  border-color: var(--midsummer);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.search-result-path {
+  display: block;
+  font-size: 11px;
+  color: rgba(238, 240, 238, 0.5);
+  margin-top: 1px;
+}
+
+.folder-toggle,
+.table-leaf {
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.35;
+  padding: 6px 8px;
+  color: rgba(238, 240, 238, 0.85);
+}
+
+.folder-toggle:hover,
+.table-leaf:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--paper);
+}
+
+.table-leaf.selected {
+  background: var(--midsummer);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.tree-status {
+  padding: 2px 8px;
+  font-size: 12px;
+  color: rgba(238, 240, 238, 0.55);
+}
+
+.tree-error {
+  color: #f2b6a8;
+}
+
+.tree-error button {
+  color: var(--paper);
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+/* Main panel */
+
+.main-panel {
+  flex: 1;
+  padding: 28px 32px;
+  overflow-y: auto;
+  max-height: calc(100vh - 140px);
+}
+
+.panel-status {
+  color: var(--slate);
+  font-family: var(--font-body);
+}
+
+.panel-error {
+  color: var(--alert);
+  font-family: var(--font-body);
+}
+
+.app-crash {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 480px;
+  margin: 80px auto;
+  padding: 32px;
+  font-family: var(--font-body);
+  color: var(--ink);
+}
+
+.app-crash h1 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  margin: 0;
+}
+
+.app-crash p {
+  color: var(--slate);
+  margin: 0;
+}
+
+.app-crash button {
+  font-family: var(--font-body);
+  font-weight: 600;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  background: var(--sea);
+  color: #fff;
+  cursor: pointer;
+}
+
+.app-crash button:hover {
+  background: var(--sea-deep);
+}

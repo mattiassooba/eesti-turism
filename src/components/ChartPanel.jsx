@@ -11,8 +11,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import ChartTooltip from "./ChartTooltip";
-
-const COLORS = ["#2b6ca3", "#d98e2b", "#5b6b7a", "#0f3a57", "#9c3b26", "#4d7894"];
+import { CHART_COLORS as COLORS, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 export default function ChartPanel({ data, seriesNames, chartType, onChartTypeChange }) {
   if (!data.length) return <div className="panel-status">Graafiku jaoks andmed puuduvad.</div>;
@@ -37,9 +36,18 @@ export default function ChartPanel({ data, seriesNames, chartType, onChartTypeCh
       </div>
       <ResponsiveContainer width="100%" height={360}>
         <Chart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="x" />
-          <YAxis />
+          <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+          <XAxis
+            dataKey="x"
+            tick={{ fill: CHART_AXIS_COLOR }}
+            axisLine={{ stroke: CHART_GRID_COLOR }}
+            tickLine={{ stroke: CHART_GRID_COLOR }}
+          />
+          <YAxis
+            tick={{ fill: CHART_AXIS_COLOR }}
+            axisLine={{ stroke: CHART_GRID_COLOR }}
+            tickLine={{ stroke: CHART_GRID_COLOR }}
+          />
           <Tooltip content={<ChartTooltip />} />
           <Legend />
           {seriesNames.map((name, i) =>

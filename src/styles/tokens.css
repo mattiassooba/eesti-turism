@@ -1,0 +1,28 @@
+:root {
+  --ink: #101b26;
+  --paper: #eef0ee;
+  --sea: #2b6ca3;
+  --sea-deep: #0f3a57;
+  --midsummer: #d98e2b;
+  --slate: #5b6b7a;
+  --alert: #9c3b26;
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--paper);
+}
+
+a {
+  color: inherit;
+}

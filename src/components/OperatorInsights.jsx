@@ -428,151 +428,188 @@ export default function OperatorInsights() {
       </div>
 
       <div className="data-card">
-        <h3>Majutatud Eestis aastate lõikes</h3>
-        <ResponsiveContainer width="100%" height={260}>
-          <ComposedChart data={view.trendChart} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
-            <XAxis
-              dataKey="x"
-              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
-              axisLine={{ stroke: CHART_GRID_COLOR }}
-              tickLine={{ stroke: CHART_GRID_COLOR }}
-            />
-            <YAxis
-              yAxisId="left"
-              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
-              axisLine={{ stroke: CHART_GRID_COLOR }}
-              tickLine={{ stroke: CHART_GRID_COLOR }}
-            />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
-              axisLine={{ stroke: CHART_GRID_COLOR }}
-              tickLine={{ stroke: CHART_GRID_COLOR }}
-              unit="%"
-            />
-            <Tooltip content={<ChartTooltip />} />
-            <Legend />
-            <Bar yAxisId="left" dataKey="Eesti kokku" fill={CHART_COLORS[0]} isAnimationActive={false} />
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey={view.shareKey}
-              stroke={FOREIGN_COLOR}
-              dot={false}
-              isAnimationActive={false}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+        <h3>
+          {regionLabel} vs. Eesti — aastate lõikes ({view.nationalYearly[0]?.year}–
+          {view.nationalYearly[view.nationalYearly.length - 1]?.year})
+        </h3>
 
-        <div className="data-grid-wrapper">
-          <table className="data-grid operator-table">
-            <thead>
-              <tr>
-                <th>Aasta</th>
-                <th>Majutatuid</th>
-                <th>Muutus</th>
-                <th>{regionLabel} osakaal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...view.nationalYearly].reverse().map((r, i) => {
-                const share = [...view.regionYearly].reverse()[i]?.share;
-                return (
-                  <tr key={r.year}>
-                    <td>
-                      {r.year}
-                      {r.partial ? " *" : ""}
-                    </td>
-                    <td>{fmtInt(r.accommodated)}</td>
-                    <td className={deltaClass(r.accommodatedYoy)}>{fmtDelta(r.accommodatedYoy)}</td>
-                    <td>{fmtPct(share)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="tile-row-split">
+          <div className="operator-chart">
+            <div className="operator-chart-title">Majutatud Eestis ja {regionLabel} osakaal</div>
+            <ResponsiveContainer width="100%" height={230}>
+              <ComposedChart data={view.trendChart} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+                <XAxis
+                  dataKey="x"
+                  tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+                  axisLine={{ stroke: CHART_GRID_COLOR }}
+                  tickLine={{ stroke: CHART_GRID_COLOR }}
+                />
+                <YAxis
+                  yAxisId="left"
+                  tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+                  axisLine={{ stroke: CHART_GRID_COLOR }}
+                  tickLine={{ stroke: CHART_GRID_COLOR }}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+                  axisLine={{ stroke: CHART_GRID_COLOR }}
+                  tickLine={{ stroke: CHART_GRID_COLOR }}
+                  unit="%"
+                />
+                <Tooltip content={<ChartTooltip />} />
+                <Legend />
+                <Bar yAxisId="left" dataKey="Eesti kokku" fill={CHART_COLORS[0]} isAnimationActive={false} />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey={view.shareKey}
+                  stroke={FOREIGN_COLOR}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="operator-chart">
+            <div className="operator-chart-title">{regionLabel}: täituvus ja keskmine ööhind</div>
+            <ResponsiveContainer width="100%" height={230}>
+              <ComposedChart data={view.kpiChart} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+                <XAxis
+                  dataKey="x"
+                  tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+                  axisLine={{ stroke: CHART_GRID_COLOR }}
+                  tickLine={{ stroke: CHART_GRID_COLOR }}
+                />
+                <YAxis
+                  yAxisId="left"
+                  tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+                  axisLine={{ stroke: CHART_GRID_COLOR }}
+                  tickLine={{ stroke: CHART_GRID_COLOR }}
+                  unit="%"
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+                  axisLine={{ stroke: CHART_GRID_COLOR }}
+                  tickLine={{ stroke: CHART_GRID_COLOR }}
+                  unit="€"
+                />
+                <Tooltip content={<ChartTooltip />} />
+                <Legend />
+                <Bar yAxisId="left" dataKey="Täituvus, %" fill={CHART_COLORS[2]} isAnimationActive={false} />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="Keskmine ööhind, €"
+                  stroke={CHART_COLORS[1]}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-        <div className="operator-footnote">* osaline aasta</div>
-      </div>
-
-      <div className="data-card">
-        <h3>{regionLabel} — ülevaade aastate lõikes</h3>
-        <ResponsiveContainer width="100%" height={260}>
-          <ComposedChart data={view.kpiChart} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
-            <XAxis
-              dataKey="x"
-              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
-              axisLine={{ stroke: CHART_GRID_COLOR }}
-              tickLine={{ stroke: CHART_GRID_COLOR }}
-            />
-            <YAxis
-              yAxisId="left"
-              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
-              axisLine={{ stroke: CHART_GRID_COLOR }}
-              tickLine={{ stroke: CHART_GRID_COLOR }}
-              unit="%"
-            />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
-              axisLine={{ stroke: CHART_GRID_COLOR }}
-              tickLine={{ stroke: CHART_GRID_COLOR }}
-              unit="€"
-            />
-            <Tooltip content={<ChartTooltip />} />
-            <Legend />
-            <Bar yAxisId="left" dataKey="Täituvus, %" fill={CHART_COLORS[2]} isAnimationActive={false} />
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="Keskmine ööhind, €"
-              stroke={CHART_COLORS[1]}
-              dot={false}
-              isAnimationActive={false}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
 
         <div className="data-grid-wrapper">
-          <table className="data-grid operator-table">
+          <table className="data-grid operator-table operator-table-transposed">
             <thead>
               <tr>
-                <th>Aasta</th>
-                <th>Majutatuid</th>
-                <th>Muutus</th>
-                <th>Osakaal Eestist</th>
-                <th>Majutusettevõtteid</th>
-                <th>Tubasid</th>
-                <th>Täituvus</th>
-                <th>ARR</th>
-                <th>Muutus</th>
-                <th>RevPAR*</th>
-                <th>Muutus</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...view.regionYearly].reverse().map((r) => (
-                <tr key={r.year}>
-                  <td>
+                <th>Näitaja</th>
+                {view.nationalYearly.map((r) => (
+                  <th key={r.year}>
                     {r.year}
                     {r.partial ? " *" : ""}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>Majutatud Eestis</th>
+                {view.nationalYearly.map((r) => (
+                  <td key={r.year}>{fmtInt(r.accommodated)}</td>
+                ))}
+              </tr>
+              <tr className="operator-subrow">
+                <th>— muutus (YoY)</th>
+                {view.nationalYearly.map((r) => (
+                  <td key={r.year} className={deltaClass(r.accommodatedYoy)}>
+                    {fmtDelta(r.accommodatedYoy)}
                   </td>
-                  <td>{fmtInt(r.accommodated)}</td>
-                  <td className={deltaClass(r.accommodatedYoy)}>{fmtDelta(r.accommodatedYoy)}</td>
-                  <td>{fmtPct(r.share)}</td>
-                  <td>{fmtInt(r.esta)}</td>
-                  <td>{fmtInt(r.rooms)}</td>
-                  <td>{fmtPct(r.occ)}</td>
-                  <td>{fmtEur(r.arr)}</td>
-                  <td className={deltaClass(r.arrYoy)}>{fmtDelta(r.arrYoy)}</td>
-                  <td>{fmtEur(r.revpar)}</td>
-                  <td className={deltaClass(r.revparYoy)}>{fmtDelta(r.revparYoy)}</td>
-                </tr>
-              ))}
+                ))}
+              </tr>
+              <tr>
+                <th>Majutatud: {regionLabel}</th>
+                {view.regionYearly.map((r) => (
+                  <td key={r.year}>{fmtInt(r.accommodated)}</td>
+                ))}
+              </tr>
+              <tr className="operator-subrow">
+                <th>— muutus (YoY)</th>
+                {view.regionYearly.map((r) => (
+                  <td key={r.year} className={deltaClass(r.accommodatedYoy)}>
+                    {fmtDelta(r.accommodatedYoy)}
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <th>{regionLabel} osakaal Eestist</th>
+                {view.regionYearly.map((r) => (
+                  <td key={r.year}>{fmtPct(r.share)}</td>
+                ))}
+              </tr>
+              <tr>
+                <th>Majutusettevõtteid</th>
+                {view.regionYearly.map((r) => (
+                  <td key={r.year}>{fmtInt(r.esta)}</td>
+                ))}
+              </tr>
+              <tr>
+                <th>Tubasid</th>
+                {view.regionYearly.map((r) => (
+                  <td key={r.year}>{fmtInt(r.rooms)}</td>
+                ))}
+              </tr>
+              <tr>
+                <th>Täituvus</th>
+                {view.regionYearly.map((r) => (
+                  <td key={r.year}>{fmtPct(r.occ)}</td>
+                ))}
+              </tr>
+              <tr>
+                <th>ARR</th>
+                {view.regionYearly.map((r) => (
+                  <td key={r.year}>{fmtEur(r.arr)}</td>
+                ))}
+              </tr>
+              <tr className="operator-subrow">
+                <th>— muutus (YoY)</th>
+                {view.regionYearly.map((r) => (
+                  <td key={r.year} className={deltaClass(r.arrYoy)}>
+                    {fmtDelta(r.arrYoy)}
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <th>RevPAR*</th>
+                {view.regionYearly.map((r) => (
+                  <td key={r.year}>{fmtEur(r.revpar)}</td>
+                ))}
+              </tr>
+              <tr className="operator-subrow">
+                <th>— muutus (YoY)</th>
+                {view.regionYearly.map((r) => (
+                  <td key={r.year} className={deltaClass(r.revparYoy)}>
+                    {fmtDelta(r.revparYoy)}
+                  </td>
+                ))}
+              </tr>
             </tbody>
           </table>
         </div>

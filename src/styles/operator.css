@@ -138,6 +138,56 @@
   font-family: var(--font-mono);
 }
 
+.operator-chart-title {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--slate);
+  margin-bottom: 6px;
+}
+
+/* Transposed table: metrics as rows, years as columns. Row labels sit in
+   the first column instead of the header row, so they need their own
+   left-aligned, non-clickable treatment and a sticky position — with up
+   to two decades of columns, scrolling horizontally without losing track
+   of which metric a row belongs to would defeat the point of the table. */
+.operator-table-transposed th:first-child,
+.operator-table-transposed td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  text-align: left;
+  background: var(--paper);
+  cursor: default;
+}
+
+.operator-table-transposed thead th:first-child {
+  z-index: 2;
+}
+
+.operator-table-transposed tbody tr:nth-child(odd) td:not(:first-child) {
+  background: rgba(16, 27, 38, 0.02);
+}
+
+.operator-subrow th,
+.operator-subrow td {
+  font-size: 12px;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.operator-subrow th {
+  color: var(--slate);
+  padding-left: 24px;
+}
+
+/* Deltas keep their up/down color even inside a subrow — the color is
+   the entire point of these rows, so it must win over the subrow's
+   default (a type+class selector otherwise outranks the lone class). */
+.operator-subrow td:not(.delta-up-text):not(.delta-down-text) {
+  color: var(--slate);
+}
+
 .operator-footnote {
   font-family: var(--font-body);
   font-size: 11px;

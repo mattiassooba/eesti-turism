@@ -230,6 +230,33 @@
   max-height: calc(100vh - 140px);
 }
 
+.scroll-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scroll-section {
+  /* Room to breathe above the section when scrollIntoView lands on it,
+     and a clear break between what used to be separate tabs. */
+  scroll-margin-top: 16px;
+  padding-top: 20px;
+  border-top: 1px solid #dbe0df;
+}
+
+.scroll-section:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.scroll-section-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 20px;
+}
+
 .panel-status {
   color: var(--slate);
   font-family: var(--font-body);

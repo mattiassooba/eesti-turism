@@ -1,0 +1,155 @@
+/* Operator (hotelier) insights section */
+
+.operator-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 8px;
+  padding-top: 28px;
+  border-top: 1px solid #dbe0df;
+}
+
+.operator-header h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+
+.operator-intro {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: var(--slate);
+  margin: 0;
+  max-width: 640px;
+}
+
+.operator-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.operator-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  color: var(--slate);
+}
+
+.operator-control select {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.operator-control select:focus-visible {
+  outline: 2px solid var(--sea);
+  outline-offset: 1px;
+}
+
+.residency-tabs {
+  display: flex;
+  gap: 4px;
+  background: #fff;
+  border-radius: 999px;
+  padding: 3px;
+  box-shadow: var(--shadow-sm);
+}
+
+.residency-tab {
+  border: none;
+  background: none;
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  color: var(--slate);
+  cursor: pointer;
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.residency-tab:hover {
+  color: var(--ink);
+}
+
+.residency-tab.active {
+  background: var(--sea);
+  color: #fff;
+}
+
+.residency-tab:focus-visible {
+  outline: 2px solid var(--sea);
+  outline-offset: 1px;
+}
+
+.operator-control-slider {
+  min-width: 220px;
+}
+
+.operator-control-slider input[type="range"] {
+  width: 100%;
+  accent-color: var(--sea);
+  cursor: pointer;
+}
+
+.operator-table th,
+.operator-table td {
+  white-space: nowrap;
+}
+
+.operator-table td:not(:first-child) {
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+.operator-table th:not(:first-child) {
+  text-align: right;
+}
+
+.operator-table-compact {
+  width: auto;
+  min-width: 100%;
+}
+
+.operator-table-compact th {
+  background: none;
+  color: var(--slate);
+  font-family: var(--font-body);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  text-align: left;
+  cursor: default;
+}
+
+.operator-table-compact td {
+  font-family: var(--font-mono);
+}
+
+.operator-footnote {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--slate);
+  font-style: italic;
+  margin-top: 10px;
+}
+
+.delta-up-text {
+  color: #1f7a4d;
+}
+
+.delta-down-text {
+  color: var(--alert);
+}

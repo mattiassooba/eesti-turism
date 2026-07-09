@@ -1,0 +1,657 @@
+import { useMemo, useState } from "react";
+import { fetchTableData, isAbortError } from "../api/pxweb";
+import { flattenToRows } from "../api/jsonStat";
+import { useAbortableEffect } from "../hooks/useAbortableEffect";
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  CartesianGrid,
+} from "recharts";
+import ChartTooltip from "./ChartTooltip";
+import RankedBarList from "./RankedBarList";
+import { CHART_COLORS, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
+
+const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
+
+// The 15 real maakonds plus the 3 major cities Statistikaamet breaks out
+// separately (each is a subset of its own maakond, e.g. Tallinn sits inside
+// Harju) — offered together in one selector since an operator may want
+// either granularity, matching how Statistikaamet itself publishes both.
+const REGION_LABELS = {
+  EE00370000000000: "Harju maakond",
+  EE00370784000004: "Tallinn",
+  EE00390000000000: "Hiiu maakond",
+  EE00450000000000: "Ida-Viru maakond",
+  EE00500000000000: "Jõgeva maakond",
+  EE00520000000000: "Järva maakond",
+  EE00560000000000: "Lääne maakond",
+  EE00600000000000: "Lääne-Viru maakond",
+  EE00640000000000: "Põlva maakond",
+  EE00680000000000: "Pärnu maakond",
+  EE00680624661905: "Pärnu linn",
+  EE00710000000000: "Rapla maakond",
+  EE00740000000000: "Saare maakond",
+  EE00790000000000: "Tartu maakond",
+  EE00790793815105: "Tartu linn",
+  EE00810000000000: "Valga maakond",
+  EE00840000000000: "Viljandi maakond",
+  EE00870000000000: "Võru maakond",
+};
+const REGION_CODES = Object.keys(REGION_LABELS);
+
+const ORIGIN_COUNTRY_LABELS = {
+  FI: "Soome",
+  LV: "Läti",
+  DE: "Saksamaa",
+  SE: "Rootsi",
+  RU: "Venemaa",
+  LT: "Leedu",
+  NO: "Norra",
+  UK: "Suurbritannia",
+  US: "Ameerika Ühendriigid",
+  FR: "Prantsusmaa",
+  NL: "Holland",
+  PL: "Poola",
+  IT: "Itaalia",
+  ES: "Hispaania",
+  DK: "Taani",
+};
+
+const RESIDENCY_CODE = { all: "WORLD", domestic: "EE", foreign: "FOR" };
+const RESIDENCY_TABS = [
+  { key: "all", label: "Kõik külastajad" },
+  { key: "domestic", label: "Eesti elanikud" },
+  { key: "foreign", label: "Väliskülastajad" },
+];
+
+function yoy(current, previous) {
+  if (current == null || previous == null || previous === 0) return null;
+  return ((current - previous) / previous) * 100;
+}
+
+function fmtInt(n) {
+  return n == null ? "—" : Math.round(n).toLocaleString("et-EE");
+}
+function fmtPct(n, digits = 1) {
+  return n == null ? "—" : `${n.toFixed(digits)}%`;
+}
+function fmtEur(n) {
+  return n == null ? "—" : `${n.toFixed(2)} €`;
+}
+function fmtDelta(n) {
+  if (n == null) return "—";
+  return `${n >= 0 ? "▲" : "▼"} ${Math.abs(n).toFixed(1)}%`;
+}
+function deltaClass(n) {
+  if (n == null) return "";
+  return n >= 0 ? "delta-up-text" : "delta-down-text";
+}
+
+// Sums `field` across `periods` for one region, skipping suppressed
+// (null) cells rather than treating them as zero — same rule the rest of
+// the app follows to avoid misreporting withheld data as "confirmed zero".
+function sumField(periodMap, periods) {
+  if (!periodMap) return null;
+  let sum = 0;
+  let any = false;
+  for (const p of periods) {
+    const v = periodMap.get(p);
+    if (v != null) {
+      sum += v;
+      any = true;
+    }
+  }
+  return any ? sum : null;
+}
+
+// CAP_ESTA/CAP_BEDR are stock counts (how many establishments/rooms exist
+// right now), so an annual figure should be the latest month's value, not
+// a sum. OCC_OR_BEDR/OCC_NI_COST are rates, so a simple average across the
+// year's available months approximates the annual figure.
+function avgAndLast(capByPeriod, periods, field) {
+  if (!capByPeriod) return { avg: null, last: null };
+  let sum = 0;
+  let count = 0;
+  let last = null;
+  for (const p of periods) {
+    const v = capByPeriod.get(p)?.[field];
+    if (v != null) {
+      sum += v;
+      count++;
+      last = v;
+    }
+  }
+  return { avg: count ? sum / count : null, last };
+}
+
+export default function OperatorInsights() {
+  const [state, setState] = useState({ data: null, loading: true, error: null });
+  const [region, setRegion] = useState("EE00370000000000");
+  const [residency, setResidency] = useState("all");
+  const [yearsToShow, setYearsToShow] = useState(10);
+  const [origins, setOrigins] = useState({ data: null, loading: true, error: null });
+
+  // Independent of region/residency/yearsToShow — those are all applied
+  // client-side to this one broad fetch, so switching them never refetches.
+  useAbortableEffect(async (signal, isActive) => {
+    try {
+      const [guestData, capData] = await Promise.all([
+        fetchTableData(
+          MAJUTUS_PATH,
+          "TU131.PX",
+          [
+            { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
+            { code: "Maakond", selection: { filter: "item", values: ["EE", ...REGION_CODES] } },
+            {
+              code: "Elukohariik",
+              selection: { filter: "item", values: ["WORLD", "EE", "FOR"] },
+            },
+            { code: "Vaatlusperiood", selection: { filter: "top", values: ["256"] } },
+          ],
+          { signal }
+        ),
+        fetchTableData(
+          MAJUTUS_PATH,
+          "TU122.PX",
+          [
+            {
+              code: "Näitaja",
+              selection: { filter: "item", values: ["CAP_ESTA", "CAP_BEDR", "OCC_OR_BEDR", "OCC_NI_COST"] },
+            },
+            { code: "Maakond", selection: { filter: "item", values: ["EE", ...REGION_CODES] } },
+            { code: "Vaatlusperiood", selection: { filter: "top", values: ["256"] } },
+          ],
+          { signal }
+        ),
+      ]);
+
+      if (isActive()) {
+        setState({
+          data: { guestRows: flattenToRows(guestData), capRows: flattenToRows(capData) },
+          loading: false,
+          error: null,
+        });
+      }
+    } catch (err) {
+      if (isAbortError(err)) return;
+      if (isActive()) setState((prev) => ({ ...prev, loading: false, error: err.message }));
+    }
+  }, []);
+
+  useAbortableEffect(
+    async (signal, isActive) => {
+      setOrigins((prev) => ({ ...prev, loading: true, error: null }));
+      try {
+        const originData = await fetchTableData(
+          MAJUTUS_PATH,
+          "TU131.PX",
+          [
+            { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
+            { code: "Maakond", selection: { filter: "item", values: [region] } },
+            {
+              code: "Elukohariik",
+              selection: { filter: "item", values: Object.keys(ORIGIN_COUNTRY_LABELS) },
+            },
+            { code: "Vaatlusperiood", selection: { filter: "top", values: ["12"] } },
+          ],
+          { signal }
+        );
+        const rows = flattenToRows(originData);
+        const totals = new Map();
+        for (const row of rows) {
+          if (row.value === null) continue;
+          totals.set(row.Elukohariik, (totals.get(row.Elukohariik) ?? 0) + row.value);
+        }
+        const list = Array.from(totals.entries())
+          .map(([code, value]) => ({ label: ORIGIN_COUNTRY_LABELS[code] ?? code, value }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 5);
+        if (isActive()) setOrigins({ data: list, loading: false, error: null });
+      } catch (err) {
+        if (isAbortError(err)) return;
+        if (isActive()) setOrigins((prev) => ({ ...prev, loading: false, error: err.message }));
+      }
+    },
+    [region]
+  );
+
+  const indexed = useMemo(() => {
+    if (!state.data) return null;
+    const { guestRows, capRows } = state.data;
+
+    const guestsByRegion = new Map();
+    for (const row of guestRows) {
+      if (row.value === null) continue;
+      if (!guestsByRegion.has(row.Maakond)) guestsByRegion.set(row.Maakond, new Map());
+      const regionMap = guestsByRegion.get(row.Maakond);
+      if (!regionMap.has(row.Elukohariik)) regionMap.set(row.Elukohariik, new Map());
+      regionMap.get(row.Elukohariik).set(row.Vaatlusperiood, row.value);
+    }
+
+    const capByRegion = new Map();
+    for (const row of capRows) {
+      if (!capByRegion.has(row.Maakond)) capByRegion.set(row.Maakond, new Map());
+      const regionMap = capByRegion.get(row.Maakond);
+      if (!regionMap.has(row.Vaatlusperiood)) regionMap.set(row.Vaatlusperiood, {});
+      if (row.value !== null) regionMap.get(row.Vaatlusperiood)[row.Näitaja] = row.value;
+    }
+
+    const allPeriods = Array.from(new Set(guestRows.map((r) => r.Vaatlusperiood))).sort();
+    const periodLabels = new Map(guestRows.map((r) => [r.Vaatlusperiood, r.Vaatlusperiood_label]));
+
+    return { guestsByRegion, capByRegion, allPeriods, periodLabels };
+  }, [state.data]);
+
+  const view = useMemo(() => {
+    if (!indexed) return null;
+    const { guestsByRegion, capByRegion, allPeriods, periodLabels } = indexed;
+    const residencyCode = RESIDENCY_CODE[residency];
+
+    const yearToPeriods = new Map();
+    for (const p of allPeriods) {
+      const year = p.split("M")[0];
+      if (!yearToPeriods.has(year)) yearToPeriods.set(year, []);
+      yearToPeriods.get(year).push(p);
+    }
+    const years = Array.from(yearToPeriods.keys()).sort();
+
+    function buildYearly(regionCode) {
+      const guestMap = guestsByRegion.get(regionCode)?.get(residencyCode);
+      const nationalGuestMap = guestsByRegion.get("EE")?.get(residencyCode);
+      const capMap = capByRegion.get(regionCode);
+
+      return years.map((year, i) => {
+        const periods = yearToPeriods.get(year);
+        // A partial current year is compared against the same number of
+        // months in the prior year, not a full 12 — otherwise "2026 so
+        // far" would read as a crash against "all of 2025".
+        const prevPeriods = i > 0 ? yearToPeriods.get(years[i - 1]).slice(0, periods.length) : null;
+
+        const accommodated = sumField(guestMap, periods);
+        const prevAccommodated = prevPeriods ? sumField(guestMap, prevPeriods) : null;
+        const nationalAccommodated = sumField(nationalGuestMap, periods);
+
+        const esta = avgAndLast(capMap, periods, "CAP_ESTA").last;
+        const rooms = avgAndLast(capMap, periods, "CAP_BEDR").last;
+        const occ = avgAndLast(capMap, periods, "OCC_OR_BEDR").avg;
+        const arr = avgAndLast(capMap, periods, "OCC_NI_COST").avg;
+        const prevOcc = prevPeriods ? avgAndLast(capMap, prevPeriods, "OCC_OR_BEDR").avg : null;
+        const prevArr = prevPeriods ? avgAndLast(capMap, prevPeriods, "OCC_NI_COST").avg : null;
+
+        const revpar = arr != null && occ != null ? arr * (occ / 100) : null;
+        const prevRevpar = prevArr != null && prevOcc != null ? prevArr * (prevOcc / 100) : null;
+
+        return {
+          year,
+          partial: periods.length < 12,
+          accommodated,
+          accommodatedYoy: yoy(accommodated, prevAccommodated),
+          share: accommodated != null && nationalAccommodated ? (accommodated / nationalAccommodated) * 100 : null,
+          esta,
+          rooms,
+          occ,
+          arr,
+          arrYoy: yoy(arr, prevArr),
+          revpar,
+          revparYoy: yoy(revpar, prevRevpar),
+        };
+      });
+    }
+
+    const nationalYearlyAll = buildYearly("EE");
+    const regionYearlyAll = buildYearly(region);
+
+    const visibleYears = Math.min(yearsToShow, years.length);
+    const nationalYearly = nationalYearlyAll.slice(-visibleYears);
+    const regionYearly = regionYearlyAll.slice(-visibleYears);
+
+    const latestPeriod = allPeriods[allPeriods.length - 1];
+    const [latestYear, latestMonthStr] = latestPeriod.split("M");
+    const prevYearPeriod = `${Number(latestYear) - 1}M${latestMonthStr}`;
+
+    function monthlySnapshot(regionCode) {
+      const guestMap = guestsByRegion.get(regionCode)?.get(residencyCode);
+      const capMap = capByRegion.get(regionCode);
+      const cur = sumField(guestMap, [latestPeriod]);
+      const prev = sumField(guestMap, [prevYearPeriod]);
+      const capCur = capMap?.get(latestPeriod) ?? {};
+      const capPrev = capMap?.get(prevYearPeriod) ?? {};
+      const occCur = capCur.OCC_OR_BEDR ?? null;
+      const occPrev = capPrev.OCC_OR_BEDR ?? null;
+      const arrCur = capCur.OCC_NI_COST ?? null;
+      const arrPrev = capPrev.OCC_NI_COST ?? null;
+      const revparCur = arrCur != null && occCur != null ? arrCur * (occCur / 100) : null;
+      const revparPrev = arrPrev != null && occPrev != null ? arrPrev * (occPrev / 100) : null;
+      return {
+        accommodated: cur,
+        accommodatedYoy: yoy(cur, prev),
+        esta: capCur.CAP_ESTA ?? null,
+        rooms: capCur.CAP_BEDR ?? null,
+        occ: occCur,
+        arr: arrCur,
+        arrYoy: yoy(arrCur, arrPrev),
+        revpar: revparCur,
+        revparYoy: yoy(revparCur, revparPrev),
+      };
+    }
+
+    const regionLabel = REGION_LABELS[region];
+    const shareKey = `${regionLabel} osakaal, %`;
+    const trendChart = nationalYearly.map((r, i) => ({
+      x: r.year,
+      "Eesti kokku": r.accommodated,
+      [shareKey]: regionYearly[i]?.share ?? null,
+    }));
+    const kpiChart = regionYearly.map((r) => ({
+      x: r.year,
+      "Täituvus, %": r.occ != null ? Number(r.occ.toFixed(1)) : null,
+      "Keskmine ööhind, €": r.arr != null ? Number(r.arr.toFixed(2)) : null,
+    }));
+
+    return {
+      maxYears: years.length,
+      nationalYearly,
+      regionYearly,
+      nationalMonthly: monthlySnapshot("EE"),
+      regionMonthly: monthlySnapshot(region),
+      latestLabel: periodLabels.get(latestPeriod) ?? latestPeriod,
+      prevLabel: periodLabels.get(prevYearPeriod) ?? prevYearPeriod,
+      trendChart,
+      kpiChart,
+      shareKey,
+    };
+  }, [indexed, region, residency, yearsToShow]);
+
+  if (!state.data && state.loading) {
+    return <div className="panel-status">Laen majutusettevõtja andmeid…</div>;
+  }
+  if (!state.data && state.error) {
+    return <div className="panel-error">Andmete laadimine ebaõnnestus: {state.error}</div>;
+  }
+  if (!view) return null;
+
+  const regionLabel = REGION_LABELS[region];
+
+  return (
+    <section className={"operator-section" + (state.loading ? " refetching" : "")}>
+      <div className="operator-header">
+        <h2>Majutusettevõtja vaade</h2>
+        <p className="operator-intro">
+          Statistikaameti andmed piirkonna hõivatuse, hinnataseme ja külastajate kohta —
+          võrdle oma maakonda või linna Eesti keskmisega.
+        </p>
+      </div>
+
+      <div className="operator-controls">
+        <label className="operator-control">
+          <span>Maakond / linn</span>
+          <select value={region} onChange={(e) => setRegion(e.target.value)}>
+            {REGION_CODES.map((code) => (
+              <option key={code} value={code}>
+                {REGION_LABELS[code]}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="operator-control">
+          <span>Külastajad</span>
+          <div className="residency-tabs">
+            {RESIDENCY_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                className={"residency-tab" + (residency === tab.key ? " active" : "")}
+                onClick={() => setResidency(tab.key)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <label className="operator-control operator-control-slider">
+          <span>Viimased {yearsToShow} aastat</span>
+          <input
+            type="range"
+            min={3}
+            max={view.maxYears}
+            value={yearsToShow}
+            onChange={(e) => setYearsToShow(Number(e.target.value))}
+          />
+        </label>
+      </div>
+
+      <div className="data-card">
+        <h3>Majutatud Eestis aastate lõikes</h3>
+        <ResponsiveContainer width="100%" height={260}>
+          <ComposedChart data={view.trendChart} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+            <XAxis
+              dataKey="x"
+              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+              axisLine={{ stroke: CHART_GRID_COLOR }}
+              tickLine={{ stroke: CHART_GRID_COLOR }}
+            />
+            <YAxis
+              yAxisId="left"
+              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+              axisLine={{ stroke: CHART_GRID_COLOR }}
+              tickLine={{ stroke: CHART_GRID_COLOR }}
+            />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+              axisLine={{ stroke: CHART_GRID_COLOR }}
+              tickLine={{ stroke: CHART_GRID_COLOR }}
+              unit="%"
+            />
+            <Tooltip content={<ChartTooltip />} />
+            <Legend />
+            <Bar yAxisId="left" dataKey="Eesti kokku" fill={CHART_COLORS[0]} isAnimationActive={false} />
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey={view.shareKey}
+              stroke={FOREIGN_COLOR}
+              dot={false}
+              isAnimationActive={false}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+
+        <div className="data-grid-wrapper">
+          <table className="data-grid operator-table">
+            <thead>
+              <tr>
+                <th>Aasta</th>
+                <th>Majutatuid</th>
+                <th>Muutus</th>
+                <th>{regionLabel} osakaal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...view.nationalYearly].reverse().map((r, i) => {
+                const share = [...view.regionYearly].reverse()[i]?.share;
+                return (
+                  <tr key={r.year}>
+                    <td>
+                      {r.year}
+                      {r.partial ? " *" : ""}
+                    </td>
+                    <td>{fmtInt(r.accommodated)}</td>
+                    <td className={deltaClass(r.accommodatedYoy)}>{fmtDelta(r.accommodatedYoy)}</td>
+                    <td>{fmtPct(share)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="operator-footnote">* osaline aasta</div>
+      </div>
+
+      <div className="data-card">
+        <h3>{regionLabel} — ülevaade aastate lõikes</h3>
+        <ResponsiveContainer width="100%" height={260}>
+          <ComposedChart data={view.kpiChart} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+            <XAxis
+              dataKey="x"
+              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+              axisLine={{ stroke: CHART_GRID_COLOR }}
+              tickLine={{ stroke: CHART_GRID_COLOR }}
+            />
+            <YAxis
+              yAxisId="left"
+              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+              axisLine={{ stroke: CHART_GRID_COLOR }}
+              tickLine={{ stroke: CHART_GRID_COLOR }}
+              unit="%"
+            />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
+              axisLine={{ stroke: CHART_GRID_COLOR }}
+              tickLine={{ stroke: CHART_GRID_COLOR }}
+              unit="€"
+            />
+            <Tooltip content={<ChartTooltip />} />
+            <Legend />
+            <Bar yAxisId="left" dataKey="Täituvus, %" fill={CHART_COLORS[2]} isAnimationActive={false} />
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="Keskmine ööhind, €"
+              stroke={CHART_COLORS[1]}
+              dot={false}
+              isAnimationActive={false}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+
+        <div className="data-grid-wrapper">
+          <table className="data-grid operator-table">
+            <thead>
+              <tr>
+                <th>Aasta</th>
+                <th>Majutatuid</th>
+                <th>Muutus</th>
+                <th>Osakaal Eestist</th>
+                <th>Majutusettevõtteid</th>
+                <th>Tubasid</th>
+                <th>Täituvus</th>
+                <th>ARR</th>
+                <th>Muutus</th>
+                <th>RevPAR*</th>
+                <th>Muutus</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...view.regionYearly].reverse().map((r) => (
+                <tr key={r.year}>
+                  <td>
+                    {r.year}
+                    {r.partial ? " *" : ""}
+                  </td>
+                  <td>{fmtInt(r.accommodated)}</td>
+                  <td className={deltaClass(r.accommodatedYoy)}>{fmtDelta(r.accommodatedYoy)}</td>
+                  <td>{fmtPct(r.share)}</td>
+                  <td>{fmtInt(r.esta)}</td>
+                  <td>{fmtInt(r.rooms)}</td>
+                  <td>{fmtPct(r.occ)}</td>
+                  <td>{fmtEur(r.arr)}</td>
+                  <td className={deltaClass(r.arrYoy)}>{fmtDelta(r.arrYoy)}</td>
+                  <td>{fmtEur(r.revpar)}</td>
+                  <td className={deltaClass(r.revparYoy)}>{fmtDelta(r.revparYoy)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="operator-footnote">
+          * osaline aasta &nbsp;·&nbsp; RevPAR = keskmine ööhind × täituvus (arvutuslik näitaja, mitte otsene
+          Statistikaameti andmeväli)
+        </div>
+      </div>
+
+      <div className="tile-row-split">
+        <div className="data-card">
+          <h3>
+            Eesti — {view.latestLabel} vs {view.prevLabel}
+          </h3>
+          <MonthlySnapshotTable snapshot={view.nationalMonthly} />
+        </div>
+        <div className="data-card">
+          <h3>
+            {regionLabel} — {view.latestLabel} vs {view.prevLabel}
+          </h3>
+          <MonthlySnapshotTable snapshot={view.regionMonthly} />
+        </div>
+      </div>
+
+      <div className="data-card">
+        <h3>Top 5 väliskülastajate päritoluriiki — {regionLabel} (viimased 12 kuud)</h3>
+        {!origins.data && origins.loading && <div className="panel-status">Laen…</div>}
+        {!origins.data && origins.error && (
+          <div className="panel-error">Andmete laadimine ebaõnnestus: {origins.error}</div>
+        )}
+        {origins.data && (
+          <div className={origins.loading ? "refetching" : ""}>
+            {origins.data.length ? (
+              <RankedBarList items={origins.data} unit="külastajat" />
+            ) : (
+              <div className="panel-status">Selle piirkonna kohta andmed puuduvad.</div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MonthlySnapshotTable({ snapshot }) {
+  return (
+    <table className="data-grid operator-table operator-table-compact">
+      <tbody>
+        <tr>
+          <th>Majutatuid</th>
+          <td>{fmtInt(snapshot.accommodated)}</td>
+          <td className={deltaClass(snapshot.accommodatedYoy)}>{fmtDelta(snapshot.accommodatedYoy)}</td>
+        </tr>
+        <tr>
+          <th>Majutusettevõtteid</th>
+          <td>{fmtInt(snapshot.esta)}</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <th>Tubasid</th>
+          <td>{fmtInt(snapshot.rooms)}</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <th>Täituvus</th>
+          <td>{fmtPct(snapshot.occ)}</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <th>ARR</th>
+          <td>{fmtEur(snapshot.arr)}</td>
+          <td className={deltaClass(snapshot.arrYoy)}>{fmtDelta(snapshot.arrYoy)}</td>
+        </tr>
+        <tr>
+          <th>RevPAR*</th>
+          <td>{fmtEur(snapshot.revpar)}</td>
+          <td className={deltaClass(snapshot.revparYoy)}>{fmtDelta(snapshot.revparYoy)}</td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}

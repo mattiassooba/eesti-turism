@@ -5,6 +5,7 @@ import { useAbortableEffect } from "../hooks/useAbortableEffect";
 import SeasonalityStrip from "./SeasonalityStrip";
 import SplitBar from "./SplitBar";
 import Sparkline from "./Sparkline";
+import OperatorInsights from "./OperatorInsights";
 import { DOMESTIC_COLOR, FOREIGN_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -257,6 +258,8 @@ export default function Dashboard({ onSelectTable, residency, timeRangeMonths, d
           ))}
         </div>
       </div>
+
+      <OperatorInsights />
     </div>
   );
 }

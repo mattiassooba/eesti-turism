@@ -78,3 +78,25 @@
 .heatmap-cell:hover {
   transform: scale(1.15);
 }
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--slate);
+}
+
+.heatmap-legend-gradient {
+  width: 70px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, rgb(77, 120, 148), rgb(217, 142, 43));
+}
+
+.heatmap-legend-values {
+  font-family: var(--font-mono);
+  color: #9aa5ac;
+}

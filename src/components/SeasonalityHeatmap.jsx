@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { seasonalityColor } from "../colorScale";
 
 const MONTH_LABELS = [
   "Jaan",
@@ -14,16 +15,6 @@ const MONTH_LABELS = [
   "Nov",
   "Dets",
 ];
-
-const QUIET = [77, 120, 148];
-const MIDSUMMER = [217, 142, 43];
-
-function interpolate(t) {
-  const r = Math.round(QUIET[0] + (MIDSUMMER[0] - QUIET[0]) * t);
-  const g = Math.round(QUIET[1] + (MIDSUMMER[1] - QUIET[1]) * t);
-  const b = Math.round(QUIET[2] + (MIDSUMMER[2] - QUIET[2]) * t);
-  return `rgb(${r}, ${g}, ${b})`;
-}
 
 export default function SeasonalityHeatmap({ years, grid }) {
   const allValues = years.flatMap((y) => grid[y]).filter((v) => typeof v === "number");
@@ -54,13 +45,24 @@ export default function SeasonalityHeatmap({ years, grid }) {
                 <div
                   key={y + "-" + mIdx}
                   className="heatmap-cell"
-                  style={{ backgroundColor: hasValue ? interpolate(t) : "transparent" }}
+                  style={{ backgroundColor: hasValue ? seasonalityColor(t) : "transparent" }}
                   title={hasValue ? `${label} ${y}: ${v.toLocaleString("et-EE")}` : ""}
                 />
               );
             })}
           </Fragment>
         ))}
+      </div>
+
+      <div className="heatmap-legend">
+        <span>Vaikne hooaeg</span>
+        <span className="heatmap-legend-gradient" />
+        <span>Tipphooaeg</span>
+        {allValues.length > 0 && (
+          <span className="heatmap-legend-values">
+            ({min.toLocaleString("et-EE")}–{max.toLocaleString("et-EE")})
+          </span>
+        )}
       </div>
     </div>
   );

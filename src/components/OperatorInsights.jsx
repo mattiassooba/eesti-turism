@@ -198,21 +198,15 @@ export default function OperatorInsights() {
               code: "Elukohariik",
               selection: { filter: "item", values: Object.keys(ORIGIN_COUNTRY_LABELS) },
             },
-            { code: "Vaatlusperiood", selection: { filter: "top", values: ["12"] } },
+            // Full history (not just the latest year) so the table below can
+            // show a top-5 ranking per year, not only the latest 12 months.
+            { code: "Vaatlusperiood", selection: { filter: "top", values: ["256"] } },
           ],
           { signal }
         );
-        const rows = flattenToRows(originData);
-        const totals = new Map();
-        for (const row of rows) {
-          if (row.value === null) continue;
-          totals.set(row.Elukohariik, (totals.get(row.Elukohariik) ?? 0) + row.value);
+        if (isActive()) {
+          setOrigins({ data: flattenToRows(originData), loading: false, error: null });
         }
-        const list = Array.from(totals.entries())
-          .map(([code, value]) => ({ label: ORIGIN_COUNTRY_LABELS[code] ?? code, value }))
-          .sort((a, b) => b.value - a.value)
-          .slice(0, 5);
-        if (isActive()) setOrigins({ data: list, loading: false, error: null });
       } catch (err) {
         if (isAbortError(err)) return;
         if (isActive()) setOrigins((prev) => ({ ...prev, loading: false, error: err.message }));
@@ -220,6 +214,33 @@ export default function OperatorInsights() {
     },
     [region]
   );
+
+  function rankCountries(rows, limit = 5) {
+    const totals = new Map();
+    for (const row of rows) {
+      if (row.value === null) continue;
+      totals.set(row.Elukohariik, (totals.get(row.Elukohariik) ?? 0) + row.value);
+    }
+    return Array.from(totals.entries())
+      .map(([code, value]) => ({ label: ORIGIN_COUNTRY_LABELS[code] ?? code, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, limit);
+  }
+
+  const originsTop5ByYear = useMemo(() => {
+    if (!origins.data) return null;
+    const byYear = new Map();
+    for (const row of origins.data) {
+      const year = row.Vaatlusperiood.split("M")[0];
+      if (!byYear.has(year)) byYear.set(year, []);
+      byYear.get(year).push(row);
+    }
+    const result = new Map();
+    for (const [year, rows] of byYear) {
+      result.set(year, rankCountries(rows));
+    }
+    return result;
+  }, [origins.data]);
 
   const indexed = useMemo(() => {
     if (!state.data) return null;
@@ -247,6 +268,12 @@ export default function OperatorInsights() {
 
     return { guestsByRegion, capByRegion, allPeriods, periodLabels };
   }, [state.data]);
+
+  const latestOriginsTop5 = useMemo(() => {
+    if (!origins.data || !indexed) return null;
+    const last12 = new Set(indexed.allPeriods.slice(-12));
+    return rankCountries(origins.data.filter((row) => last12.has(row.Vaatlusperiood)));
+  }, [origins.data, indexed]);
 
   const view = useMemo(() => {
     if (!indexed) return null;
@@ -610,12 +637,25 @@ export default function OperatorInsights() {
                   </td>
                 ))}
               </tr>
+              {[0, 1, 2, 3, 4].map((rank) => (
+                <tr key={`origin-${rank}`} className={rank > 0 ? "operator-subrow" : undefined}>
+                  <th>Top {rank + 1} päritoluriik</th>
+                  {view.regionYearly.map((r) => {
+                    const item = originsTop5ByYear?.get(r.year)?.[rank];
+                    return (
+                      <td key={r.year}>
+                        {item ? `${item.label} (${fmtInt(item.value)})` : "—"}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
         <div className="operator-footnote">
           * osaline aasta &nbsp;·&nbsp; RevPAR = keskmine ööhind × täituvus (arvutuslik näitaja, mitte otsene
-          Statistikaameti andmeväli)
+          Statistikaameti andmeväli) &nbsp;·&nbsp; Päritoluriigid on järjestatud aasta ööbimiste järgi
         </div>
       </div>
 
@@ -636,14 +676,14 @@ export default function OperatorInsights() {
 
       <div className="data-card">
         <h3>Top 5 väliskülastajate päritoluriiki — {regionLabel} (viimased 12 kuud)</h3>
-        {!origins.data && origins.loading && <div className="panel-status">Laen…</div>}
-        {!origins.data && origins.error && (
+        {!latestOriginsTop5 && origins.loading && <div className="panel-status">Laen…</div>}
+        {!latestOriginsTop5 && origins.error && (
           <div className="panel-error">Andmete laadimine ebaõnnestus: {origins.error}</div>
         )}
-        {origins.data && (
+        {latestOriginsTop5 && (
           <div className={origins.loading ? "refetching" : ""}>
-            {origins.data.length ? (
-              <RankedBarList items={origins.data} unit="külastajat" />
+            {latestOriginsTop5.length ? (
+              <RankedBarList items={latestOriginsTop5} unit="külastajat" />
             ) : (
               <div className="panel-status">Selle piirkonna kohta andmed puuduvad.</div>
             )}

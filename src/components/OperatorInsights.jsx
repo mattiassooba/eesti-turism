@@ -383,6 +383,7 @@ function OperatorInsights() {
       x: r.year,
       "Täituvus, %": r.occ != null ? Number(r.occ.toFixed(1)) : null,
       "Keskmine ööhind, €": r.arr != null ? Number(r.arr.toFixed(2)) : null,
+      "RevPAR, €": r.revpar != null ? Number(r.revpar.toFixed(2)) : null,
     }));
 
     return {
@@ -506,7 +507,7 @@ function OperatorInsights() {
           </div>
 
           <div className="operator-chart">
-            <div className="operator-chart-title">{regionLabel}: täituvus ja keskmine ööhind</div>
+            <div className="operator-chart-title">{regionLabel}: täituvus, keskmine ööhind ja RevPAR</div>
             <ResponsiveContainer width="100%" height={230}>
               <ComposedChart data={view.kpiChart} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
@@ -539,6 +540,14 @@ function OperatorInsights() {
                   type="monotone"
                   dataKey="Keskmine ööhind, €"
                   stroke={CHART_COLORS[1]}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="RevPAR, €"
+                  stroke={CHART_COLORS[3]}
                   dot={false}
                   isAnimationActive={false}
                 />

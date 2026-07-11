@@ -31,16 +31,6 @@ const REAL_COUNTY_CODES = [
   "EE00870000000000", // Võru
 ];
 
-const QUICK_LINKS = [
-  { tableId: "TU121.PX", title: "TU121: MAJUTATUD (KUUD)" },
-  { tableId: "TU122.PX", title: "TU122: MAJUTAMINE MAAKONNA JÄRGI (KUUD)" },
-  { tableId: "TU11.PX", title: "TU11: MAJUTUSKOHTADE MAHUTAVUS PIIRKONNA JÄRGI" },
-  {
-    tableId: "TU131.PX",
-    title: "TU131: MAJUTATUD JA MAJUTATUTE ÖÖBIMISED MAAKONNA JA ELUKOHARIIGI JÄRGI (KUUD)",
-  },
-];
-
 const RESIDENCY = {
   all: { code: "WORLD", guestsLabel: "Majutatud külastajad", nightsLabel: "Ööbimised" },
   domestic: { code: "EE", guestsLabel: "Eesti elanikud", nightsLabel: "Eesti elanike ööbimised" },
@@ -63,7 +53,7 @@ function periodDelta(series, latestIndex, offset, label) {
 // Memoized — on this scrolling single-page layout, an ancestor state
 // update unrelated to this section's own props (e.g. scroll-driven
 // active-tab tracking) shouldn't re-render this section's charts/table.
-function Dashboard({ onSelectTable, residency, timeRangeMonths, deltaMode }) {
+function Dashboard({ residency, timeRangeMonths, deltaMode }) {
   const [state, setState] = useState({ data: null, loading: true, error: null });
 
   useAbortableEffect(
@@ -244,21 +234,6 @@ function Dashboard({ onSelectTable, residency, timeRangeMonths, deltaMode }) {
         <div className="stat-tile">
           <div className="tile-label">Keskmine ööbimiste arv külastaja kohta</div>
           <div className="tile-number">{data.avgNightsPerGuest.toFixed(2)}</div>
-        </div>
-      </div>
-
-      <div className="quick-links">
-        <div className="quick-links-label">Kiirvalik</div>
-        <div className="quick-links-grid">
-          {QUICK_LINKS.map((link) => (
-            <button
-              key={link.tableId}
-              className="quick-link-card"
-              onClick={() => onSelectTable(MAJUTUS_PATH, link.tableId, link.title)}
-            >
-              {link.title}
-            </button>
-          ))}
         </div>
       </div>
 

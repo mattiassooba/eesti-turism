@@ -21,10 +21,36 @@ const NAV_ITEMS = [
   { key: "browse", label: "Kõik tabelid" },
 ];
 
-// The five dashboard-style pages scroll past one after another on one
-// continuous page; "browse" (raw table + sidebar) is a different workflow
-// entirely and stays its own destination rather than a scroll section.
-const SCROLL_SECTIONS = NAV_ITEMS.filter((item) => item.key !== "browse").map((item) => item.key);
+// Ülevaade, Kaart ja hooajalisus, Eesmärk ja kestus, and Mahutavus scroll
+// past one another on one continuous page. Residentide reisid and Kõik
+// tabelid are each their own destination instead — Residents because it's
+// about Estonians' own travel (a different subject from the rest, which
+// are all about visitors to Estonia), not something that should load by
+// default when the site opens; Browse because it's a different workflow
+// (raw table + sidebar) entirely.
+const SCROLL_SECTIONS = ["dashboard", "map", "purpose", "capacity"];
+
+const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
+const QUICK_LINKS = [
+  { tableId: "TU121.PX", title: "TU121: MAJUTATUD (KUUD)" },
+  { tableId: "TU122.PX", title: "TU122: MAJUTAMINE MAAKONNA JÄRGI (KUUD)" },
+  { tableId: "TU11.PX", title: "TU11: MAJUTUSKOHTADE MAHUTAVUS PIIRKONNA JÄRGI" },
+  {
+    tableId: "TU131.PX",
+    title: "TU131: MAJUTATUD JA MAJUTATUTE ÖÖBIMISED MAAKONNA JA ELUKOHARIIGI JÄRGI (KUUD)",
+  },
+];
+
+// Which global filters make sense to show per destination. Residentide
+// reisid is about Estonians' own domestic/outbound travel, a different
+// concept from visitor residency, so that filter doesn't apply there; it
+// has no per-page delta-mode toggle either. Browse has its own per-table
+// filters already.
+const FILTER_RELEVANCE = {
+  scroll: { residency: true, timeRange: true, deltaMode: true },
+  residents: { residency: false, timeRange: true, deltaMode: false },
+  browse: { residency: false, timeRange: false, deltaMode: false },
+};
 
 export default function App() {
   const [view, setView] = useState("scroll");
@@ -39,7 +65,7 @@ export default function App() {
   const mainPanelRef = useRef(null);
 
   const activeSection = useActiveSection(SCROLL_SECTIONS, mainPanelRef, view === "scroll");
-  const activeTab = view === "browse" ? "browse" : activeSection;
+  const activeTab = view === "scroll" ? activeSection : view;
 
   useEffect(() => {
     if (!scrollRequest || view !== "scroll") return;
@@ -83,15 +109,15 @@ export default function App() {
   }, []);
 
   function handleNavClick(key) {
-    if (key === "browse") {
-      setView("browse");
+    if (key === "browse" || key === "residents") {
+      setView(key);
       return;
     }
     setView("scroll");
     setScrollRequest({ key, nonce: Date.now() });
   }
 
-  const showFilters = view === "scroll";
+  const relevance = FILTER_RELEVANCE[view] ?? FILTER_RELEVANCE.scroll;
 
   return (
     <div className="app-shell">
@@ -111,9 +137,9 @@ export default function App() {
       </header>
 
       <GlobalFilters
-        showResidency={showFilters}
-        showTimeRange={showFilters}
-        showDeltaMode={showFilters}
+        showResidency={relevance.residency}
+        showTimeRange={relevance.timeRange}
+        showDeltaMode={relevance.deltaMode}
         residency={residency}
         onResidencyChange={setResidency}
         timeRangeMonths={timeRangeMonths}
@@ -131,12 +157,7 @@ export default function App() {
             <div className="scroll-sections">
               <section id="dashboard" className="scroll-section">
                 <h2 className="scroll-section-title">Ülevaade</h2>
-                <Dashboard
-                  onSelectTable={handleSelectTable}
-                  residency={residency}
-                  timeRangeMonths={timeRangeMonths}
-                  deltaMode={deltaMode}
-                />
+                <Dashboard residency={residency} timeRangeMonths={timeRangeMonths} deltaMode={deltaMode} />
               </section>
 
               <section id="map" className="scroll-section">
@@ -153,19 +174,19 @@ export default function App() {
                 </LazyMount>
               </section>
 
-              <section id="residents" className="scroll-section">
-                <h2 className="scroll-section-title">Residentide reisid</h2>
-                <LazyMount containerRef={mainPanelRef}>
-                  <Page4Residents timeRangeMonths={timeRangeMonths} />
-                </LazyMount>
-              </section>
-
               <section id="capacity" className="scroll-section">
                 <h2 className="scroll-section-title">Mahutavus</h2>
                 <LazyMount containerRef={mainPanelRef}>
                   <Page6Capacity />
                 </LazyMount>
               </section>
+            </div>
+          )}
+
+          {view === "residents" && (
+            <div className="scroll-section">
+              <h2 className="scroll-section-title">Residentide reisid</h2>
+              <Page4Residents timeRangeMonths={timeRangeMonths} />
             </div>
           )}
 
@@ -178,7 +199,23 @@ export default function App() {
                 initialTimeRangeMonths={timeRangeMonths}
               />
             ) : (
-              <div className="panel-status">Vali tabel küljel olevast loendist.</div>
+              <div className="dashboard">
+                <div className="panel-status">Vali tabel küljel olevast loendist.</div>
+                <div className="quick-links">
+                  <div className="quick-links-label">Kiirvalik</div>
+                  <div className="quick-links-grid">
+                    {QUICK_LINKS.map((link) => (
+                      <button
+                        key={link.tableId}
+                        className="quick-link-card"
+                        onClick={() => handleSelectTable(MAJUTUS_PATH, link.tableId, link.title)}
+                      >
+                        {link.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             ))}
         </main>
       </div>

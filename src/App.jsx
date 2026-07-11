@@ -8,7 +8,6 @@ import Page4Residents from "./components/Page4Residents";
 import Page6Capacity from "./components/Page6Capacity";
 import LazyMount from "./components/LazyMount";
 import SourceFooter from "./components/SourceFooter";
-import GlobalFilters from "./components/GlobalFilters";
 import SectionRail from "./components/SectionRail";
 import { useActiveSection } from "./hooks/useActiveSection";
 import "./App.css";
@@ -51,17 +50,6 @@ const QUICK_LINKS = [
   },
 ];
 
-// Which global filters make sense to show per destination. Residentide
-// reisid is about Estonians' own domestic/outbound travel, a different
-// concept from visitor residency, so that filter doesn't apply there; it
-// has no per-page delta-mode toggle either. Browse has its own per-table
-// filters already.
-const FILTER_RELEVANCE = {
-  scroll: { residency: true, timeRange: true, deltaMode: true },
-  residents: { residency: false, timeRange: true, deltaMode: false },
-  browse: { residency: false, timeRange: false, deltaMode: false },
-};
-
 export default function App() {
   const [view, setView] = useState("scroll");
   // { key, nonce } rather than a plain key string, so clicking the same
@@ -69,9 +57,6 @@ export default function App() {
   // string wouldn't change and React would skip the effect).
   const [scrollRequest, setScrollRequest] = useState(null);
   const [selected, setSelected] = useState(null);
-  const [residency, setResidency] = useState("all");
-  const [timeRangeMonths, setTimeRangeMonths] = useState("24");
-  const [deltaMode, setDeltaMode] = useState("yoy");
   const mainPanelRef = useRef(null);
 
   const activeSection = useActiveSection(SCROLL_SECTIONS, mainPanelRef, view === "scroll");
@@ -127,8 +112,6 @@ export default function App() {
     setScrollRequest({ key, nonce: Date.now() });
   }
 
-  const relevance = FILTER_RELEVANCE[view] ?? FILTER_RELEVANCE.scroll;
-
   return (
     <div className="app-shell">
       <header className="top-nav">
@@ -146,18 +129,6 @@ export default function App() {
         </nav>
       </header>
 
-      <GlobalFilters
-        showResidency={relevance.residency}
-        showTimeRange={relevance.timeRange}
-        showDeltaMode={relevance.deltaMode}
-        residency={residency}
-        onResidencyChange={setResidency}
-        timeRangeMonths={timeRangeMonths}
-        onTimeRangeChange={setTimeRangeMonths}
-        deltaMode={deltaMode}
-        onDeltaModeChange={setDeltaMode}
-      />
-
       {view === "scroll" && (
         <SectionRail items={RAIL_ITEMS} activeKey={activeSection} onSelect={handleNavClick} />
       )}
@@ -171,20 +142,20 @@ export default function App() {
             <div className="scroll-sections">
               <section id="dashboard" className="scroll-section">
                 <h2 className="scroll-section-title">Ülevaade</h2>
-                <Dashboard residency={residency} timeRangeMonths={timeRangeMonths} deltaMode={deltaMode} />
+                <Dashboard />
               </section>
 
               <section id="map" className="scroll-section">
                 <h2 className="scroll-section-title">Kaart ja hooajalisus</h2>
                 <LazyMount containerRef={mainPanelRef}>
-                  <Page2Map residency={residency} timeRangeMonths={timeRangeMonths} />
+                  <Page2Map />
                 </LazyMount>
               </section>
 
               <section id="purpose" className="scroll-section">
                 <h2 className="scroll-section-title">Eesmärk ja kestus</h2>
                 <LazyMount containerRef={mainPanelRef}>
-                  <Page3Purpose residency={residency} timeRangeMonths={timeRangeMonths} />
+                  <Page3Purpose />
                 </LazyMount>
               </section>
 
@@ -200,18 +171,13 @@ export default function App() {
           {view === "residents" && (
             <div className="scroll-section">
               <h2 className="scroll-section-title">Residentide reisid</h2>
-              <Page4Residents timeRangeMonths={timeRangeMonths} />
+              <Page4Residents />
             </div>
           )}
 
           {view === "browse" &&
             (selected ? (
-              <TableView
-                path={selected.path}
-                tableId={selected.tableId}
-                title={selected.title}
-                initialTimeRangeMonths={timeRangeMonths}
-              />
+              <TableView path={selected.path} tableId={selected.tableId} title={selected.title} />
             ) : (
               <div className="dashboard">
                 <div className="panel-status">Vali tabel küljel olevast loendist.</div>

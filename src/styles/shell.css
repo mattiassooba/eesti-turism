@@ -76,45 +76,6 @@
   outline-offset: 2px;
 }
 
-.global-filters {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
-  background: var(--paper);
-  padding: 14px 32px;
-}
-
-.global-filter {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  background: #fff;
-  border-radius: 999px;
-  padding: 6px 8px 6px 16px;
-  box-shadow: var(--shadow-sm);
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: var(--slate);
-}
-
-.global-filter select {
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 999px;
-  background: var(--paper);
-  color: var(--ink);
-  cursor: pointer;
-}
-
-.global-filter select:focus-visible {
-  outline: 2px solid var(--sea);
-  outline-offset: 1px;
-}
-
 .app-body {
   flex: 1;
   display: flex;

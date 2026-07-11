@@ -15,6 +15,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import ChartTooltip from "./ChartTooltip";
+import SectionFilters from "./SectionFilters";
 import { CHART_COLORS, DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -30,8 +31,10 @@ const RESIDENCY_TITLE = {
 };
 
 // Memoized — see Dashboard.jsx for why.
-function Page3Purpose({ residency, timeRangeMonths }) {
+function Page3Purpose() {
   const [state, setState] = useState({ data: null, loading: true, error: null });
+  const [residency, setResidency] = useState("all");
+  const [timeRangeMonths, setTimeRangeMonths] = useState("24");
   const windowSize = timeRangeMonths ? Number(timeRangeMonths) : 999;
 
   useAbortableEffect(
@@ -138,6 +141,15 @@ function Page3Purpose({ residency, timeRangeMonths }) {
 
   return (
     <div className={"dashboard" + (state.loading ? " refetching" : "")}>
+      <SectionFilters
+        showTimeRange
+        showResidency
+        residency={residency}
+        onResidencyChange={setResidency}
+        timeRangeMonths={timeRangeMonths}
+        onTimeRangeChange={setTimeRangeMonths}
+      />
+
       {data.topPurpose && (
         <div className="hero-card">
           <div className="hero-label">Peamine reisieesmärk</div>

@@ -434,11 +434,11 @@ function OperatorInsights() {
 
         <div className="operator-control">
           <span>Külastajad</span>
-          <div className="residency-tabs">
+          <div className="pill-tabs">
             {RESIDENCY_TABS.map((tab) => (
               <button
                 key={tab.key}
-                className={"residency-tab" + (residency === tab.key ? " active" : "")}
+                className={"pill-tab" + (residency === tab.key ? " active" : "")}
                 onClick={() => setResidency(tab.key)}
               >
                 {tab.label}

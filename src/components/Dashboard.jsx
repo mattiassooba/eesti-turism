@@ -6,6 +6,7 @@ import SeasonalityStrip from "./SeasonalityStrip";
 import SplitBar from "./SplitBar";
 import Sparkline from "./Sparkline";
 import OperatorInsights from "./OperatorInsights";
+import SectionFilters from "./SectionFilters";
 import { DOMESTIC_COLOR, FOREIGN_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -53,8 +54,11 @@ function periodDelta(series, latestIndex, offset, label) {
 // Memoized — on this scrolling single-page layout, an ancestor state
 // update unrelated to this section's own props (e.g. scroll-driven
 // active-tab tracking) shouldn't re-render this section's charts/table.
-function Dashboard({ residency, timeRangeMonths, deltaMode }) {
+function Dashboard() {
   const [state, setState] = useState({ data: null, loading: true, error: null });
+  const [residency, setResidency] = useState("all");
+  const [timeRangeMonths, setTimeRangeMonths] = useState("24");
+  const [deltaMode, setDeltaMode] = useState("yoy");
 
   useAbortableEffect(
     async (signal, isActive) => {
@@ -183,6 +187,18 @@ function Dashboard({ residency, timeRangeMonths, deltaMode }) {
 
   return (
     <div className={"dashboard" + (state.loading ? " refetching" : "")}>
+      <SectionFilters
+        showTimeRange
+        showResidency
+        showDeltaMode
+        residency={residency}
+        onResidencyChange={setResidency}
+        timeRangeMonths={timeRangeMonths}
+        onTimeRangeChange={setTimeRangeMonths}
+        deltaMode={deltaMode}
+        onDeltaModeChange={setDeltaMode}
+      />
+
       <div className="kpi-row">
         <div className="hero-card">
           <div className="hero-label">

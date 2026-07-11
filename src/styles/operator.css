@@ -58,7 +58,7 @@
   outline-offset: 1px;
 }
 
-.residency-tabs {
+.pill-tabs {
   display: flex;
   gap: 4px;
   background: #fff;
@@ -67,7 +67,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-.residency-tab {
+.pill-tab {
   border: none;
   background: none;
   border-radius: 999px;
@@ -76,19 +76,20 @@
   font-size: 12.5px;
   color: var(--slate);
   cursor: pointer;
+  white-space: nowrap;
   transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
 }
 
-.residency-tab:hover {
+.pill-tab:hover {
   color: var(--ink);
 }
 
-.residency-tab.active {
+.pill-tab.active {
   background: var(--sea);
   color: #fff;
 }
 
-.residency-tab:focus-visible {
+.pill-tab:focus-visible {
   outline: 2px solid var(--sea);
   outline-offset: 1px;
 }

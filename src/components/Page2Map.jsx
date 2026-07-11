@@ -16,6 +16,7 @@ import EstoniaMap from "./EstoniaMap";
 import SeasonalityHeatmap from "./SeasonalityHeatmap";
 import RankedBarList from "./RankedBarList";
 import ChartTooltip from "./ChartTooltip";
+import SectionFilters from "./SectionFilters";
 import { DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -86,10 +87,12 @@ const ORIGIN_COUNTRY_LABELS = {
 };
 
 // Memoized — see Dashboard.jsx for why.
-function Page2Map({ residency, timeRangeMonths }) {
+function Page2Map() {
   const [base, setBase] = useState({ data: null, loading: true, error: null });
   const [origins, setOrigins] = useState({ data: null, loading: true, error: null });
   const [selectedCounty, setSelectedCounty] = useState(null); // { mkood, label } | null
+  const [residency, setResidency] = useState("all");
+  const [timeRangeMonths, setTimeRangeMonths] = useState("24");
 
   const windowSize = timeRangeMonths ? Number(timeRangeMonths) : 999;
 
@@ -246,6 +249,15 @@ function Page2Map({ residency, timeRangeMonths }) {
 
   return (
     <div className={"dashboard" + (base.loading ? " refetching" : "")}>
+      <SectionFilters
+        showTimeRange
+        showResidency
+        residency={residency}
+        onResidencyChange={setResidency}
+        timeRangeMonths={timeRangeMonths}
+        onTimeRangeChange={setTimeRangeMonths}
+      />
+
       {base.data.topCounty && (
         <div className="hero-card">
           <div className="hero-label">Enim ööbimisi</div>

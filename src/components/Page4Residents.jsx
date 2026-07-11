@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import RankedBarList from "./RankedBarList";
 import ChartTooltip from "./ChartTooltip";
+import SectionFilters from "./SectionFilters";
 import { DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
@@ -44,9 +45,10 @@ const ACCOMMODATION_LABELS = {
 };
 
 // Memoized — see Dashboard.jsx for why.
-function Page4Residents({ timeRangeMonths }) {
+function Page4Residents() {
   const [state, setState] = useState({ data: null, loading: true, error: null });
-  // This page's tables are quarterly, but the global time-range control is
+  const [timeRangeMonths, setTimeRangeMonths] = useState("24");
+  // This page's tables are quarterly, but the time-range control is
   // defined in months (it applies to monthly pages too) — convert here.
   const quarters = timeRangeMonths ? Math.max(Math.ceil(Number(timeRangeMonths) / 3), 4) : 999;
   const originQuarters = timeRangeMonths ? Math.max(Math.ceil(Number(timeRangeMonths) / 3), 1) : 999;
@@ -201,6 +203,12 @@ function Page4Residents({ timeRangeMonths }) {
 
   return (
     <div className={"dashboard" + (state.loading ? " refetching" : "")}>
+      <SectionFilters
+        showTimeRange
+        timeRangeMonths={timeRangeMonths}
+        onTimeRangeChange={setTimeRangeMonths}
+      />
+
       {topCountry && (
         <div className="hero-card">
           <div className="hero-label">Populaarseim sihtriik</div>

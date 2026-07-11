@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import TableView from "./components/TableView";
 import Dashboard from "./components/Dashboard";
@@ -72,10 +72,15 @@ export default function App() {
     };
   }, [scrollRequest, view]);
 
-  function handleSelectTable(path, tableId, title) {
+  // Stable reference: this is passed as a prop into Dashboard, which is
+  // wrapped in memo() specifically so the frequent activeSection updates
+  // from scrolling don't cascade into re-rendering the dashboard's dozen
+  // chart instances — a new function identity on every render would
+  // defeat that regardless of the memo wrapper.
+  const handleSelectTable = useCallback((path, tableId, title) => {
     setSelected({ path, tableId, title });
     setView("browse");
-  }
+  }, []);
 
   function handleNavClick(key) {
     if (key === "browse") {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { fetchTableData, isAbortError } from "../api/pxweb";
 import { flattenToRows } from "../api/jsonStat";
 import { useAbortableEffect } from "../hooks/useAbortableEffect";
@@ -43,7 +43,8 @@ const ACCOMMODATION_LABELS = {
   NR_OTH: "Muu tasuta majutus",
 };
 
-export default function Page4Residents({ timeRangeMonths }) {
+// Memoized — see Dashboard.jsx for why.
+function Page4Residents({ timeRangeMonths }) {
   const [state, setState] = useState({ data: null, loading: true, error: null });
   // This page's tables are quarterly, but the global time-range control is
   // defined in months (it applies to monthly pages too) — convert here.
@@ -288,3 +289,5 @@ export default function Page4Residents({ timeRangeMonths }) {
     </div>
   );
 }
+
+export default memo(Page4Residents);

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { fetchTableData, isAbortError } from "../api/pxweb";
 import { flattenToRows } from "../api/jsonStat";
 import { useAbortableEffect } from "../hooks/useAbortableEffect";
@@ -130,7 +130,11 @@ function avgAndLast(capByPeriod, periods, field) {
   return { avg: count ? sum / count : null, last };
 }
 
-export default function OperatorInsights() {
+// Memoized — takes no props, so on a page where an unrelated ancestor
+// state update (e.g. scroll-driven active-tab tracking) triggers frequent
+// re-renders, this large table+chart section has zero reason to ever
+// re-render in response.
+function OperatorInsights() {
   const [state, setState] = useState({ data: null, loading: true, error: null });
   const [region, setRegion] = useState("EE00370000000000");
   const [residency, setResidency] = useState("all");
@@ -693,6 +697,8 @@ export default function OperatorInsights() {
     </section>
   );
 }
+
+export default memo(OperatorInsights);
 
 function MonthlySnapshotTable({ snapshot }) {
   return (

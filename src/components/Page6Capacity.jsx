@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { fetchTableData, isAbortError } from "../api/pxweb";
 import { flattenToRows } from "../api/jsonStat";
 import { useAbortableEffect } from "../hooks/useAbortableEffect";
@@ -26,7 +26,8 @@ const REGION_LABELS = {
   EE008: "Lõuna-Eesti",
 };
 
-export default function Page6Capacity() {
+// Memoized — see Dashboard.jsx for why.
+function Page6Capacity() {
   const [state, setState] = useState({ status: "loading" });
 
   useAbortableEffect(async (signal, isActive) => {
@@ -210,3 +211,5 @@ export default function Page6Capacity() {
     </div>
   );
 }
+
+export default memo(Page6Capacity);

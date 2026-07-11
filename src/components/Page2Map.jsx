@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { fetchTableData, isAbortError } from "../api/pxweb";
 import { flattenToRows } from "../api/jsonStat";
 import { useAbortableEffect } from "../hooks/useAbortableEffect";
@@ -85,7 +85,8 @@ const ORIGIN_COUNTRY_LABELS = {
   DK: "Taani",
 };
 
-export default function Page2Map({ residency, timeRangeMonths }) {
+// Memoized — see Dashboard.jsx for why.
+function Page2Map({ residency, timeRangeMonths }) {
   const [base, setBase] = useState({ data: null, loading: true, error: null });
   const [origins, setOrigins] = useState({ data: null, loading: true, error: null });
   const [selectedCounty, setSelectedCounty] = useState(null); // { mkood, label } | null
@@ -339,3 +340,5 @@ export default function Page2Map({ residency, timeRangeMonths }) {
     </div>
   );
 }
+
+export default memo(Page2Map);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { fetchTableData, isAbortError } from "../api/pxweb";
 import { flattenToRows } from "../api/jsonStat";
 import { useAbortableEffect } from "../hooks/useAbortableEffect";
@@ -60,7 +60,10 @@ function periodDelta(series, latestIndex, offset, label) {
   return { pct: ((latest - compare) / compare) * 100, label };
 }
 
-export default function Dashboard({ onSelectTable, residency, timeRangeMonths, deltaMode }) {
+// Memoized — on this scrolling single-page layout, an ancestor state
+// update unrelated to this section's own props (e.g. scroll-driven
+// active-tab tracking) shouldn't re-render this section's charts/table.
+function Dashboard({ onSelectTable, residency, timeRangeMonths, deltaMode }) {
   const [state, setState] = useState({ data: null, loading: true, error: null });
 
   useAbortableEffect(
@@ -263,3 +266,5 @@ export default function Dashboard({ onSelectTable, residency, timeRangeMonths, d
     </div>
   );
 }
+
+export default memo(Dashboard);

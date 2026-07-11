@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { fetchTableData, isAbortError } from "../api/pxweb";
 import { flattenToRows } from "../api/jsonStat";
 import { useAbortableEffect } from "../hooks/useAbortableEffect";
@@ -29,7 +29,8 @@ const RESIDENCY_TITLE = {
   foreign: "Väliskülastajate ööbimised",
 };
 
-export default function Page3Purpose({ residency, timeRangeMonths }) {
+// Memoized — see Dashboard.jsx for why.
+function Page3Purpose({ residency, timeRangeMonths }) {
   const [state, setState] = useState({ data: null, loading: true, error: null });
   const windowSize = timeRangeMonths ? Number(timeRangeMonths) : 999;
 
@@ -214,3 +215,5 @@ export default function Page3Purpose({ residency, timeRangeMonths }) {
     </div>
   );
 }
+
+export default memo(Page3Purpose);

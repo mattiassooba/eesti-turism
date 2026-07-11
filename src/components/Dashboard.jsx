@@ -7,6 +7,7 @@ import SplitBar from "./SplitBar";
 import Sparkline from "./Sparkline";
 import OperatorInsights from "./OperatorInsights";
 import SectionFilters from "./SectionFilters";
+import TableSource from "./TableSource";
 import { DOMESTIC_COLOR, FOREIGN_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -57,12 +58,13 @@ function periodDelta(series, latestIndex, offset, label) {
 function Dashboard() {
   const [state, setState] = useState({ data: null, loading: true, error: null });
   const [residency, setResidency] = useState("all");
-  const [timeRangeMonths, setTimeRangeMonths] = useState("24");
   const [deltaMode, setDeltaMode] = useState("yoy");
 
   useAbortableEffect(
     async (signal, isActive) => {
-      const fetchCount = timeRangeMonths ? Math.max(Number(timeRangeMonths), 25) : 999;
+      // Fixed window: covers the 12-month nights sparkline plus enough
+      // headroom for the YoY delta (looks back 12 months from the latest).
+      const fetchCount = 25;
       const residencyCode = RESIDENCY[residency]?.code ?? "WORLD";
       setState((prev) => ({ ...prev, loading: true, error: null }));
 
@@ -91,7 +93,7 @@ function Dashboard() {
               { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
               { code: "Maakond", selection: { filter: "item", values: REAL_COUNTY_CODES } },
               { code: "Elukohariik", selection: { filter: "item", values: [residencyCode] } },
-              { code: "Vaatlusperiood", selection: { filter: "top", values: ["1"] } },
+              { code: "Vaatlusperiood", selection: { filter: "top", values: [String(fetchCount)] } },
             ],
             { signal }
           ),
@@ -120,12 +122,17 @@ function Dashboard() {
         const domesticGuests = latest.OCC_ARR_EE ?? 0;
         const foreignGuests = latest.OCC_ARR_FOR ?? 0;
         const avgNightsPerGuest = totalGuests ? totalNights / totalGuests : 0;
+        const avgNightsSeries = periods.map((p) => {
+          const g = byPeriod.get(p)[`OCC_ARR_${residencyCode}`] ?? 0;
+          const n = byPeriod.get(p)[`OCC_NI_${residencyCode}`] ?? 0;
+          return g ? n / g : 0;
+        });
 
         const months = periods.slice(-12).map((p) => ({
           label: byPeriod.get(p).label,
           value: byPeriod.get(p)[`OCC_ARR_${residencyCode}`] ?? 0,
         }));
-        const sparkWindow = timeRangeMonths ? Number(timeRangeMonths) : periods.length;
+        const sparkWindow = 12;
         const nightsSparkline = periods.slice(-sparkWindow).map((p) => ({
           value: byPeriod.get(p)[`OCC_NI_${residencyCode}`] ?? 0,
         }));
@@ -134,13 +141,22 @@ function Dashboard() {
         const deltaCompareLabel = deltaMode === "mom" ? "eelmine kuu" : "aasta tagasi";
 
         const countyRows = flattenToRows(county);
+        const countyByPeriod = new Map();
+        for (const row of countyRows) {
+          if (!countyByPeriod.has(row.Vaatlusperiood)) countyByPeriod.set(row.Vaatlusperiood, new Map());
+          countyByPeriod.get(row.Vaatlusperiood).set(row.Maakond, row.value);
+        }
         let topCounty = null;
         for (const row of countyRows) {
-          if (row.value === null) continue;
+          if (row.Vaatlusperiood !== periods[latestIdx] || row.value === null) continue;
           if (!topCounty || row.value > topCounty.value) {
-            topCounty = { label: row.Maakond_label, value: row.value };
+            topCounty = { code: row.Maakond, label: row.Maakond_label, value: row.value };
           }
         }
+        const topCountySeries = periods.map((p) => countyByPeriod.get(p)?.get(topCounty?.code) ?? 0);
+        const topCountyDelta = topCounty
+          ? periodDelta(topCountySeries, latestIdx, deltaOffset, deltaCompareLabel)
+          : null;
 
         if (isActive()) {
           setState({
@@ -153,10 +169,12 @@ function Dashboard() {
               avgNightsPerGuest,
               guestsDelta: periodDelta(guestsSeries, latestIdx, deltaOffset, deltaCompareLabel),
               nightsDelta: periodDelta(nightsSeries, latestIdx, deltaOffset, deltaCompareLabel),
+              avgNightsDelta: periodDelta(avgNightsSeries, latestIdx, deltaOffset, deltaCompareLabel),
               months,
               nightsSparkline,
               sparkWindow,
               topCounty,
+              topCountyDelta,
             },
             loading: false,
             error: null,
@@ -167,7 +185,7 @@ function Dashboard() {
         if (isActive()) setState((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     },
-    [residency, timeRangeMonths, deltaMode]
+    [residency, deltaMode]
   );
 
   if (!state.data && state.loading) {
@@ -188,13 +206,10 @@ function Dashboard() {
   return (
     <div className={"dashboard" + (state.loading ? " refetching" : "")}>
       <SectionFilters
-        showTimeRange
         showResidency
         showDeltaMode
         residency={residency}
         onResidencyChange={setResidency}
-        timeRangeMonths={timeRangeMonths}
-        onTimeRangeChange={setTimeRangeMonths}
         deltaMode={deltaMode}
         onDeltaModeChange={setDeltaMode}
       />
@@ -216,6 +231,7 @@ function Dashboard() {
             <span className="seasonality-legend-gradient" />
             <span>Tipphooaeg</span>
           </div>
+          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
         </div>
 
         <div className="hero-card">
@@ -230,28 +246,43 @@ function Dashboard() {
           )}
           <Sparkline data={data.nightsSparkline} />
           <div className="hero-caption">Viimased {data.sparkWindow} kuud</div>
+          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
         </div>
       </div>
 
       {residency === "all" && (
-        <SplitBar
-          segments={[
-            { label: "Eesti elanikud", value: data.domesticGuests, color: DOMESTIC_COLOR },
-            { label: "Väliskülastajad", value: data.foreignGuests, color: FOREIGN_COLOR },
-          ]}
-        />
+        <div>
+          <SplitBar
+            segments={[
+              { label: "Eesti elanikud", value: data.domesticGuests, color: DOMESTIC_COLOR },
+              { label: "Väliskülastajad", value: data.foreignGuests, color: FOREIGN_COLOR },
+            ]}
+          />
+          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
+        </div>
       )}
 
       <div className="tile-row">
         <div className="stat-tile">
           <div className="tile-label">Enim külastatud maakond</div>
           <div className="tile-number tile-number-small">{data.topCounty?.label ?? "—"}</div>
+          {data.topCountyDelta && (
+            <div className={"tile-delta " + (data.topCountyDelta.pct >= 0 ? "delta-up-text" : "delta-down-text")}>
+              {deltaText(data.topCountyDelta)}
+            </div>
+          )}
         </div>
         <div className="stat-tile">
           <div className="tile-label">Keskmine ööbimiste arv külastaja kohta</div>
           <div className="tile-number">{data.avgNightsPerGuest.toFixed(2)}</div>
+          {data.avgNightsDelta && (
+            <div className={"tile-delta " + (data.avgNightsDelta.pct >= 0 ? "delta-up-text" : "delta-down-text")}>
+              {deltaText(data.avgNightsDelta)}
+            </div>
+          )}
         </div>
       </div>
+      <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
 
       <OperatorInsights />
     </div>

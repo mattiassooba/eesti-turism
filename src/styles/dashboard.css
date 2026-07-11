@@ -205,6 +205,42 @@
   font-weight: 600;
 }
 
+.tile-delta {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  margin-top: 6px;
+}
+
+.table-source {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--slate);
+  margin-top: 10px;
+}
+
+.table-source a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(91, 107, 122, 0.4);
+}
+
+.table-source a:hover {
+  color: var(--sea);
+}
+
+.table-source-dark {
+  color: rgba(238, 240, 238, 0.55);
+}
+
+.table-source-dark a {
+  color: inherit;
+  text-decoration-color: rgba(238, 240, 238, 0.35);
+}
+
+.table-source-dark a:hover {
+  color: var(--midsummer);
+}
+
 .quick-links-label {
   font-family: var(--font-display);
   font-size: 13px;

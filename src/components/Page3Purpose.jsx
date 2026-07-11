@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import ChartTooltip from "./ChartTooltip";
 import SectionFilters from "./SectionFilters";
+import TableSource from "./TableSource";
 import { CHART_COLORS, DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -159,6 +160,7 @@ function Page3Purpose() {
               {data.topPurposeShare.toFixed(0)}% kõigist ööbimistest selle akna jooksul
             </div>
           )}
+          <TableSource path={MAJUTUS_PATH} ids={["TU133.PX"]} dark />
         </div>
       )}
 
@@ -198,6 +200,7 @@ function Page3Purpose() {
             ))}
           </AreaChart>
         </ResponsiveContainer>
+        <TableSource path={MAJUTUS_PATH} ids={["TU133.PX"]} />
       </div>
 
       <div className="data-card">
@@ -223,6 +226,7 @@ function Page3Purpose() {
             <Bar dataKey="Välisreisid" fill={FOREIGN_COLOR} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
+        <TableSource path={REISIMINE_PATH} ids={["TU54.PX"]} />
       </div>
     </div>
   );

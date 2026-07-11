@@ -17,6 +17,7 @@ import {
 import RankedBarList from "./RankedBarList";
 import ChartTooltip from "./ChartTooltip";
 import SectionFilters from "./SectionFilters";
+import TableSource from "./TableSource";
 import { DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
@@ -216,6 +217,7 @@ function Page4Residents() {
           <div className="hero-caption">
             {topCountry.value.toLocaleString("et-EE")} tuh reisi
           </div>
+          <TableSource path={REISIMINE_PATH} ids={["TU63.PX"]} dark />
         </div>
       )}
 
@@ -243,17 +245,20 @@ function Page4Residents() {
             <Bar dataKey="Välisreisid" fill={FOREIGN_COLOR} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
+        <TableSource path={REISIMINE_PATH} ids={["TU51.PX"]} />
       </div>
 
       <div className="tile-row-split">
         <div className="data-card">
           <h3>Enim külastatud sihtriigid (viimased {originQuarters === 999 ? "kõik" : originQuarters} kvartalit, tuhat reisi)</h3>
           <RankedBarList items={data.countries} unit="tuh reisi" />
+          <TableSource path={REISIMINE_PATH} ids={["TU63.PX"]} />
         </div>
 
         <div className="data-card">
           <h3>Majutuse liik reisidel (viimane kvartal, tuhat ööbimist)</h3>
           <RankedBarList items={data.accommodation} unit="tuh ööbimist" />
+          <TableSource path={REISIMINE_PATH} ids={["TU551.PX"]} />
         </div>
       </div>
 
@@ -293,6 +298,7 @@ function Page4Residents() {
             />
           </LineChart>
         </ResponsiveContainer>
+        <TableSource path={REISIMINE_PATH} ids={["TU56.PX", "TU661.PX"]} />
       </div>
     </div>
   );

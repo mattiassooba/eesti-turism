@@ -15,6 +15,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import ChartTooltip from "./ChartTooltip";
+import TableSource from "./TableSource";
 import { CHART_COLORS, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -221,6 +222,7 @@ function Page6Capacity() {
             ▲ {data.growthMultiple.toFixed(1)}x rohkem kui 1992. aastal
           </div>
         )}
+        <TableSource path={MAJUTUS_PATH} ids={["TU11.PX"]} dark />
       </div>
 
       <div className="data-card">
@@ -247,6 +249,7 @@ function Page6Capacity() {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        <TableSource path={MAJUTUS_PATH} ids={["TU11.PX"]} />
       </div>
 
       <div className="tile-row-split">
@@ -277,6 +280,7 @@ function Page6Capacity() {
               />
             </LineChart>
           </ResponsiveContainer>
+          <TableSource path={MAJUTUS_PATH} ids={["TU11.PX"]} />
         </div>
 
         <div className="data-card">
@@ -307,6 +311,7 @@ function Page6Capacity() {
               />
             </LineChart>
           </ResponsiveContainer>
+          <TableSource path={MAJUTUS_PATH} ids={["TU110.PX"]} />
         </div>
       </div>
       {region !== "EE" && (

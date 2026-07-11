@@ -5,6 +5,7 @@ import Dashboard from "./components/Dashboard";
 import Page2Map from "./components/Page2Map";
 import Page3Purpose from "./components/Page3Purpose";
 import Page4Residents from "./components/Page4Residents";
+import Page5Expenses from "./components/Page5Expenses";
 import Page6Capacity from "./components/Page6Capacity";
 import LazyMount from "./components/LazyMount";
 import SourceFooter from "./components/SourceFooter";
@@ -28,15 +29,17 @@ const RAIL_ITEMS = [
   { key: "map", label: "Kaart ja hooajalisus" },
   { key: "purpose", label: "Eesmärk ja kestus" },
   { key: "capacity", label: "Mahutavus" },
+  { key: "expenses", label: "Reisikulutused" },
 ];
 
-// Ülevaade, Kaart ja hooajalisus, Eesmärk ja kestus, and Mahutavus scroll
-// past one another on one continuous page. Residentide reisid and Kõik
-// tabelid are each their own destination instead — Residents because it's
-// about Estonians' own travel (a different subject from the rest, which
-// are all about visitors to Estonia), not something that should load by
-// default when the site opens; Browse because it's a different workflow
-// (raw table + sidebar) entirely.
+// Ülevaade, Kaart ja hooajalisus, Eesmärk ja kestus, Mahutavus, and
+// Reisikulutused scroll past one another on one continuous page (by
+// request, Reisikulutused sits here despite being about residents' own
+// spending rather than visitors to Estonia, unlike Residentide reisid).
+// Residentide reisid and Kõik tabelid are each their own destination
+// instead — Residents because it's a different subject from the rest of
+// the scroll and shouldn't load by default when the site opens; Browse
+// because it's a different workflow (raw table + sidebar) entirely.
 const SCROLL_SECTIONS = RAIL_ITEMS.map((item) => item.key);
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -163,6 +166,13 @@ export default function App() {
                 <h2 className="scroll-section-title">Mahutavus</h2>
                 <LazyMount containerRef={mainPanelRef}>
                   <Page6Capacity />
+                </LazyMount>
+              </section>
+
+              <section id="expenses" className="scroll-section">
+                <h2 className="scroll-section-title">Reisikulutused</h2>
+                <LazyMount containerRef={mainPanelRef}>
+                  <Page5Expenses />
                 </LazyMount>
               </section>
             </div>

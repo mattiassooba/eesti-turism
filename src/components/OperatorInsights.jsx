@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import ChartTooltip from "./ChartTooltip";
 import RankedBarList from "./RankedBarList";
+import TableSource from "./TableSource";
 import { CHART_COLORS, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -670,6 +671,7 @@ function OperatorInsights() {
           * osaline aasta &nbsp;·&nbsp; RevPAR = keskmine ööhind × täituvus (arvutuslik näitaja, mitte otsene
           Statistikaameti andmeväli) &nbsp;·&nbsp; Päritoluriigid on järjestatud aasta ööbimiste järgi
         </div>
+        <TableSource path={MAJUTUS_PATH} ids={["TU131.PX", "TU122.PX"]} />
       </div>
 
       <div className="tile-row-split">
@@ -678,12 +680,14 @@ function OperatorInsights() {
             Eesti — {view.latestLabel} vs {view.prevLabel}
           </h3>
           <MonthlySnapshotTable snapshot={view.nationalMonthly} />
+          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX", "TU122.PX"]} />
         </div>
         <div className="data-card">
           <h3>
             {regionLabel} — {view.latestLabel} vs {view.prevLabel}
           </h3>
           <MonthlySnapshotTable snapshot={view.regionMonthly} />
+          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX", "TU122.PX"]} />
         </div>
       </div>
 
@@ -702,6 +706,7 @@ function OperatorInsights() {
             )}
           </div>
         )}
+        <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
       </div>
     </section>
   );

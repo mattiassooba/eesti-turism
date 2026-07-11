@@ -44,13 +44,24 @@
 .operator-control select {
   font-family: var(--font-mono);
   font-size: 13px;
-  padding: 7px 12px;
+  padding: 7px 30px 7px 14px;
   border: none;
   border-radius: 999px;
-  background: #fff;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%235b6b7a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
   color: var(--ink);
   box-shadow: var(--shadow-sm);
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  transition: box-shadow 0.15s var(--ease);
+}
+
+.operator-control select:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .operator-control select:focus-visible {

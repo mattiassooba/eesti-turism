@@ -17,6 +17,7 @@ import SeasonalityHeatmap from "./SeasonalityHeatmap";
 import RankedBarList from "./RankedBarList";
 import ChartTooltip from "./ChartTooltip";
 import SectionFilters from "./SectionFilters";
+import TableSource from "./TableSource";
 import { DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -265,6 +266,7 @@ function Page2Map() {
           <div className="hero-caption">
             {base.data.topCounty.value.toLocaleString("et-EE")} ööd
           </div>
+          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
         </div>
       )}
 
@@ -279,6 +281,7 @@ function Page2Map() {
               setSelectedCounty((prev) => (prev?.mkood === mkood ? null : { mkood, label }))
             }
           />
+          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
         </div>
 
         <div className="data-card">
@@ -302,6 +305,7 @@ function Page2Map() {
               )}
             </div>
           )}
+          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
         </div>
       </div>
 
@@ -343,11 +347,13 @@ function Page2Map() {
             />
           </LineChart>
         </ResponsiveContainer>
+        <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
       </div>
 
       <div className="data-card">
         <h3>Hooajalisus: majutatute arv kuu ja aasta järgi</h3>
         <SeasonalityHeatmap years={base.data.years} grid={base.data.grid} />
+        <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
       </div>
     </div>
   );

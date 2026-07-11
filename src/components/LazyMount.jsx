@@ -6,7 +6,14 @@ import { useEffect, useRef, useState } from "react";
 // on load, instead of only the sections the user actually scrolls to. Once
 // shown, a section stays mounted — scrolling back up shouldn't unmount it
 // and lose its fetched data.
-export default function LazyMount({ children, containerRef, rootMargin = "600px 0px" }) {
+//
+// rootMargin is deliberately large (several screens' worth): the goal
+// isn't just "don't fetch until near the viewport", it's "finish fetching
+// and rendering well before the user actually scrolls there". A tight
+// margin (e.g. one viewport) means the section's fetch is often still in
+// flight when it scrolls into view, so the placeholder-to-content swap
+// happens mid-scroll and visibly hitches the page right at that moment.
+export default function LazyMount({ children, containerRef, rootMargin = "2400px 0px" }) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
 
@@ -17,50 +24,52 @@ export default function LazyMount({ children, containerRef, rootMargin = "600px 
     if (!el || !root) return;
 
     let intersecting = false;
-    let settleTimer = null;
-
-    function scheduleCheck() {
-      if (settleTimer) clearTimeout(settleTimer);
-      settleTimer = setTimeout(() => {
-        if (intersecting) {
-          setVisible(true);
-          cleanup();
-        }
-      }, 600);
-    }
-
-    // Below the 720px responsive breakpoint, .main-panel's max-height is
-    // dropped and the window scrolls instead — IntersectionObserver needs
-    // a root with real scrollable overflow, so fall back to the window
-    // (root: null) when .main-panel itself has none.
     const rootScrolls = root.scrollHeight > root.clientHeight;
     const io = new IntersectionObserver(
       (entries) => {
         intersecting = entries[0].isIntersecting;
-        scheduleCheck();
       },
       { root: rootScrolls ? root : null, rootMargin }
     );
     io.observe(el);
 
-    // An earlier section can still be short (its own async data hasn't
-    // rendered yet, e.g. the dashboard before its fetch resolves), making
-    // this section look closer to the viewport than it will end up once
-    // that content finishes loading and pushes it further down. .main-panel
-    // itself has a fixed height (it's the scroll container), so watch the
-    // section stack's actual content height instead, and only trust the
-    // intersection reading once it's stopped growing for a beat.
-    const growthTarget = el.closest(".scroll-sections") ?? root;
-    const ro = new ResizeObserver(scheduleCheck);
-    ro.observe(growthTarget);
+    // A section earlier on the page can still be loading and growing,
+    // which shifts this section's position — poll this element's own
+    // position rather than reacting to any resize of the shared page
+    // container. Watching the shared container instead would mean every
+    // section's own placeholder-to-content swap resets every *other*
+    // section's settle check too (they all resize the same container),
+    // which can cascade into never settling. Committing only once this
+    // element's own position has held steady across two checks avoids
+    // that entirely. offsetTop (not getBoundingClientRect, which is
+    // viewport-relative) so an ongoing scroll doesn't itself look like a
+    // layout shift.
+    let lastTop = null;
+    let stableCount = 0;
+    const poll = setInterval(() => {
+      const top = el.offsetTop;
+      if (intersecting && top === lastTop) {
+        stableCount++;
+        if (stableCount >= 2) {
+          setVisible(true);
+          cleanup();
+        }
+      } else {
+        stableCount = 0;
+      }
+      lastTop = top;
+    }, 300);
 
     function cleanup() {
       io.disconnect();
-      ro.disconnect();
-      if (settleTimer) clearTimeout(settleTimer);
+      clearInterval(poll);
     }
     return cleanup;
   }, [visible, containerRef, rootMargin]);
 
-  return <div ref={ref}>{visible ? children : <div className="panel-status">Laen…</div>}</div>;
+  return (
+    <div ref={ref}>
+      {visible ? children : <div className="panel-status lazy-placeholder">Laen…</div>}
+    </div>
+  );
 }

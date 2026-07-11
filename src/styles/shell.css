@@ -262,6 +262,13 @@
   font-family: var(--font-body);
 }
 
+/* Reserves roughly the space a loaded section ends up taking, so the
+   placeholder-to-content swap (once its lazy-loaded data arrives) shifts
+   the page as little as possible instead of visibly hitching it. */
+.lazy-placeholder {
+  min-height: 70vh;
+}
+
 .panel-error {
   color: var(--alert);
   font-family: var(--font-body);

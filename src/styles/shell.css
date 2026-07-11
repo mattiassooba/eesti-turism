@@ -315,3 +315,136 @@
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
+
+/* Section rail — floating scroll-position nav for the continuous-scroll
+   pages (Ülevaade → Kaart ja hooajalisus → Eesmärk ja kestus → Mahutavus).
+   Dots fill in behind the current position (seen) and stay hollow ahead of
+   it (not yet seen), so the shape of the list alone says "you're partway
+   through a fixed sequence" without needing a progress bar. */
+.section-rail {
+  position: fixed;
+  top: 50%;
+  right: 22px;
+  transform: translateY(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(6px);
+  border-radius: var(--radius-lg);
+  padding: 18px 16px;
+  box-shadow: var(--shadow-md);
+}
+
+.section-rail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.section-rail-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--slate);
+  background: transparent;
+  transition: all 0.2s var(--ease);
+}
+
+.section-rail-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--slate);
+  white-space: nowrap;
+  transition: color 0.2s var(--ease), font-weight 0.2s var(--ease);
+}
+
+.section-rail-passed .section-rail-dot {
+  background: var(--slate);
+  border-color: var(--slate);
+}
+
+.section-rail-passed .section-rail-label {
+  opacity: 0.75;
+}
+
+.section-rail-active .section-rail-dot {
+  width: 11px;
+  height: 11px;
+  background: var(--midsummer);
+  border-color: var(--midsummer);
+  box-shadow: 0 0 0 4px rgba(217, 142, 43, 0.22);
+}
+
+.section-rail-active .section-rail-label {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.section-rail-item:hover .section-rail-label {
+  color: var(--ink);
+}
+
+.section-rail-item:focus-visible {
+  outline: 2px solid var(--sea);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.section-rail-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--slate);
+  text-transform: uppercase;
+  opacity: 1;
+  transition: opacity 0.3s var(--ease);
+}
+
+.section-rail-hint-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.section-rail-chevron {
+  font-size: 15px;
+  line-height: 1;
+  animation: section-rail-bounce 1.6s ease-in-out infinite;
+}
+
+@keyframes section-rail-bounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .section-rail {
+    display: none;
+  }
+}

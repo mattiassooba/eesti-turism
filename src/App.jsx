@@ -9,16 +9,26 @@ import Page6Capacity from "./components/Page6Capacity";
 import LazyMount from "./components/LazyMount";
 import SourceFooter from "./components/SourceFooter";
 import GlobalFilters from "./components/GlobalFilters";
+import SectionRail from "./components/SectionRail";
 import { useActiveSection } from "./hooks/useActiveSection";
 import "./App.css";
 
-const NAV_ITEMS = [
+// Top bar only carries the three distinct destinations now: the scroll
+// entry point, and the two pages that aren't part of the scroll at all.
+// The sections within the scroll (map/purpose/capacity) moved to the
+// SectionRail floating on the right, alongside Ülevaade itself so the
+// rail always shows a current position even while at the very top.
+const TOP_NAV_ITEMS = [
+  { key: "dashboard", label: "Ülevaade" },
+  { key: "residents", label: "Residentide reisid" },
+  { key: "browse", label: "Kõik tabelid" },
+];
+
+const RAIL_ITEMS = [
   { key: "dashboard", label: "Ülevaade" },
   { key: "map", label: "Kaart ja hooajalisus" },
   { key: "purpose", label: "Eesmärk ja kestus" },
-  { key: "residents", label: "Residentide reisid" },
   { key: "capacity", label: "Mahutavus" },
-  { key: "browse", label: "Kõik tabelid" },
 ];
 
 // Ülevaade, Kaart ja hooajalisus, Eesmärk ja kestus, and Mahutavus scroll
@@ -28,7 +38,7 @@ const NAV_ITEMS = [
 // are all about visitors to Estonia), not something that should load by
 // default when the site opens; Browse because it's a different workflow
 // (raw table + sidebar) entirely.
-const SCROLL_SECTIONS = ["dashboard", "map", "purpose", "capacity"];
+const SCROLL_SECTIONS = RAIL_ITEMS.map((item) => item.key);
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 const QUICK_LINKS = [
@@ -124,7 +134,7 @@ export default function App() {
       <header className="top-nav">
         <div className="top-nav-title">Eesti Turism</div>
         <nav className="top-nav-tabs">
-          {NAV_ITEMS.map((item) => (
+          {TOP_NAV_ITEMS.map((item) => (
             <button
               key={item.key}
               className={"top-nav-tab" + (activeTab === item.key ? " active" : "")}
@@ -147,6 +157,10 @@ export default function App() {
         deltaMode={deltaMode}
         onDeltaModeChange={setDeltaMode}
       />
+
+      {view === "scroll" && (
+        <SectionRail items={RAIL_ITEMS} activeKey={activeSection} onSelect={handleNavClick} />
+      )}
 
       <div className="app-body">
         {view === "browse" && (

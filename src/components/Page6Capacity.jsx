@@ -16,18 +16,11 @@ import {
 } from "recharts";
 import ChartTooltip from "./ChartTooltip";
 import TableSource from "./TableSource";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
+import { formatNumber } from "../i18n/format";
 import { CHART_COLORS, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
-
-const REGION_LABELS = {
-  EE001: "Põhja-Eesti",
-  EE009: "Kesk-Eesti",
-  EE00A: "Kirde-Eesti",
-  EE004: "Lääne-Eesti",
-  EE008: "Lõuna-Eesti",
-};
-const REGION_OPTIONS = { EE: "Eesti tervikuna", ...REGION_LABELS };
 
 // TU11 (bed capacity) groups by Piirkond (5 macro-regions); TU110
 // (occupancy) only groups by Maakond (15 counties) — it has no Piirkond
@@ -44,7 +37,7 @@ const PIIRKOND_MAAKONDS = {
   EE008: ["EE00640000000000", "EE00790000000000", "EE00810000000000", "EE00840000000000", "EE00870000000000"], // Lõuna-Eesti = Põlva, Tartu, Valga, Viljandi, Võru
 };
 
-function computeOccupancyChart(rows, region) {
+function computeOccupancyChart(rows, region, occupancyKey) {
   const byPeriod = new Map();
   for (const row of rows) {
     if (row.value === null) continue;
@@ -61,7 +54,7 @@ function computeOccupancyChart(rows, region) {
     const bucket = byPeriod.get(p);
     if (region === "EE") {
       const ee = bucket.maakonds.get("EE");
-      return { x: bucket.label, "Täituvus, %": ee?.OCC_OR_BEDP ?? null };
+      return { x: bucket.label, [occupancyKey]: ee?.OCC_OR_BEDP ?? null };
     }
     let weightedSum = 0;
     let totalBeds = 0;
@@ -70,12 +63,16 @@ function computeOccupancyChart(rows, region) {
       weightedSum += m.OCC_OR_BEDP * m.CAP_BEDP;
       totalBeds += m.CAP_BEDP;
     }
-    return { x: bucket.label, "Täituvus, %": totalBeds ? weightedSum / totalBeds : null };
+    return { x: bucket.label, [occupancyKey]: totalBeds ? weightedSum / totalBeds : null };
   });
 }
 
 // Memoized — see Dashboard.jsx for why.
 function Page6Capacity() {
+  const { t, locale } = useTranslation();
+  const REGION_LABELS = t("codes.piirkond");
+  const REGION_OPTIONS = { EE: t("capacity.wholeEstonia"), ...REGION_LABELS };
+  const occupancyKey = t("capacity.occupancyPct");
   const [state, setState] = useState({ data: null, loading: true, error: null });
   const [region, setRegion] = useState("EE");
   const [yearsToShow, setYearsToShow] = useState(15);
@@ -100,7 +97,7 @@ function Page6Capacity() {
               },
               { code: "Vaatlusperiood", selection: { filter: "top", values: ["1"] } },
             ],
-            { signal }
+            { signal, locale }
           ),
           fetchTableData(
             MAJUTUS_PATH,
@@ -110,7 +107,7 @@ function Page6Capacity() {
               { code: "Piirkond", selection: { filter: "item", values: [region] } },
               { code: "Vaatlusperiood", selection: { filter: "top", values: ["34"] } },
             ],
-            { signal }
+            { signal, locale }
           ),
           fetchTableData(
             MAJUTUS_PATH,
@@ -123,7 +120,7 @@ function Page6Capacity() {
               { code: "Maakond", selection: { filter: "item", values: occupancyMaakonds } },
               { code: "Vaatlusperiood", selection: { filter: "top", values: ["22"] } },
             ],
-            { signal }
+            { signal, locale }
           ),
         ]);
 
@@ -142,7 +139,7 @@ function Page6Capacity() {
         const growthMultiple =
           firstCapacity && latestCapacity ? latestCapacity / firstCapacity : null;
 
-        const occupancyChart = computeOccupancyChart(flattenToRows(occupancyData), region);
+        const occupancyChart = computeOccupancyChart(flattenToRows(occupancyData), region, occupancyKey);
 
         if (isActive()) {
           setState({
@@ -163,7 +160,7 @@ function Page6Capacity() {
         if (isActive()) setState((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     },
-    [region]
+    [region, locale, t, occupancyKey]
   );
 
   const maxYears = state.data ? Math.max(state.data.trendChart.length, 5) : 34;
@@ -176,19 +173,19 @@ function Page6Capacity() {
     [state.data, yearsToShow]
   );
 
-  if (!state.data && state.loading) return <div className="panel-status">Laen…</div>;
+  if (!state.data && state.loading) return <div className="panel-status">{t("capacity.loading")}</div>;
   if (!state.data && state.error)
-    return <div className="panel-error">Andmete laadimine ebaõnnestus: {state.error}</div>;
+    return <div className="panel-error">{t("capacity.loadError", state.error)}</div>;
 
   const { data } = state;
   const regionLabel = REGION_OPTIONS[region];
-  const regionSuffix = region === "EE" ? "Eesti kokku" : regionLabel;
+  const regionSuffix = region === "EE" ? t("capacity.wholeEstoniaSuffix") : regionLabel;
 
   return (
     <div className={"dashboard" + (state.loading ? " refetching" : "")}>
       <div className="operator-controls">
         <label className="operator-control">
-          <span>Piirkond</span>
+          <span>{t("capacity.region")}</span>
           <select value={region} onChange={(e) => setRegion(e.target.value)}>
             {Object.entries(REGION_OPTIONS).map(([code, label]) => (
               <option key={code} value={code}>
@@ -199,7 +196,7 @@ function Page6Capacity() {
         </label>
 
         <label className="operator-control operator-control-slider">
-          <span>Viimased {yearsToShow} aastat</span>
+          <span>{t("capacity.lastYears", yearsToShow)}</span>
           <input
             type="range"
             min={5}
@@ -212,21 +209,19 @@ function Page6Capacity() {
 
       <div className="hero-card">
         <div className="hero-label">
-          Voodikohti kokku{region !== "EE" ? ` — ${regionLabel}` : ""}
+          {region !== "EE" ? t("capacity.bedsTotalRegion", regionLabel) : t("capacity.bedsTotal")}
         </div>
         <div className="hero-number">
-          {data.latestCapacity !== null ? data.latestCapacity.toLocaleString("et-EE") : "—"}
+          {data.latestCapacity !== null ? formatNumber(data.latestCapacity, locale) : "—"}
         </div>
         {data.growthMultiple !== null && (
-          <div className="hero-delta delta-up">
-            ▲ {data.growthMultiple.toFixed(1)}x rohkem kui 1992. aastal
-          </div>
+          <div className="hero-delta delta-up">{t("capacity.growthMultiple", data.growthMultiple.toFixed(1))}</div>
         )}
         <TableSource path={MAJUTUS_PATH} ids={["TU11.PX"]} dark />
       </div>
 
       <div className="data-card">
-        <h3>Voodikohad piirkonna järgi ({data.regionLatestLabel})</h3>
+        <h3>{t("capacity.bedsByRegionHeading", data.regionLatestLabel)}</h3>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={data.regionChart}>
             <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
@@ -241,7 +236,7 @@ function Page6Capacity() {
               axisLine={{ stroke: CHART_GRID_COLOR }}
               tickLine={{ stroke: CHART_GRID_COLOR }}
             />
-            <Tooltip content={<ChartTooltip />} />
+            <Tooltip content={<ChartTooltip locale={locale} />} />
             <Bar dataKey="Voodikohad" isAnimationActive={false}>
               {data.regionChart.map((entry) => (
                 <Cell key={entry.code} fill={entry.code === region ? FOREIGN_COLOR : CHART_COLORS[0]} />
@@ -254,7 +249,7 @@ function Page6Capacity() {
 
       <div className="tile-row-split">
         <div className="data-card">
-          <h3>Voodikohtade arv, {regionSuffix} (alates 1992)</h3>
+          <h3>{t("capacity.bedsTrendHeading", regionSuffix)}</h3>
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={visibleTrend} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
@@ -270,7 +265,7 @@ function Page6Capacity() {
                 axisLine={{ stroke: CHART_GRID_COLOR }}
                 tickLine={{ stroke: CHART_GRID_COLOR }}
               />
-              <Tooltip content={<ChartTooltip />} />
+              <Tooltip content={<ChartTooltip locale={locale} />} />
               <Line
                 type="monotone"
                 dataKey="Voodikohad"
@@ -284,7 +279,7 @@ function Page6Capacity() {
         </div>
 
         <div className="data-card">
-          <h3>Voodikohtade täituvus, {regionSuffix} (alates 2004)</h3>
+          <h3>{t("capacity.occupancyTrendHeading", regionSuffix)}</h3>
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={visibleOccupancy} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
@@ -301,10 +296,10 @@ function Page6Capacity() {
                 tickLine={{ stroke: CHART_GRID_COLOR }}
                 unit="%"
               />
-              <Tooltip content={<ChartTooltip />} />
+              <Tooltip content={<ChartTooltip locale={locale} />} />
               <Line
                 type="monotone"
-                dataKey="Täituvus, %"
+                dataKey={occupancyKey}
                 stroke={CHART_COLORS[1]}
                 dot={false}
                 isAnimationActive={false}
@@ -314,12 +309,7 @@ function Page6Capacity() {
           <TableSource path={MAJUTUS_PATH} ids={["TU110.PX"]} />
         </div>
       </div>
-      {region !== "EE" && (
-        <div className="operator-footnote">
-          Piirkonna täituvus on maakondade voodikohtadega kaalutud keskmine (Statistikaamet ei
-          avalda täituvust piirkonna, vaid ainult maakonna tasemel).
-        </div>
-      )}
+      {region !== "EE" && <div className="operator-footnote">{t("capacity.occupancyFootnote")}</div>}
     </div>
   );
 }

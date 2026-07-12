@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import TableView from "./components/TableView";
 import Dashboard from "./components/Dashboard";
@@ -11,49 +11,59 @@ import LazyMount from "./components/LazyMount";
 import SourceFooter from "./components/SourceFooter";
 import SectionRail from "./components/SectionRail";
 import { useActiveSection } from "./hooks/useActiveSection";
+import { useTranslation } from "./i18n/LocaleContext.jsx";
 import "./App.css";
 
-// Top bar only carries the three distinct destinations now: the scroll
-// entry point, and the two pages that aren't part of the scroll at all.
-// The sections within the scroll (map/purpose/capacity) moved to the
-// SectionRail floating on the right, alongside Ülevaade itself so the
-// rail always shows a current position even while at the very top.
-const TOP_NAV_ITEMS = [
-  { key: "dashboard", label: "Ülevaade" },
-  { key: "residents", label: "Residentide reisid" },
-  { key: "browse", label: "Kõik tabelid" },
-];
-
-const RAIL_ITEMS = [
-  { key: "dashboard", label: "Ülevaade" },
-  { key: "map", label: "Kaart ja hooajalisus" },
-  { key: "purpose", label: "Eesmärk ja kestus" },
-  { key: "capacity", label: "Mahutavus" },
-  { key: "expenses", label: "Reisikulutused" },
-];
-
-// Ülevaade, Kaart ja hooajalisus, Eesmärk ja kestus, Mahutavus, and
-// Reisikulutused scroll past one another on one continuous page (by
-// request, Reisikulutused sits here despite being about residents' own
-// spending rather than visitors to Estonia, unlike Residentide reisid).
-// Residentide reisid and Kõik tabelid are each their own destination
-// instead — Residents because it's a different subject from the rest of
-// the scroll and shouldn't load by default when the site opens; Browse
-// because it's a different workflow (raw table + sidebar) entirely.
-const SCROLL_SECTIONS = RAIL_ITEMS.map((item) => item.key);
-
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
-const QUICK_LINKS = [
-  { tableId: "TU121.PX", title: "TU121: MAJUTATUD (KUUD)" },
-  { tableId: "TU122.PX", title: "TU122: MAJUTAMINE MAAKONNA JÄRGI (KUUD)" },
-  { tableId: "TU11.PX", title: "TU11: MAJUTUSKOHTADE MAHUTAVUS PIIRKONNA JÄRGI" },
-  {
-    tableId: "TU131.PX",
-    title: "TU131: MAJUTATUD JA MAJUTATUTE ÖÖBIMISED MAAKONNA JA ELUKOHARIIGI JÄRGI (KUUD)",
-  },
-];
 
 export default function App() {
+  const { t, locale, setLocale } = useTranslation();
+
+  // Top bar only carries the three distinct destinations now: the scroll
+  // entry point, and the two pages that aren't part of the scroll at all.
+  // The sections within the scroll (map/purpose/capacity) moved to the
+  // SectionRail floating on the right, alongside Ülevaade itself so the
+  // rail always shows a current position even while at the very top.
+  const TOP_NAV_ITEMS = useMemo(
+    () => [
+      { key: "dashboard", label: t("nav.dashboard") },
+      { key: "residents", label: t("nav.residents") },
+      { key: "browse", label: t("nav.browse") },
+    ],
+    [t]
+  );
+
+  const RAIL_ITEMS = useMemo(
+    () => [
+      { key: "dashboard", label: t("nav.dashboard") },
+      { key: "map", label: t("nav.map") },
+      { key: "purpose", label: t("nav.purpose") },
+      { key: "capacity", label: t("nav.capacity") },
+      { key: "expenses", label: t("nav.expenses") },
+    ],
+    [t]
+  );
+
+  // Ülevaade, Kaart ja hooajalisus, Eesmärk ja kestus, Mahutavus, and
+  // Reisikulutused scroll past one another on one continuous page (by
+  // request, Reisikulutused sits here despite being about residents' own
+  // spending rather than visitors to Estonia, unlike Residentide reisid).
+  // Residentide reisid and Kõik tabelid are each their own destination
+  // instead — Residents because it's a different subject from the rest of
+  // the scroll and shouldn't load by default when the site opens; Browse
+  // because it's a different workflow (raw table + sidebar) entirely.
+  const SCROLL_SECTIONS = useMemo(() => RAIL_ITEMS.map((item) => item.key), [RAIL_ITEMS]);
+
+  const QUICK_LINKS = useMemo(
+    () => [
+      { tableId: "TU121.PX", title: t("app.quickLink1") },
+      { tableId: "TU122.PX", title: t("app.quickLink2") },
+      { tableId: "TU11.PX", title: t("app.quickLink3") },
+      { tableId: "TU131.PX", title: t("app.quickLink4") },
+    ],
+    [t]
+  );
+
   const [view, setView] = useState("scroll");
   // { key, nonce } rather than a plain key string, so clicking the same
   // nav item twice always re-triggers the scroll effect below (a plain
@@ -118,7 +128,7 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="top-nav">
-        <div className="top-nav-title">Eesti Turism</div>
+        <div className="top-nav-title">{t("app.brand")}</div>
         <nav className="top-nav-tabs">
           {TOP_NAV_ITEMS.map((item) => (
             <button
@@ -130,6 +140,20 @@ export default function App() {
             </button>
           ))}
         </nav>
+        <div className="pill-tabs locale-switch">
+          <button
+            className={"pill-tab" + (locale === "et" ? " active" : "")}
+            onClick={() => setLocale("et")}
+          >
+            ET
+          </button>
+          <button
+            className={"pill-tab" + (locale === "en" ? " active" : "")}
+            onClick={() => setLocale("en")}
+          >
+            EN
+          </button>
+        </div>
       </header>
 
       {view === "scroll" && (
@@ -144,33 +168,33 @@ export default function App() {
           {view === "scroll" && (
             <div className="scroll-sections">
               <section id="dashboard" className="scroll-section">
-                <h2 className="scroll-section-title">Ülevaade</h2>
+                <h2 className="scroll-section-title">{t("nav.dashboard")}</h2>
                 <Dashboard />
               </section>
 
               <section id="map" className="scroll-section">
-                <h2 className="scroll-section-title">Kaart ja hooajalisus</h2>
+                <h2 className="scroll-section-title">{t("nav.map")}</h2>
                 <LazyMount containerRef={mainPanelRef}>
                   <Page2Map />
                 </LazyMount>
               </section>
 
               <section id="purpose" className="scroll-section">
-                <h2 className="scroll-section-title">Eesmärk ja kestus</h2>
+                <h2 className="scroll-section-title">{t("nav.purpose")}</h2>
                 <LazyMount containerRef={mainPanelRef}>
                   <Page3Purpose />
                 </LazyMount>
               </section>
 
               <section id="capacity" className="scroll-section">
-                <h2 className="scroll-section-title">Mahutavus</h2>
+                <h2 className="scroll-section-title">{t("nav.capacity")}</h2>
                 <LazyMount containerRef={mainPanelRef}>
                   <Page6Capacity />
                 </LazyMount>
               </section>
 
               <section id="expenses" className="scroll-section">
-                <h2 className="scroll-section-title">Reisikulutused</h2>
+                <h2 className="scroll-section-title">{t("nav.expenses")}</h2>
                 <LazyMount containerRef={mainPanelRef}>
                   <Page5Expenses />
                 </LazyMount>
@@ -180,7 +204,7 @@ export default function App() {
 
           {view === "residents" && (
             <div className="scroll-section">
-              <h2 className="scroll-section-title">Residentide reisid</h2>
+              <h2 className="scroll-section-title">{t("nav.residents")}</h2>
               <Page4Residents />
             </div>
           )}
@@ -190,9 +214,9 @@ export default function App() {
               <TableView path={selected.path} tableId={selected.tableId} title={selected.title} />
             ) : (
               <div className="dashboard">
-                <div className="panel-status">Vali tabel küljel olevast loendist.</div>
+                <div className="panel-status">{t("app.chooseTable")}</div>
                 <div className="quick-links">
-                  <div className="quick-links-label">Kiirvalik</div>
+                  <div className="quick-links-label">{t("app.quickLinks")}</div>
                   <div className="quick-links-grid">
                     {QUICK_LINKS.map((link) => (
                       <button

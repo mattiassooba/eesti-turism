@@ -1,4 +1,6 @@
-export default function RankedBarList({ items, unit }) {
+import { formatNumber } from "../i18n/format";
+
+export default function RankedBarList({ items, unit, locale = "et" }) {
   const max = Math.max(...items.map((i) => i.value), 1);
 
   return (
@@ -10,7 +12,7 @@ export default function RankedBarList({ items, unit }) {
             <div className="ranked-bar-fill" style={{ width: `${(item.value / max) * 100}%` }} />
           </div>
           <div className="ranked-bar-value">
-            {item.value.toLocaleString("et-EE")}
+            {formatNumber(item.value, locale)}
             {unit ? <span className="ranked-bar-unit"> {unit}</span> : null}
           </div>
         </div>

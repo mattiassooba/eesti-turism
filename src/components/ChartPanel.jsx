@@ -11,10 +11,12 @@ import {
   CartesianGrid,
 } from "recharts";
 import ChartTooltip from "./ChartTooltip";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { CHART_COLORS as COLORS, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 export default function ChartPanel({ data, seriesNames, chartType, onChartTypeChange }) {
-  if (!data.length) return <div className="panel-status">Graafiku jaoks andmed puuduvad.</div>;
+  const { t, locale } = useTranslation();
+  if (!data.length) return <div className="panel-status">{t("chartPanel.noData")}</div>;
 
   const Chart = chartType === "bar" ? BarChart : LineChart;
 
@@ -25,13 +27,13 @@ export default function ChartPanel({ data, seriesNames, chartType, onChartTypeCh
           className={chartType === "line" ? "active" : ""}
           onClick={() => onChartTypeChange("line")}
         >
-          Joon
+          {t("chartPanel.line")}
         </button>
         <button
           className={chartType === "bar" ? "active" : ""}
           onClick={() => onChartTypeChange("bar")}
         >
-          Tulp
+          {t("chartPanel.bar")}
         </button>
       </div>
       <ResponsiveContainer width="100%" height={360}>
@@ -48,7 +50,7 @@ export default function ChartPanel({ data, seriesNames, chartType, onChartTypeCh
             axisLine={{ stroke: CHART_GRID_COLOR }}
             tickLine={{ stroke: CHART_GRID_COLOR }}
           />
-          <Tooltip content={<ChartTooltip />} />
+          <Tooltip content={<ChartTooltip locale={locale} />} />
           <Legend />
           {seriesNames.map((name, i) =>
             chartType === "bar" ? (

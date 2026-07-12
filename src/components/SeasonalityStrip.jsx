@@ -1,6 +1,7 @@
 import { seasonalityColor } from "../colorScale";
+import { formatNumber } from "../i18n/format";
 
-export default function SeasonalityStrip({ months }) {
+export default function SeasonalityStrip({ months, locale = "et" }) {
   if (!months.length) return null;
 
   const values = months.map((m) => m.value);
@@ -18,7 +19,7 @@ export default function SeasonalityStrip({ months }) {
             key={m.label + i}
             className={"seasonality-cell" + (isCurrent ? " seasonality-current" : "")}
             style={{ backgroundColor: seasonalityColor(t) }}
-            title={`${m.label}: ${m.value.toLocaleString("et-EE")}`}
+            title={`${m.label}: ${formatNumber(m.value, locale)}`}
           />
         );
       })}

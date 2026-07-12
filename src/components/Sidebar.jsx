@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchLevel, searchTables, isAbortError } from "../api/pxweb";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
 
 const ROOT_PATH = ["majandus"];
 const ROOT_ID = "turism-ja-majutus";
-const ROOT_TEXT = "Turism, majutus ja toitlustus";
 const ROOT_FULL_PATH = [...ROOT_PATH, ROOT_ID];
 
-function FolderNode({ path, id, text, onSelectTable, selectedTableId }) {
+function FolderNode({ path, id, text, onSelectTable, selectedTableId, locale, t }) {
   const [expanded, setExpanded] = useState(false);
   const [children, setChildren] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -22,6 +22,15 @@ function FolderNode({ path, id, text, onSelectTable, selectedTableId }) {
     };
   }, []);
 
+  // A locale switch invalidates any already-fetched children (they're
+  // cached in the wrong language) — collapse and drop the cache so the
+  // next expand re-fetches in the new language, rather than silently
+  // showing stale-language labels.
+  useEffect(() => {
+    setChildren(null);
+    setExpanded(false);
+  }, [locale]);
+
   const fullPath = [...path, id];
 
   async function loadChildren() {
@@ -31,7 +40,7 @@ function FolderNode({ path, id, text, onSelectTable, selectedTableId }) {
     setLoading(true);
     setError(null);
     try {
-      const items = await fetchLevel(fullPath, { signal: controller.signal });
+      const items = await fetchLevel(fullPath, { signal: controller.signal, locale });
       setChildren(items);
     } catch (err) {
       if (isAbortError(err)) return;
@@ -53,11 +62,11 @@ function FolderNode({ path, id, text, onSelectTable, selectedTableId }) {
       <button className="folder-toggle" onClick={toggle}>
         {expanded ? "▾" : "▸"} {text}
       </button>
-      {loading && <div className="tree-status">Laen…</div>}
+      {loading && <div className="tree-status">{t("sidebar.loading")}</div>}
       {error && (
         <div className="tree-status tree-error">
           {error}{" "}
-          <button onClick={loadChildren}>Proovi uuesti</button>
+          <button onClick={loadChildren}>{t("sidebar.retry")}</button>
         </div>
       )}
       {expanded && children && (
@@ -71,6 +80,8 @@ function FolderNode({ path, id, text, onSelectTable, selectedTableId }) {
                 text={child.text}
                 onSelectTable={onSelectTable}
                 selectedTableId={selectedTableId}
+                locale={locale}
+                t={t}
               />
             ) : (
               <li key={child.id}>
@@ -92,6 +103,7 @@ function FolderNode({ path, id, text, onSelectTable, selectedTableId }) {
 }
 
 export default function Sidebar({ onSelectTable, selectedTableId }) {
+  const { t, locale } = useTranslation();
   const [term, setTerm] = useState("");
   const [search, setSearch] = useState({ status: "idle" });
 
@@ -106,7 +118,7 @@ export default function Sidebar({ onSelectTable, selectedTableId }) {
     setSearch({ status: "loading" });
     const timer = setTimeout(async () => {
       try {
-        const results = await searchTables(ROOT_FULL_PATH, trimmed, { signal: controller.signal });
+        const results = await searchTables(ROOT_FULL_PATH, trimmed, { signal: controller.signal, locale });
         if (!cancelled) setSearch({ status: "ready", results });
       } catch (err) {
         if (isAbortError(err)) return;
@@ -118,7 +130,7 @@ export default function Sidebar({ onSelectTable, selectedTableId }) {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [term]);
+  }, [term, locale]);
 
   function handleResultClick(result) {
     const relativeParts = result.path.split("/").filter(Boolean);
@@ -132,14 +144,14 @@ export default function Sidebar({ onSelectTable, selectedTableId }) {
       <input
         type="search"
         className="sidebar-search"
-        placeholder="Otsi tabelit…"
+        placeholder={t("sidebar.searchPlaceholder")}
         value={term}
         onChange={(e) => setTerm(e.target.value)}
       />
 
       {showResults ? (
         <>
-          {search.status === "loading" && <div className="tree-status">Otsin…</div>}
+          {search.status === "loading" && <div className="tree-status">{t("sidebar.searching")}</div>}
           {search.status === "error" && (
             <div className="tree-status tree-error">{search.message}</div>
           )}
@@ -161,7 +173,7 @@ export default function Sidebar({ onSelectTable, selectedTableId }) {
                 ))}
               </ul>
             ) : (
-              <div className="tree-status">Vastavaid tabeleid ei leitud.</div>
+              <div className="tree-status">{t("sidebar.noResults")}</div>
             ))}
         </>
       ) : (
@@ -169,9 +181,11 @@ export default function Sidebar({ onSelectTable, selectedTableId }) {
           <FolderNode
             path={ROOT_PATH}
             id={ROOT_ID}
-            text={ROOT_TEXT}
+            text={t("sidebar.rootText")}
             onSelectTable={onSelectTable}
             selectedTableId={selectedTableId}
+            locale={locale}
+            t={t}
           />
         </ul>
       )}

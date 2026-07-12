@@ -18,35 +18,25 @@ import RankedBarList from "./RankedBarList";
 import ChartTooltip from "./ChartTooltip";
 import SectionFilters from "./SectionFilters";
 import TableSource from "./TableSource";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
+import { formatNumber } from "../i18n/format";
 import { DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
 
-const NAITAJA_SHORT = { TR_DOM: "Sisereisid", TR_OUT: "Välisreisid" };
+// Subset of codes.country this page's TU63 destination-country query
+// actually asks for (a different, smaller set than Page2Map/OperatorInsights'
+// origin-country selectors).
+const COUNTRY_CODES = ["LT", "LV", "SE", "FI", "RU", "DE", "IT", "TR", "ES"];
 
-const COUNTRY_LABELS = {
-  LT: "Leedu",
-  LV: "Läti",
-  SE: "Rootsi",
-  FI: "Soome",
-  RU: "Venemaa",
-  DE: "Saksamaa",
-  IT: "Itaalia",
-  TR: "Türgi",
-  ES: "Hispaania",
-};
-
-const ACCOMMODATION_LABELS = {
-  R_HOT: "Hotellid",
-  R_CAMP: "Laagriplatsid, haagissuvilad",
-  R_OTH: "Muu tasuline majutus",
-  NR_OWN: "Endale kuuluv eluruum",
-  NR_RF: "Tuttavate/sugulaste juures",
-  NR_OTH: "Muu tasuta majutus",
-};
+const ACCOMMODATION_CODES = ["R_HOT", "R_CAMP", "R_OTH", "NR_OWN", "NR_RF", "NR_OTH"];
 
 // Memoized — see Dashboard.jsx for why.
 function Page4Residents() {
+  const { t, locale } = useTranslation();
+  const NAITAJA_SHORT = { TR_DOM: t("residents.domesticTrips"), TR_OUT: t("residents.foreignTrips") };
+  const COUNTRY_LABELS = t("codes.country");
+  const ACCOMMODATION_LABELS = t("codes.accommodation");
   const [state, setState] = useState({ data: null, loading: true, error: null });
   const [timeRangeMonths, setTimeRangeMonths] = useState("24");
   // This page's tables are quarterly, but the time-range control is
@@ -72,7 +62,7 @@ function Page4Residents() {
                 { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
                 { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
               ],
-              { signal }
+              { signal, locale }
             ),
             fetchTableData(
               REISIMINE_PATH,
@@ -80,14 +70,14 @@ function Page4Residents() {
               [
                 {
                   code: "Sihtriik",
-                  selection: { filter: "item", values: Object.keys(COUNTRY_LABELS) },
+                  selection: { filter: "item", values: COUNTRY_CODES },
                 },
                 {
                   code: "Vaatlusperiood",
                   selection: { filter: "top", values: [String(originQuarters)] },
                 },
               ],
-              { signal }
+              { signal, locale }
             ),
             fetchTableData(
               REISIMINE_PATH,
@@ -96,7 +86,7 @@ function Page4Residents() {
                 { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
                 { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
               ],
-              { signal }
+              { signal, locale }
             ),
             fetchTableData(
               REISIMINE_PATH,
@@ -106,7 +96,7 @@ function Page4Residents() {
                 { code: "Reisi eesmärk", selection: { filter: "item", values: ["TOTAL"] } },
                 { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
               ],
-              { signal }
+              { signal, locale }
             ),
             fetchTableData(
               REISIMINE_PATH,
@@ -115,11 +105,11 @@ function Page4Residents() {
                 { code: "Näitaja", selection: { filter: "item", values: ["N_DOM", "N_OUT"] } },
                 {
                   code: "Majutuse liik",
-                  selection: { filter: "item", values: Object.keys(ACCOMMODATION_LABELS) },
+                  selection: { filter: "item", values: ACCOMMODATION_CODES },
                 },
                 { code: "Vaatlusperiood", selection: { filter: "top", values: ["1"] } },
               ],
-              { signal }
+              { signal, locale }
             ),
           ]);
 
@@ -156,13 +146,13 @@ function Page4Residents() {
           if (!bySpendQuarter.has(row.Vaatlusperiood)) {
             bySpendQuarter.set(row.Vaatlusperiood, { x: row.Vaatlusperiood_label });
           }
-          bySpendQuarter.get(row.Vaatlusperiood)["Sisereis"] = row.value;
+          bySpendQuarter.get(row.Vaatlusperiood)[t("residents.domesticTrip")] = row.value;
         }
         for (const row of foreignRows) {
           if (!bySpendQuarter.has(row.Vaatlusperiood)) {
             bySpendQuarter.set(row.Vaatlusperiood, { x: row.Vaatlusperiood_label });
           }
-          bySpendQuarter.get(row.Vaatlusperiood)["Välisreis"] = row.value;
+          bySpendQuarter.get(row.Vaatlusperiood)[t("residents.foreignTrip")] = row.value;
         }
         const spendKeys = Array.from(bySpendQuarter.keys()).sort();
         const spendChart = spendKeys.map((k) => bySpendQuarter.get(k));
@@ -191,12 +181,12 @@ function Page4Residents() {
         if (isActive()) setState((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     },
-    [timeRangeMonths]
+    [timeRangeMonths, locale, t]
   );
 
-  if (!state.data && state.loading) return <div className="panel-status">Laen…</div>;
+  if (!state.data && state.loading) return <div className="panel-status">{t("residents.loading")}</div>;
   if (!state.data && state.error)
-    return <div className="panel-error">Andmete laadimine ebaõnnestus: {state.error}</div>;
+    return <div className="panel-error">{t("residents.loadError", state.error)}</div>;
 
   const { data } = state;
 
@@ -212,17 +202,15 @@ function Page4Residents() {
 
       {topCountry && (
         <div className="hero-card">
-          <div className="hero-label">Populaarseim sihtriik</div>
+          <div className="hero-label">{t("residents.topDestination")}</div>
           <div className="hero-number hero-number-text">{topCountry.label}</div>
-          <div className="hero-caption">
-            {topCountry.value.toLocaleString("et-EE")} tuh reisi
-          </div>
+          <div className="hero-caption">{t("residents.thousandTrips", formatNumber(topCountry.value, locale))}</div>
           <TableSource path={REISIMINE_PATH} ids={["TU63.PX"]} dark />
         </div>
       )}
 
       <div className="data-card">
-        <h3>Sise- ja välisreisid kvartalite kaupa (tuhat reisi, viimased {quarters === 999 ? data.tripsChart.length : quarters} kvartalit)</h3>
+        <h3>{t("residents.tripsHeading", quarters === 999 ? data.tripsChart.length : quarters)}</h3>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={data.tripsChart}>
             <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
@@ -239,10 +227,10 @@ function Page4Residents() {
               axisLine={{ stroke: CHART_GRID_COLOR }}
               tickLine={{ stroke: CHART_GRID_COLOR }}
             />
-            <Tooltip content={<ChartTooltip unit="tuh" />} />
+            <Tooltip content={<ChartTooltip unit="tuh" locale={locale} />} />
             <Legend />
-            <Bar dataKey="Sisereisid" fill={DOMESTIC_COLOR} isAnimationActive={false} />
-            <Bar dataKey="Välisreisid" fill={FOREIGN_COLOR} isAnimationActive={false} />
+            <Bar dataKey={t("residents.domesticTrips")} fill={DOMESTIC_COLOR} isAnimationActive={false} />
+            <Bar dataKey={t("residents.foreignTrips")} fill={FOREIGN_COLOR} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
         <TableSource path={REISIMINE_PATH} ids={["TU51.PX"]} />
@@ -250,20 +238,20 @@ function Page4Residents() {
 
       <div className="tile-row-split">
         <div className="data-card">
-          <h3>Enim külastatud sihtriigid (viimased {originQuarters === 999 ? "kõik" : originQuarters} kvartalit, tuhat reisi)</h3>
-          <RankedBarList items={data.countries} unit="tuh reisi" />
+          <h3>{t("residents.topDestinationsHeading", originQuarters === 999 ? "kõik" : originQuarters)}</h3>
+          <RankedBarList items={data.countries} unit={t("residents.thousandTripsUnit")} locale={locale} />
           <TableSource path={REISIMINE_PATH} ids={["TU63.PX"]} />
         </div>
 
         <div className="data-card">
-          <h3>Majutuse liik reisidel (viimane kvartal, tuhat ööbimist)</h3>
-          <RankedBarList items={data.accommodation} unit="tuh ööbimist" />
+          <h3>{t("residents.accommodationHeading")}</h3>
+          <RankedBarList items={data.accommodation} unit={t("residents.thousandNightsUnit")} locale={locale} />
           <TableSource path={REISIMINE_PATH} ids={["TU551.PX"]} />
         </div>
       </div>
 
       <div className="data-card">
-        <h3>Reisikulutused, sise- vs. välisreis (eurot, viimased {quarters === 999 ? data.spendChart.length : quarters} kvartalit)</h3>
+        <h3>{t("residents.spendHeading", quarters === 999 ? data.spendChart.length : quarters)}</h3>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={data.spendChart}>
             <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
@@ -280,18 +268,18 @@ function Page4Residents() {
               axisLine={{ stroke: CHART_GRID_COLOR }}
               tickLine={{ stroke: CHART_GRID_COLOR }}
             />
-            <Tooltip content={<ChartTooltip unit="€" />} />
+            <Tooltip content={<ChartTooltip unit="€" locale={locale} />} />
             <Legend />
             <Line
               type="monotone"
-              dataKey="Sisereis"
+              dataKey={t("residents.domesticTrip")}
               stroke={DOMESTIC_COLOR}
               dot={false}
               isAnimationActive={false}
             />
             <Line
               type="monotone"
-              dataKey="Välisreis"
+              dataKey={t("residents.foreignTrip")}
               stroke={FOREIGN_COLOR}
               dot={false}
               isAnimationActive={false}

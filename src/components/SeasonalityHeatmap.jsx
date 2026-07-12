@@ -1,22 +1,11 @@
 import { Fragment } from "react";
 import { seasonalityColor } from "../colorScale";
-
-const MONTH_LABELS = [
-  "Jaan",
-  "Veebr",
-  "Märts",
-  "Apr",
-  "Mai",
-  "Juuni",
-  "Juuli",
-  "Aug",
-  "Sept",
-  "Okt",
-  "Nov",
-  "Dets",
-];
+import { useTranslation } from "../i18n/LocaleContext.jsx";
+import { formatNumber } from "../i18n/format";
 
 export default function SeasonalityHeatmap({ years, grid }) {
+  const { t, locale } = useTranslation();
+  const monthLabels = t("heatmap.months");
   const allValues = years.flatMap((y) => grid[y]).filter((v) => typeof v === "number");
   const max = allValues.length ? Math.max(...allValues) : 1;
   const min = allValues.length ? Math.min(...allValues) : 0;
@@ -34,7 +23,7 @@ export default function SeasonalityHeatmap({ years, grid }) {
             {y}
           </div>
         ))}
-        {MONTH_LABELS.map((label, mIdx) => (
+        {monthLabels.map((label, mIdx) => (
           <Fragment key={label}>
             <div className="heatmap-month-label">{label}</div>
             {years.map((y) => {
@@ -46,7 +35,7 @@ export default function SeasonalityHeatmap({ years, grid }) {
                   key={y + "-" + mIdx}
                   className="heatmap-cell"
                   style={{ backgroundColor: hasValue ? seasonalityColor(t) : "transparent" }}
-                  title={hasValue ? `${label} ${y}: ${v.toLocaleString("et-EE")}` : ""}
+                  title={hasValue ? `${label} ${y}: ${formatNumber(v, locale)}` : ""}
                 />
               );
             })}
@@ -55,12 +44,12 @@ export default function SeasonalityHeatmap({ years, grid }) {
       </div>
 
       <div className="heatmap-legend">
-        <span>Vaikne hooaeg</span>
+        <span>{t("heatmap.quietSeason")}</span>
         <span className="heatmap-legend-gradient" />
-        <span>Tipphooaeg</span>
+        <span>{t("heatmap.peakSeason")}</span>
         {allValues.length > 0 && (
           <span className="heatmap-legend-values">
-            ({min.toLocaleString("et-EE")}–{max.toLocaleString("et-EE")})
+            ({formatNumber(min, locale)}–{formatNumber(max, locale)})
           </span>
         )}
       </div>

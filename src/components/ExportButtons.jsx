@@ -1,6 +1,6 @@
-const CITATION = "Allikas: Statistikaamet (andmed.stat.ee) · CC BY-SA 4.0";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
 
-function rowsToExportData(rows) {
+function rowsToExportData(rows, valueLabel) {
   return rows.map((row) => {
     const out = {};
     Object.keys(row).forEach((key) => {
@@ -8,7 +8,7 @@ function rowsToExportData(rows) {
         out[key.replace(/_label$/, "")] = row[key];
       }
     });
-    out["Väärtus"] = row.value;
+    out[valueLabel] = row.value;
     return out;
   });
 }
@@ -23,29 +23,32 @@ function downloadBlob(blob, filename) {
 }
 
 export default function ExportButtons({ rows, tableId }) {
+  const { t, locale } = useTranslation();
+  const citation = `${t("source.prefix")} ${t("source.agency")} (andmed.stat.ee) · CC BY-SA 4.0`;
+
   // xlsx is a large dependency used only when a user actually exports —
   // load it on demand instead of paying for it in the main bundle.
   async function exportCsv() {
     const XLSX = await import("xlsx");
-    const sheet = XLSX.utils.json_to_sheet(rowsToExportData(rows));
+    const sheet = XLSX.utils.json_to_sheet(rowsToExportData(rows, t("dataGrid.value")));
     const csv = XLSX.utils.sheet_to_csv(sheet);
     downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8;" }), `${tableId}.csv`);
   }
 
   async function exportXlsx() {
     const XLSX = await import("xlsx");
-    const sheet = XLSX.utils.json_to_sheet(rowsToExportData(rows));
+    const sheet = XLSX.utils.json_to_sheet(rowsToExportData(rows, t("dataGrid.value")));
     const sourceSheet = XLSX.utils.aoa_to_sheet([
-      ["Allikas"],
-      ["Statistikaamet (Statistics Estonia)"],
-      ["https://andmed.stat.ee/et/stat"],
-      ["Litsents"],
-      ["CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/deed.et"],
-      ["See rakendus ei ole Statistikaameti ametlik toode."],
+      [t("exportButtons.sourceSheetTitle")],
+      [t("exportButtons.agency")],
+      [`https://andmed.stat.ee/${locale}/stat`],
+      [t("exportButtons.licenseLabel")],
+      [t("exportButtons.licenseValue")],
+      [t("exportButtons.disclaimer")],
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, sheet, tableId.slice(0, 31));
-    XLSX.utils.book_append_sheet(wb, sourceSheet, "Allikas");
+    XLSX.utils.book_append_sheet(wb, sourceSheet, t("exportButtons.sourceSheetTitle"));
     XLSX.writeFile(wb, `${tableId}.xlsx`);
   }
 
@@ -67,7 +70,7 @@ export default function ExportButtons({ rows, tableId }) {
       ctx.drawImage(img, 0, 0);
       ctx.fillStyle = "#5b6b7a";
       ctx.font = "12px 'IBM Plex Sans', sans-serif";
-      ctx.fillText(CITATION, 8, svg.clientHeight + 16);
+      ctx.fillText(citation, 8, svg.clientHeight + 16);
       URL.revokeObjectURL(url);
       canvas.toBlob((blob) => downloadBlob(blob, `${tableId}-chart.png`));
     };
@@ -76,9 +79,9 @@ export default function ExportButtons({ rows, tableId }) {
 
   return (
     <div className="export-buttons">
-      <button onClick={exportCsv}>Laadi alla CSV</button>
-      <button onClick={exportXlsx}>Laadi alla XLSX</button>
-      <button onClick={exportPng}>Laadi alla PNG</button>
+      <button onClick={exportCsv}>{t("exportButtons.csv")}</button>
+      <button onClick={exportXlsx}>{t("exportButtons.xlsx")}</button>
+      <button onClick={exportPng}>{t("exportButtons.png")}</button>
     </div>
   );
 }

@@ -17,22 +17,27 @@ import {
 import ChartTooltip from "./ChartTooltip";
 import SectionFilters from "./SectionFilters";
 import TableSource from "./TableSource";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { CHART_COLORS, DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
 const PURPOSE_CODES = ["HOL", "BSNS", "BSNS_CONF", "BSNS_O", "_O"];
-const DURATION_ORDER = ["1 kuni 3 ööd", "4 kuni 7 ööd", "Üle 7 öö"];
-const NAITAJA_SHORT = { TR_DOM: "Sisereisid", TR_OUT: "Välisreisid" };
+// Ordered by raw code, not the API's own label — the label text changes
+// with locale, but this array is used to sort the chart's x-axis, so it
+// must match against something locale-invariant.
+const DURATION_ORDER = ["N1-3", "N4-7", "N_GT7"];
 const NIGHTS_CODE = { all: "OCC_NI", domestic: "OCC_NI_RES", foreign: "OCC_NI_NONRES" };
-const RESIDENCY_TITLE = {
-  all: "Ööbimised",
-  domestic: "Eesti elanike ööbimised",
-  foreign: "Väliskülastajate ööbimised",
-};
 
 // Memoized — see Dashboard.jsx for why.
 function Page3Purpose() {
+  const { t, locale } = useTranslation();
+  const NAITAJA_SHORT = { TR_DOM: t("purpose.domesticTrips"), TR_OUT: t("purpose.foreignTrips") };
+  const RESIDENCY_TITLE = {
+    all: t("purpose.nightsAll"),
+    domestic: t("purpose.nightsDomestic"),
+    foreign: t("purpose.nightsForeign"),
+  };
   const [state, setState] = useState({ data: null, loading: true, error: null });
   const [residency, setResidency] = useState("all");
   const [timeRangeMonths, setTimeRangeMonths] = useState("24");
@@ -56,7 +61,7 @@ function Page3Purpose() {
               { code: "Reisi eesmärk", selection: { filter: "item", values: PURPOSE_CODES } },
               { code: "Vaatlusperiood", selection: { filter: "top", values: [String(windowSize)] } },
             ],
-            { signal }
+            { signal, locale }
           ),
           fetchTableData(
             REISIMINE_PATH,
@@ -69,7 +74,7 @@ function Page3Purpose() {
               },
               { code: "Vaatlusperiood", selection: { filter: "top", values: ["1"] } },
             ],
-            { signal }
+            { signal, locale }
           ),
         ]);
 
@@ -103,9 +108,9 @@ function Page3Purpose() {
         const durationRows = flattenToRows(durationData);
         const byDuration = new Map();
         for (const row of durationRows) {
-          const key = row["Reisi kestus_label"];
-          if (!byDuration.has(key)) byDuration.set(key, { x: key });
-          byDuration.get(key)[NAITAJA_SHORT[row.Näitaja] ?? row.Näitaja] = row.value;
+          const code = row["Reisi kestus"];
+          if (!byDuration.has(code)) byDuration.set(code, { x: t(`codes.duration.${code}`) });
+          byDuration.get(code)[NAITAJA_SHORT[row.Näitaja] ?? row.Näitaja] = row.value;
         }
         const durationChart = DURATION_ORDER.map((d) => byDuration.get(d)).filter(Boolean);
         const durationLatestLabel = durationRows[0]?.Vaatlusperiood_label ?? "";
@@ -130,12 +135,12 @@ function Page3Purpose() {
         if (isActive()) setState((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     },
-    [residency, timeRangeMonths]
+    [residency, timeRangeMonths, locale, t]
   );
 
-  if (!state.data && state.loading) return <div className="panel-status">Laen…</div>;
+  if (!state.data && state.loading) return <div className="panel-status">{t("purpose.loading")}</div>;
   if (!state.data && state.error)
-    return <div className="panel-error">Andmete laadimine ebaõnnestus: {state.error}</div>;
+    return <div className="panel-error">{t("purpose.loadError", state.error)}</div>;
 
   const title = RESIDENCY_TITLE[residency] ?? RESIDENCY_TITLE.all;
   const { data } = state;
@@ -153,21 +158,17 @@ function Page3Purpose() {
 
       {data.topPurpose && (
         <div className="hero-card">
-          <div className="hero-label">Peamine reisieesmärk</div>
+          <div className="hero-label">{t("purpose.topPurpose")}</div>
           <div className="hero-number hero-number-text">{data.topPurpose.name}</div>
           {data.topPurposeShare !== null && (
-            <div className="hero-caption">
-              {data.topPurposeShare.toFixed(0)}% kõigist ööbimistest selle akna jooksul
-            </div>
+            <div className="hero-caption">{t("purpose.topPurposeShare", data.topPurposeShare.toFixed(0))}</div>
           )}
           <TableSource path={MAJUTUS_PATH} ids={["TU133.PX"]} dark />
         </div>
       )}
 
       <div className="data-card">
-        <h3>
-          {title} reisi eesmärgi järgi (viimased {data.windowSize} kuud)
-        </h3>
+        <h3>{t("purpose.byPurposeHeading", [title, data.windowSize])}</h3>
         <ResponsiveContainer width="100%" height={340}>
           <AreaChart data={data.purposeChart}>
             <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
@@ -184,7 +185,7 @@ function Page3Purpose() {
               axisLine={{ stroke: CHART_GRID_COLOR }}
               tickLine={{ stroke: CHART_GRID_COLOR }}
             />
-            <Tooltip content={<ChartTooltip />} />
+            <Tooltip content={<ChartTooltip locale={locale} />} />
             <Legend />
             {data.purposeNames.map((name, i) => (
               <Area
@@ -204,7 +205,7 @@ function Page3Purpose() {
       </div>
 
       <div className="data-card">
-        <h3>Reisi kestus, sise- vs. välisreisid ({data.durationLatestLabel})</h3>
+        <h3>{t("purpose.durationHeading", data.durationLatestLabel)}</h3>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={data.durationChart} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
@@ -220,10 +221,10 @@ function Page3Purpose() {
               axisLine={{ stroke: CHART_GRID_COLOR }}
               tickLine={{ stroke: CHART_GRID_COLOR }}
             />
-            <Tooltip content={<ChartTooltip />} />
+            <Tooltip content={<ChartTooltip locale={locale} />} />
             <Legend />
-            <Bar dataKey="Sisereisid" fill={DOMESTIC_COLOR} isAnimationActive={false} />
-            <Bar dataKey="Välisreisid" fill={FOREIGN_COLOR} isAnimationActive={false} />
+            <Bar dataKey={t("purpose.domesticTrips")} fill={DOMESTIC_COLOR} isAnimationActive={false} />
+            <Bar dataKey={t("purpose.foreignTrips")} fill={FOREIGN_COLOR} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
         <TableSource path={REISIMINE_PATH} ids={["TU54.PX"]} />

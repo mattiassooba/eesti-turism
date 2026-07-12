@@ -8,6 +8,10 @@ import Sparkline from "./Sparkline";
 import OperatorInsights from "./OperatorInsights";
 import SectionFilters from "./SectionFilters";
 import TableSource from "./TableSource";
+import NarrativeBlock from "./NarrativeBlock";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
+import { formatNumber } from "../i18n/format";
+import { countyLabelByCode } from "../data/counties";
 import { DOMESTIC_COLOR, FOREIGN_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -33,16 +37,6 @@ const REAL_COUNTY_CODES = [
   "EE00870000000000", // Võru
 ];
 
-const RESIDENCY = {
-  all: { code: "WORLD", guestsLabel: "Majutatud külastajad", nightsLabel: "Ööbimised" },
-  domestic: { code: "EE", guestsLabel: "Eesti elanikud", nightsLabel: "Eesti elanike ööbimised" },
-  foreign: {
-    code: "FOR",
-    guestsLabel: "Väliskülastajad",
-    nightsLabel: "Väliskülastajate ööbimised",
-  },
-};
-
 function periodDelta(series, latestIndex, offset, label) {
   const compareIndex = latestIndex - offset;
   if (compareIndex < 0) return null;
@@ -56,6 +50,20 @@ function periodDelta(series, latestIndex, offset, label) {
 // update unrelated to this section's own props (e.g. scroll-driven
 // active-tab tracking) shouldn't re-render this section's charts/table.
 function Dashboard() {
+  const { t, locale } = useTranslation();
+  const RESIDENCY = {
+    all: { code: "WORLD", guestsLabel: t("dashboard.guestsAll"), nightsLabel: t("dashboard.nightsAll") },
+    domestic: {
+      code: "EE",
+      guestsLabel: t("dashboard.guestsDomestic"),
+      nightsLabel: t("dashboard.nightsDomestic"),
+    },
+    foreign: {
+      code: "FOR",
+      guestsLabel: t("dashboard.guestsForeign"),
+      nightsLabel: t("dashboard.nightsForeign"),
+    },
+  };
   const [state, setState] = useState({ data: null, loading: true, error: null });
   const [residency, setResidency] = useState("all");
   const [deltaMode, setDeltaMode] = useState("yoy");
@@ -84,7 +92,7 @@ function Dashboard() {
               },
               { code: "Vaatlusperiood", selection: { filter: "top", values: [String(fetchCount)] } },
             ],
-            { signal }
+            { signal, locale }
           ),
           fetchTableData(
             MAJUTUS_PATH,
@@ -95,7 +103,7 @@ function Dashboard() {
               { code: "Elukohariik", selection: { filter: "item", values: [residencyCode] } },
               { code: "Vaatlusperiood", selection: { filter: "top", values: [String(fetchCount)] } },
             ],
-            { signal }
+            { signal, locale }
           ),
         ]);
 
@@ -138,7 +146,7 @@ function Dashboard() {
         }));
 
         const deltaOffset = deltaMode === "mom" ? 1 : 12;
-        const deltaCompareLabel = deltaMode === "mom" ? "eelmine kuu" : "aasta tagasi";
+        const deltaCompareLabel = deltaMode === "mom" ? t("common.vsLastMonth") : t("common.vsYearAgo");
 
         const countyRows = flattenToRows(county);
         const countyByPeriod = new Map();
@@ -150,7 +158,11 @@ function Dashboard() {
         for (const row of countyRows) {
           if (row.Vaatlusperiood !== periods[latestIdx] || row.value === null) continue;
           if (!topCounty || row.value > topCounty.value) {
-            topCounty = { code: row.Maakond, label: row.Maakond_label, value: row.value };
+            // Prefer the locally-maintained bilingual dictionary over the
+            // API's own _label — we already fully control this table's
+            // translation for both locales, so this sidesteps trusting
+            // PxWeb's English coverage for a field we can guarantee.
+            topCounty = { code: row.Maakond, label: countyLabelByCode(row.Maakond, locale), value: row.value };
           }
         }
         const topCountySeries = periods.map((p) => countyByPeriod.get(p)?.get(topCounty?.code) ?? 0);
@@ -185,14 +197,14 @@ function Dashboard() {
         if (isActive()) setState((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     },
-    [residency, deltaMode]
+    [residency, deltaMode, locale]
   );
 
   if (!state.data && state.loading) {
-    return <div className="panel-status">Laen ülevaadet…</div>;
+    return <div className="panel-status">{t("dashboard.loading")}</div>;
   }
   if (!state.data && state.error) {
-    return <div className="panel-error">Ülevaate laadimine ebaõnnestus: {state.error}</div>;
+    return <div className="panel-error">{t("dashboard.loadError", state.error)}</div>;
   }
 
   const labels = RESIDENCY[residency] ?? RESIDENCY.all;
@@ -214,22 +226,24 @@ function Dashboard() {
         onDeltaModeChange={setDeltaMode}
       />
 
+      <NarrativeBlock />
+
       <div className="kpi-row">
         <div className="hero-card">
           <div className="hero-label">
             {labels.guestsLabel} · {data.latestLabel}
           </div>
-          <div className="hero-number">{data.totalGuests.toLocaleString("et-EE")}</div>
+          <div className="hero-number">{formatNumber(data.totalGuests, locale)}</div>
           {data.guestsDelta && (
             <div className={"hero-delta " + (data.guestsDelta.pct >= 0 ? "delta-up" : "delta-down")}>
               {deltaText(data.guestsDelta)}
             </div>
           )}
-          <SeasonalityStrip months={data.months} />
+          <SeasonalityStrip months={data.months} locale={locale} />
           <div className="seasonality-legend">
-            <span>Vaikne hooaeg</span>
+            <span>{t("dashboard.quietSeason")}</span>
             <span className="seasonality-legend-gradient" />
-            <span>Tipphooaeg</span>
+            <span>{t("dashboard.peakSeason")}</span>
           </div>
           <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
         </div>
@@ -238,14 +252,14 @@ function Dashboard() {
           <div className="hero-label">
             {labels.nightsLabel} · {data.latestLabel}
           </div>
-          <div className="hero-number">{data.totalNights.toLocaleString("et-EE")}</div>
+          <div className="hero-number">{formatNumber(data.totalNights, locale)}</div>
           {data.nightsDelta && (
             <div className={"hero-delta " + (data.nightsDelta.pct >= 0 ? "delta-up" : "delta-down")}>
               {deltaText(data.nightsDelta)}
             </div>
           )}
           <Sparkline data={data.nightsSparkline} />
-          <div className="hero-caption">Viimased {data.sparkWindow} kuud</div>
+          <div className="hero-caption">{t("dashboard.lastMonths", data.sparkWindow)}</div>
           <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
         </div>
       </div>
@@ -254,9 +268,10 @@ function Dashboard() {
         <div>
           <SplitBar
             segments={[
-              { label: "Eesti elanikud", value: data.domesticGuests, color: DOMESTIC_COLOR },
-              { label: "Väliskülastajad", value: data.foreignGuests, color: FOREIGN_COLOR },
+              { label: t("common.domestic"), value: data.domesticGuests, color: DOMESTIC_COLOR },
+              { label: t("common.foreign"), value: data.foreignGuests, color: FOREIGN_COLOR },
             ]}
+            locale={locale}
           />
           <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
         </div>
@@ -264,7 +279,7 @@ function Dashboard() {
 
       <div className="tile-row">
         <div className="stat-tile">
-          <div className="tile-label">Enim külastatud maakond</div>
+          <div className="tile-label">{t("dashboard.topCounty")}</div>
           <div className="tile-number tile-number-small">{data.topCounty?.label ?? "—"}</div>
           {data.topCountyDelta && (
             <div className={"tile-delta " + (data.topCountyDelta.pct >= 0 ? "delta-up-text" : "delta-down-text")}>
@@ -273,7 +288,7 @@ function Dashboard() {
           )}
         </div>
         <div className="stat-tile">
-          <div className="tile-label">Keskmine ööbimiste arv külastaja kohta</div>
+          <div className="tile-label">{t("dashboard.avgNights")}</div>
           <div className="tile-number">{data.avgNightsPerGuest.toFixed(2)}</div>
           {data.avgNightsDelta && (
             <div className={"tile-delta " + (data.avgNightsDelta.pct >= 0 ? "delta-up-text" : "delta-down-text")}>

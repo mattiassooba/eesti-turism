@@ -5,8 +5,10 @@ import {
   getSortedRowModel,
   flexRender,
 } from "@tanstack/react-table";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
 
 export default function DataGrid({ rows }) {
+  const { t } = useTranslation();
   const [sorting, setSorting] = useState([]);
 
   const columns = useMemo(() => {
@@ -17,9 +19,9 @@ export default function DataGrid({ rows }) {
         accessorKey: key,
         header: key.replace(/_label$/, ""),
       })),
-      { accessorKey: "value", header: "Väärtus" },
+      { accessorKey: "value", header: t("dataGrid.value") },
     ];
-  }, [rows]);
+  }, [rows, t]);
 
   const table = useReactTable({
     data: rows,
@@ -30,7 +32,7 @@ export default function DataGrid({ rows }) {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  if (!rows.length) return <div className="panel-status">Andmed puuduvad.</div>;
+  if (!rows.length) return <div className="panel-status">{t("dataGrid.noData")}</div>;
 
   return (
     <div className="data-grid-wrapper">

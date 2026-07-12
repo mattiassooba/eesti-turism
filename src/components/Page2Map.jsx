@@ -18,6 +18,9 @@ import RankedBarList from "./RankedBarList";
 import ChartTooltip from "./ChartTooltip";
 import SectionFilters from "./SectionFilters";
 import TableSource from "./TableSource";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
+import { formatNumber } from "../i18n/format";
+import { countyLabelByMkood } from "../data/counties";
 import { DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -49,46 +52,12 @@ function toStatCode(mkood) {
   return `EE${mkood}0000000000`;
 }
 
-const MKOOD_LABELS = {
-  "0037": "Harju maakond",
-  "0039": "Hiiu maakond",
-  "0045": "Ida-Viru maakond",
-  "0050": "Jõgeva maakond",
-  "0052": "Järva maakond",
-  "0056": "Lääne maakond",
-  "0060": "Lääne-Viru maakond",
-  "0064": "Põlva maakond",
-  "0068": "Pärnu maakond",
-  "0071": "Rapla maakond",
-  "0074": "Saare maakond",
-  "0079": "Tartu maakond",
-  "0081": "Valga maakond",
-  "0084": "Viljandi maakond",
-  "0087": "Võru maakond",
-};
-
 const RESIDENCY_CODE = { all: "WORLD", domestic: "EE", foreign: "FOR" };
-
-const ORIGIN_COUNTRY_LABELS = {
-  FI: "Soome",
-  LV: "Läti",
-  DE: "Saksamaa",
-  SE: "Rootsi",
-  RU: "Venemaa",
-  LT: "Leedu",
-  NO: "Norra",
-  UK: "Suurbritannia",
-  US: "Ameerika Ühendriigid",
-  FR: "Prantsusmaa",
-  NL: "Holland",
-  PL: "Poola",
-  IT: "Itaalia",
-  ES: "Hispaania",
-  DK: "Taani",
-};
 
 // Memoized — see Dashboard.jsx for why.
 function Page2Map() {
+  const { t, locale } = useTranslation();
+  const ORIGIN_COUNTRY_LABELS = t("codes.country");
   const [base, setBase] = useState({ data: null, loading: true, error: null });
   const [origins, setOrigins] = useState({ data: null, loading: true, error: null });
   const [selectedCounty, setSelectedCounty] = useState(null); // { mkood, label } | null
@@ -123,7 +92,7 @@ function Page2Map() {
                 selection: { filter: "top", values: [String(Math.min(windowSize, 24))] },
               },
             ],
-            { signal }
+            { signal, locale }
           ),
           fetchTableData(
             MAJUTUS_PATH,
@@ -134,7 +103,7 @@ function Page2Map() {
               { code: "Elukohariik", selection: { filter: "item", values: ["EE", "FOR"] } },
               { code: "Vaatlusperiood", selection: { filter: "top", values: ["256"] } },
             ],
-            { signal }
+            { signal, locale }
           ),
         ]);
 
@@ -148,18 +117,20 @@ function Page2Map() {
         let topCounty = null;
         for (const [mkood, value] of Object.entries(countyTotals)) {
           if (!topCounty || value > topCounty.value) {
-            topCounty = { label: MKOOD_LABELS[mkood] ?? mkood, value };
+            topCounty = { label: countyLabelByMkood(mkood, locale), value };
           }
         }
 
         const historyRows = flattenToRows(historyData);
+        const domesticKey = t("common.domestic");
+        const foreignKey = t("common.foreign");
 
         const byPeriod = new Map();
         for (const row of historyRows) {
           if (!byPeriod.has(row.Vaatlusperiood)) {
             byPeriod.set(row.Vaatlusperiood, { x: row.Vaatlusperiood_label });
           }
-          const label = row.Elukohariik === "EE" ? "Eesti elanikud" : "Väliskülastajad";
+          const label = row.Elukohariik === "EE" ? domesticKey : foreignKey;
           if (row.value !== null) {
             byPeriod.get(row.Vaatlusperiood)[label] = row.value;
           }
@@ -179,8 +150,8 @@ function Page2Map() {
           yearSet.add(year);
           if (!grid[year]) grid[year] = new Array(12).fill(null);
           const entry = byPeriod.get(key);
-          const domestic = entry["Eesti elanikud"];
-          const foreign = entry["Väliskülastajad"];
+          const domestic = entry[domesticKey];
+          const foreign = entry[foreignKey];
           grid[year][monthIdx] =
             domestic === undefined && foreign === undefined ? null : (domestic ?? 0) + (foreign ?? 0);
         }
@@ -198,7 +169,7 @@ function Page2Map() {
         if (isActive()) setBase((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     },
-    [residency, timeRangeMonths]
+    [residency, timeRangeMonths, locale, t]
   );
 
   useAbortableEffect(
@@ -220,7 +191,7 @@ function Page2Map() {
             },
             { code: "Vaatlusperiood", selection: { filter: "top", values: [String(originWindow)] } },
           ],
-          { signal }
+          { signal, locale }
         );
         const originRows = flattenToRows(originData);
         const originTotals = new Map();
@@ -241,12 +212,12 @@ function Page2Map() {
         if (isActive()) setOrigins((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     },
-    [timeRangeMonths, selectedCounty]
+    [timeRangeMonths, selectedCounty, locale, t]
   );
 
-  if (!base.data && base.loading) return <div className="panel-status">Laen…</div>;
+  if (!base.data && base.loading) return <div className="panel-status">{t("map.loading")}</div>;
   if (!base.data && base.error)
-    return <div className="panel-error">Andmete laadimine ebaõnnestus: {base.error}</div>;
+    return <div className="panel-error">{t("map.loadError", base.error)}</div>;
 
   return (
     <div className={"dashboard" + (base.loading ? " refetching" : "")}>
@@ -261,21 +232,19 @@ function Page2Map() {
 
       {base.data.topCounty && (
         <div className="hero-card">
-          <div className="hero-label">Enim ööbimisi</div>
+          <div className="hero-label">{t("map.topNights")}</div>
           <div className="hero-number hero-number-text">{base.data.topCounty.label}</div>
-          <div className="hero-caption">
-            {base.data.topCounty.value.toLocaleString("et-EE")} ööd
-          </div>
+          <div className="hero-caption">{t("map.nights", formatNumber(base.data.topCounty.value, locale))}</div>
           <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
         </div>
       )}
 
       <div className="tile-row-split">
         <div className="data-card">
-          <h3>Ööbimised maakonna järgi (viimased {Math.min(windowSize, 24)} kuud kokku)</h3>
+          <h3>{t("map.byCountyHeading", Math.min(windowSize, 24))}</h3>
           <EstoniaMap
             valuesByMkood={base.data.countyTotals}
-            unit="ööd"
+            unit={t("common.nightsUnit")}
             selectedMkood={selectedCounty?.mkood}
             onSelectCounty={(mkood, label) =>
               setSelectedCounty((prev) => (prev?.mkood === mkood ? null : { mkood, label }))
@@ -285,23 +254,23 @@ function Page2Map() {
         </div>
 
         <div className="data-card">
-          <h3>Enim külastajaid saatvad riigid (viimased {Math.min(windowSize, 12)} kuud)</h3>
+          <h3>{t("map.topOriginsHeading", Math.min(windowSize, 12))}</h3>
           {selectedCounty && (
             <button className="selection-chip" onClick={() => setSelectedCounty(null)}>
               {selectedCounty.label}
               <span className="selection-chip-x">×</span>
             </button>
           )}
-          {!origins.data && origins.loading && <div className="panel-status">Laen…</div>}
+          {!origins.data && origins.loading && <div className="panel-status">{t("map.loading")}</div>}
           {!origins.data && origins.error && (
-            <div className="panel-error">Andmete laadimine ebaõnnestus: {origins.error}</div>
+            <div className="panel-error">{t("map.loadError", origins.error)}</div>
           )}
           {origins.data && (
             <div className={origins.loading ? "refetching" : ""}>
               {origins.data.length ? (
-                <RankedBarList items={origins.data} unit="külastajat" />
+                <RankedBarList items={origins.data} unit={t("common.guests")} locale={locale} />
               ) : (
-                <div className="panel-status">Selle maakonna kohta andmed puuduvad.</div>
+                <div className="panel-status">{t("map.noCountyData")}</div>
               )}
             </div>
           )}
@@ -310,9 +279,7 @@ function Page2Map() {
       </div>
 
       <div className="data-card">
-        <h3>
-          Eesti elanikud vs. väliskülastajad (viimased {base.data.historyChart.length} kuud)
-        </h3>
+        <h3>{t("map.residentsVsForeignHeading", base.data.historyChart.length)}</h3>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={base.data.historyChart} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
@@ -329,18 +296,18 @@ function Page2Map() {
               axisLine={{ stroke: CHART_GRID_COLOR }}
               tickLine={{ stroke: CHART_GRID_COLOR }}
             />
-            <Tooltip content={<ChartTooltip />} />
+            <Tooltip content={<ChartTooltip locale={locale} />} />
             <Legend />
             <Line
               type="monotone"
-              dataKey="Eesti elanikud"
+              dataKey={t("common.domestic")}
               stroke={DOMESTIC_COLOR}
               dot={false}
               isAnimationActive={false}
             />
             <Line
               type="monotone"
-              dataKey="Väliskülastajad"
+              dataKey={t("common.foreign")}
               stroke={FOREIGN_COLOR}
               dot={false}
               isAnimationActive={false}
@@ -351,7 +318,7 @@ function Page2Map() {
       </div>
 
       <div className="data-card">
-        <h3>Hooajalisus: majutatute arv kuu ja aasta järgi</h3>
+        <h3>{t("map.seasonalityHeading")}</h3>
         <SeasonalityHeatmap years={base.data.years} grid={base.data.grid} />
         <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
       </div>

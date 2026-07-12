@@ -6,6 +6,7 @@ import FilterBar from "./FilterBar";
 import DataGrid from "./DataGrid";
 import ChartPanel from "./ChartPanel";
 import ExportButtons from "./ExportButtons";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
 
 function defaultQuery(variables, initialTimeTop) {
   return variables.map((v) => {
@@ -27,6 +28,7 @@ function tableKey(path, tableId) {
 }
 
 export default function TableView({ path, tableId, title, initialTimeRangeMonths }) {
+  const { t, locale } = useTranslation();
   const [meta, setMeta] = useState(null);
   const [metaError, setMetaError] = useState(null);
   const [query, setQuery] = useState(null);
@@ -48,7 +50,7 @@ export default function TableView({ path, tableId, title, initialTimeRangeMonths
       queryOwnerRef.current = null;
 
       try {
-        const m = await fetchTableMeta(path, tableId, { signal });
+        const m = await fetchTableMeta(path, tableId, { signal, locale });
         if (!isActive()) return;
         setMeta(m);
         queryOwnerRef.current = tableKey(path, tableId);
@@ -66,7 +68,7 @@ export default function TableView({ path, tableId, title, initialTimeRangeMonths
         if (isActive()) setMetaError(err.message);
       }
     },
-    [path, tableId]
+    [path, tableId, locale]
   );
 
   useAbortableEffect(
@@ -82,7 +84,7 @@ export default function TableView({ path, tableId, title, initialTimeRangeMonths
       setDataError(null);
 
       try {
-        const d = await fetchTableData(path, tableId, query, { signal });
+        const d = await fetchTableData(path, tableId, query, { signal, locale });
         if (isActive()) setDataset(d);
       } catch (err) {
         if (isAbortError(err)) return;
@@ -91,7 +93,7 @@ export default function TableView({ path, tableId, title, initialTimeRangeMonths
         if (isActive()) setLoading(false);
       }
     },
-    [path, tableId, query]
+    [path, tableId, query, locale]
   );
 
   const rows = useMemo(() => (dataset ? flattenToRows(dataset) : []), [dataset]);
@@ -102,10 +104,10 @@ export default function TableView({ path, tableId, title, initialTimeRangeMonths
   }, [rows, timeField, groupField]);
 
   if (metaError) {
-    return <div className="panel-error">Tabeli laadimine ebaõnnestus: {metaError}</div>;
+    return <div className="panel-error">{t("tableView.metaError", metaError)}</div>;
   }
   if (!meta || !query) {
-    return <div className="panel-status">Laen tabelit…</div>;
+    return <div className="panel-status">{t("tableView.loadingTable")}</div>;
   }
 
   return (
@@ -120,11 +122,11 @@ export default function TableView({ path, tableId, title, initialTimeRangeMonths
       />
       {dataError && (
         <div className="panel-error">
-          Andmete laadimine ebaõnnestus: {dataError}{" "}
-          <button onClick={() => setQuery([...query])}>Proovi uuesti</button>
+          {t("tableView.loadError", dataError)}{" "}
+          <button onClick={() => setQuery([...query])}>{t("tableView.retry")}</button>
         </div>
       )}
-      {!dataset && loading && <div className="panel-status">Laen andmeid…</div>}
+      {!dataset && loading && <div className="panel-status">{t("tableView.loadingData")}</div>}
       {!dataError && dataset && (
         <div className={loading ? "refetching" : ""}>
           <ChartPanel

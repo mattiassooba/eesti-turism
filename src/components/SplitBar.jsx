@@ -1,4 +1,6 @@
-export default function SplitBar({ segments }) {
+import { formatNumber } from "../i18n/format";
+
+export default function SplitBar({ segments, locale = "et" }) {
   const total = segments.reduce((sum, s) => sum + s.value, 0) || 1;
 
   return (
@@ -16,7 +18,7 @@ export default function SplitBar({ segments }) {
         {segments.map((s) => (
           <span key={s.label} className="split-bar-legend-item">
             <span className="split-bar-swatch" style={{ backgroundColor: s.color }} />
-            {s.label} · {Math.round((s.value / total) * 100)}% ({s.value.toLocaleString("et-EE")})
+            {s.label} · {Math.round((s.value / total) * 100)}% ({formatNumber(s.value, locale)})
           </span>
         ))}
       </div>

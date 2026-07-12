@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
 
 // Delays mounting `children` until this wrapper scrolls near the given
 // scroll container's viewport. Without this, stacking every section on one
@@ -14,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 // flight when it scrolls into view, so the placeholder-to-content swap
 // happens mid-scroll and visibly hitches the page right at that moment.
 export default function LazyMount({ children, containerRef, rootMargin = "2400px 0px" }) {
+  const { t } = useTranslation();
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
 
@@ -69,7 +71,7 @@ export default function LazyMount({ children, containerRef, rootMargin = "2400px
 
   return (
     <div ref={ref}>
-      {visible ? children : <div className="panel-status lazy-placeholder">Laen…</div>}
+      {visible ? children : <div className="panel-status lazy-placeholder">{t("common.loading")}</div>}
     </div>
   );
 }

@@ -12,13 +12,16 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   background: var(--ink);
   color: var(--paper);
   padding: 16px 24px;
-  gap: 16px;
+  gap: 24px;
   flex-wrap: wrap;
   box-shadow: 0 2px 12px rgba(16, 27, 38, 0.25);
+}
+
+.top-nav .locale-switch {
+  margin-left: auto;
 }
 
 .top-nav-title {

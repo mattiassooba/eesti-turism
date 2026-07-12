@@ -2,18 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import { feature } from "topojson-client";
 import { geoMercator, geoPath } from "d3-geo";
 import { seasonalityColor } from "../colorScale";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
+import { formatNumber } from "../i18n/format";
+import { countyLabelByMkood } from "../data/counties";
 
 const WIDTH = 520;
 const HEIGHT = 340;
 
 export default function EstoniaMap({ valuesByMkood, unit, selectedMkood, onSelectCounty }) {
+  const { t, locale } = useTranslation();
   const [topology, setTopology] = useState(null);
   const [error, setError] = useState(null);
   const [hovered, setHovered] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/data/maakond-topo.json")
+    fetch(`${import.meta.env.BASE_URL}data/maakond-topo.json`)
       .then((res) => {
         if (!res.ok) throw new Error(`${res.status}`);
         return res.json();
@@ -42,23 +46,31 @@ export default function EstoniaMap({ valuesByMkood, unit, selectedMkood, onSelec
     };
   }, [topology, valuesByMkood]);
 
-  if (error) return <div className="panel-error">Kaardi laadimine ebaõnnestus: {error}</div>;
-  if (!topology) return <div className="panel-status">Laen kaarti…</div>;
+  if (error) return <div className="panel-error">{t("map3d.loadError", error)}</div>;
+  if (!topology) return <div className="panel-status">{t("map3d.loading")}</div>;
 
   const range = max - min || 1;
 
+  // The topojson file's own MNIMI property is always Estonian (it's a
+  // static geo file, not fetched from the locale-aware PxWeb API) — the
+  // county-code dictionary is the source of truth for the display name.
+  function countyName(mkood) {
+    return countyLabelByMkood(mkood, locale);
+  }
+
   function selectCounty(f) {
-    onSelectCounty?.(f.properties.MKOOD, f.properties.MNIMI);
+    onSelectCounty?.(f.properties.MKOOD, countyName(f.properties.MKOOD));
   }
 
   return (
     <div className="estonia-map">
-      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label="Eesti maakondade kaart">
+      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={t("map3d.ariaLabel")}>
         {features.map((f) => {
           const value = valuesByMkood[f.properties.MKOOD];
           const hasValue = typeof value === "number";
           const t = hasValue ? (value - min) / range : 0;
           const isSelected = selectedMkood === f.properties.MKOOD;
+          const name = countyName(f.properties.MKOOD);
           return (
             <path
               key={f.properties.MKOOD}
@@ -79,13 +91,13 @@ export default function EstoniaMap({ valuesByMkood, unit, selectedMkood, onSelec
               }}
               tabIndex={onSelectCounty ? 0 : -1}
               role={onSelectCounty ? "button" : undefined}
-              aria-label={onSelectCounty ? f.properties.MNIMI : undefined}
+              aria-label={onSelectCounty ? name : undefined}
               aria-pressed={onSelectCounty ? isSelected : undefined}
               style={{ cursor: onSelectCounty ? "pointer" : "default" }}
             >
               <title>
-                {f.properties.MNIMI}
-                {hasValue ? `: ${value.toLocaleString("et-EE")}${unit ? ` ${unit}` : ""}` : ""}
+                {name}
+                {hasValue ? `: ${formatNumber(value, locale)}${unit ? ` ${unit}` : ""}` : ""}
               </title>
             </path>
           );
@@ -93,14 +105,14 @@ export default function EstoniaMap({ valuesByMkood, unit, selectedMkood, onSelec
       </svg>
       <div className="estonia-map-caption">
         {hovered
-          ? `${hovered.MNIMI}: ${
+          ? `${countyName(hovered.MKOOD)}: ${
               typeof valuesByMkood[hovered.MKOOD] === "number"
-                ? valuesByMkood[hovered.MKOOD].toLocaleString("et-EE") + (unit ? ` ${unit}` : "")
-                : "andmed puuduvad"
+                ? formatNumber(valuesByMkood[hovered.MKOOD], locale) + (unit ? ` ${unit}` : "")
+                : t("map3d.noData")
             }`
-          : "Liigu hiirega maakonna kohal, kliki valimiseks"}
+          : t("map3d.hoverHint")}
       </div>
-      <div className="estonia-map-source">Piirid: Maa-amet, seisuga 01.09.2018</div>
+      <div className="estonia-map-source">{t("map3d.boundarySource")}</div>
     </div>
   );
 }

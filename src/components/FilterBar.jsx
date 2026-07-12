@@ -1,3 +1,5 @@
+import { useTranslation } from "../i18n/LocaleContext.jsx";
+
 const TIME_TOP_OPTIONS = [6, 12, 24, 48, 120];
 
 export default function FilterBar({
@@ -7,6 +9,7 @@ export default function FilterBar({
   groupField,
   onGroupFieldChange,
 }) {
+  const { t } = useTranslation();
   const timeVar = variables.find((v) => v.time);
   const nonTimeVars = variables.filter((v) => !v.time);
 
@@ -37,7 +40,7 @@ export default function FilterBar({
           >
             {TIME_TOP_OPTIONS.map((n) => (
               <option key={n} value={n}>
-                viimased {n}
+                {t("filterBar.lastN", n)}
               </option>
             ))}
           </select>
@@ -46,7 +49,7 @@ export default function FilterBar({
       {nonTimeVars.map((v) => (
         <label key={v.code}>
           {v.text}:{" "}
-          <span className="filter-hint">(mitme valimiseks hoia all Ctrl/Cmd)</span>
+          <span className="filter-hint">{t("filterBar.multiSelectHint")}</span>
           <select
             multiple
             size={Math.min(v.values.length, 6)}
@@ -68,12 +71,12 @@ export default function FilterBar({
       ))}
       {nonTimeVars.length > 0 && (
         <label>
-          Rühmita graafik:{" "}
+          {t("filterBar.groupChart")}{" "}
           <select
             value={groupField ?? ""}
             onChange={(e) => onGroupFieldChange(e.target.value || null)}
           >
-            <option value="">(puudub)</option>
+            <option value="">{t("filterBar.none")}</option>
             {nonTimeVars.map((v) => (
               <option key={v.code} value={v.code}>
                 {v.text}

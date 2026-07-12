@@ -15,40 +15,41 @@ import {
 import ChartTooltip from "./ChartTooltip";
 import RankedBarList from "./RankedBarList";
 import TableSource from "./TableSource";
+import { useTranslation } from "../i18n/LocaleContext.jsx";
+import { formatNumber } from "../i18n/format";
 import { CHART_COLORS, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
 
-const TIME_RANGE_OPTIONS = [
-  { value: "12", label: "12 kuud" },
-  { value: "24", label: "24 kuud" },
-  { value: "60", label: "5 aastat" },
-  { value: "all", label: "Kõik aeg" },
-];
-
-const COST_TYPE_TABS = [
-  { key: "SUM_EXP", label: "Kogukulu" },
-  { key: "AVG_EXP_TRP", label: "Keskmine kulu reisi kohta" },
-  { key: "AVG_EXP_NGT", label: "Keskmine kulu öö kohta" },
-];
-
-const COST_TYPE_HERO_LABEL = {
-  SUM_EXP: "Sisereiside kulutused kokku",
-  AVG_EXP_TRP: "Keskmine kulu reisi kohta",
-  AVG_EXP_NGT: "Keskmine kulu öö kohta",
-};
-
 // Näitaja codes in TU552, in the order the breakdown chart should consider
 // them before sorting by value.
-const CATEGORY_LABELS = {
-  EXP_TRA: "Transport",
-  EXP_ACC: "Majutus",
-  EXP_REST: "Toit ja jook",
-  EXP_OTH: "Muu (meelelahutus, ostud, teenused)",
-};
+const CATEGORY_CODES = ["EXP_TRA", "EXP_ACC", "EXP_REST", "EXP_OTH"];
 
 // Memoized — see Dashboard.jsx for why.
 function Page5Expenses() {
+  const { t, locale } = useTranslation();
+  const TIME_RANGE_OPTIONS = [
+    { value: "12", label: t("filters.time12") },
+    { value: "24", label: t("filters.time24") },
+    { value: "60", label: t("filters.time60") },
+    { value: "all", label: t("filters.timeAll") },
+  ];
+  const COST_TYPE_TABS = [
+    { key: "SUM_EXP", label: t("expenses.costTypeSum") },
+    { key: "AVG_EXP_TRP", label: t("expenses.costTypePerTrip") },
+    { key: "AVG_EXP_NGT", label: t("expenses.costTypePerNight") },
+  ];
+  const COST_TYPE_HERO_LABEL = {
+    SUM_EXP: t("expenses.heroLabelSum"),
+    AVG_EXP_TRP: t("expenses.heroLabelPerTrip"),
+    AVG_EXP_NGT: t("expenses.heroLabelPerNight"),
+  };
+  const CATEGORY_LABELS = {
+    EXP_TRA: t("expenses.categoryTransport"),
+    EXP_ACC: t("expenses.categoryAccommodation"),
+    EXP_REST: t("expenses.categoryFood"),
+    EXP_OTH: t("expenses.categoryOther"),
+  };
   const [state, setState] = useState({ data: null, loading: true, error: null });
   const [timeRangeMonths, setTimeRangeMonths] = useState("24");
   const [costType, setCostType] = useState("AVG_EXP_TRP");
@@ -75,7 +76,7 @@ function Page5Expenses() {
               },
               { code: "Vaatlusperiood", selection: { filter: "top", values: [String(quarters)] } },
             ],
-            { signal }
+            { signal, locale }
           ),
           fetchTableData(
             REISIMINE_PATH,
@@ -92,7 +93,7 @@ function Page5Expenses() {
               { code: "Reisi tüüp", selection: { filter: "item", values: ["DOM"] } },
               { code: "Vaatlusperiood", selection: { filter: "top", values: ["2"] } },
             ],
-            { signal }
+            { signal, locale }
           ),
         ]);
 
@@ -122,7 +123,7 @@ function Page5Expenses() {
         const heroValue = latestValues.EXP ?? 0;
         const heroDelta =
           prevValues && prevValues.EXP
-            ? { pct: ((heroValue - prevValues.EXP) / prevValues.EXP) * 100, label: `vs ${prevYear}` }
+            ? { pct: ((heroValue - prevValues.EXP) / prevValues.EXP) * 100, label: t("expenses.vs", prevYear) }
             : null;
 
         // SUM_EXP is a national aggregate (hundreds of millions of euros) —
@@ -130,15 +131,13 @@ function Page5Expenses() {
         // already human-scale (tens to hundreds of euros).
         const categoryScale = costType === "SUM_EXP" ? 1_000_000 : 1;
         const categoryUnit = costType === "SUM_EXP" ? "mln €" : "€";
-        const breakdown = Object.entries(CATEGORY_LABELS)
-          .map(([code, label]) => ({
-            label,
-            value:
-              costType === "SUM_EXP"
-                ? Math.round(((latestValues[code] ?? 0) / categoryScale) * 10) / 10
-                : Math.round(latestValues[code] ?? 0),
-          }))
-          .sort((a, b) => b.value - a.value);
+        const breakdown = CATEGORY_CODES.map((code) => ({
+          label: CATEGORY_LABELS[code],
+          value:
+            costType === "SUM_EXP"
+              ? Math.round(((latestValues[code] ?? 0) / categoryScale) * 10) / 10
+              : Math.round(latestValues[code] ?? 0),
+        })).sort((a, b) => b.value - a.value);
 
         if (isActive()) {
           setState({
@@ -161,12 +160,12 @@ function Page5Expenses() {
         if (isActive()) setState((prev) => ({ ...prev, loading: false, error: err.message }));
       }
     },
-    [quarters, costType]
+    [quarters, costType, locale, t]
   );
 
-  if (!state.data && state.loading) return <div className="panel-status">Laen…</div>;
+  if (!state.data && state.loading) return <div className="panel-status">{t("expenses.loading")}</div>;
   if (!state.data && state.error)
-    return <div className="panel-error">Andmete laadimine ebaõnnestus: {state.error}</div>;
+    return <div className="panel-error">{t("expenses.loadError", state.error)}</div>;
 
   const { data } = state;
 
@@ -177,16 +176,16 @@ function Page5Expenses() {
 
   function formatHeroValue(value) {
     if (costType === "SUM_EXP") {
-      return `${(value / 1_000_000).toLocaleString("et-EE", { maximumFractionDigits: 1 })} mln €`;
+      return `${formatNumber(value / 1_000_000, locale, { maximumFractionDigits: 1 })} mln €`;
     }
-    return `${Math.round(value).toLocaleString("et-EE")} €`;
+    return `${formatNumber(Math.round(value), locale)} €`;
   }
 
   return (
     <div className={"dashboard" + (state.loading ? " refetching" : "")}>
       <div className="operator-controls">
         <label className="operator-control">
-          <span>Ajavahemik</span>
+          <span>{t("filters.timeRange")}</span>
           <select
             value={timeRangeMonths ?? "all"}
             onChange={(e) => setTimeRangeMonths(e.target.value === "all" ? null : e.target.value)}
@@ -199,7 +198,7 @@ function Page5Expenses() {
           </select>
         </label>
         <div className="operator-control">
-          <span>Kulu tüüp</span>
+          <span>{t("expenses.costType")}</span>
           <div className="pill-tabs">
             {COST_TYPE_TABS.map((tab) => (
               <button
@@ -228,7 +227,7 @@ function Page5Expenses() {
       </div>
 
       <div className="data-card">
-        <h3>Sisereiside kulutused eesmärgi järgi (eurot, viimased {data.quarters} kvartalit)</h3>
+        <h3>{t("expenses.byPurposeHeading", data.quarters)}</h3>
         <ResponsiveContainer width="100%" height={320}>
           <AreaChart data={data.purposeChart}>
             <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
@@ -245,7 +244,7 @@ function Page5Expenses() {
               axisLine={{ stroke: CHART_GRID_COLOR }}
               tickLine={{ stroke: CHART_GRID_COLOR }}
             />
-            <Tooltip content={<ChartTooltip unit="€" />} />
+            <Tooltip content={<ChartTooltip unit="€" locale={locale} />} />
             <Legend />
             {data.purposeNames.map((name, i) => (
               <Area
@@ -265,8 +264,8 @@ function Page5Expenses() {
       </div>
 
       <div className="data-card">
-        <h3>Kulutuste jaotus liigi järgi ({data.latestYear})</h3>
-        <RankedBarList items={data.breakdown} unit={data.categoryUnit} />
+        <h3>{t("expenses.byCategoryHeading", data.latestYear)}</h3>
+        <RankedBarList items={data.breakdown} unit={data.categoryUnit} locale={locale} />
         <TableSource path={REISIMINE_PATH} ids={["TU552.px"]} />
       </div>
     </div>

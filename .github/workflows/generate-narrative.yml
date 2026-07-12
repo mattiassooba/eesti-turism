@@ -1,0 +1,33 @@
+name: Generate narrative
+
+on:
+  schedule:
+    # 5th of each month, 06:00 UTC — buffered a few days after month-end
+    # for Statistikaamet to actually publish the new data point.
+    - cron: "0 6 5 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      - run: node scripts/generate-narrative.mjs
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL: claude-sonnet-5
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update narrative data"
+          file_pattern: public/data/narrative.json

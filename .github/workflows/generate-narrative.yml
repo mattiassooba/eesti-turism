@@ -31,3 +31,4 @@ jobs:
         with:
           commit_message: "chore: update narrative data"
           file_pattern: public/data/narrative.json
+

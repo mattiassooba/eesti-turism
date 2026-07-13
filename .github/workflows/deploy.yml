@@ -3,6 +3,15 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [master]
+  # git-auto-commit-action (in generate-narrative.yml) pushes using the
+  # default GITHUB_TOKEN, and GitHub deliberately does not fire `push`
+  # triggers for GITHUB_TOKEN-authored commits (anti-loop protection) —
+  # so that commit alone would never redeploy. workflow_run does fire
+  # for it, since it's keyed off the *other workflow* completing, not
+  # the push itself.
+  workflow_run:
+    workflows: ["Generate narrative"]
+    types: [completed]
   workflow_dispatch: {}
 
 permissions:
@@ -16,6 +25,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

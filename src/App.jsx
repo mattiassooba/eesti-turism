@@ -8,6 +8,7 @@ import Page4Residents from "./components/Page4Residents";
 import Page5Expenses from "./components/Page5Expenses";
 import Page6Capacity from "./components/Page6Capacity";
 import LazyMount from "./components/LazyMount";
+import NewsletterSignup from "./components/NewsletterSignup";
 import SourceFooter from "./components/SourceFooter";
 import SectionRail from "./components/SectionRail";
 import { useActiveSection } from "./hooks/useActiveSection";
@@ -234,6 +235,7 @@ export default function App() {
         </main>
       </div>
 
+      <NewsletterSignup />
       <SourceFooter />
     </div>
   );

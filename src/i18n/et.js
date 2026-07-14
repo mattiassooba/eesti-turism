@@ -40,6 +40,21 @@ export default {
     caption: (period) => `Tehisintellekti kokkuvõte Statistikaameti uusimate andmete põhjal (${period}) — AI-kirjutatud, mitte Statistikaameti ametlik toode.`,
   },
 
+  newsletter: {
+    heading: "Telli uudiskiri",
+    intro: "Saa Eesti turismistatistika kokkuvõte otse e-postile — vali sagedus, keel ja maakond, mis sind kõige rohkem huvitab.",
+    emailPlaceholder: "sinu@email.ee",
+    submit: "Telli",
+    cadence: "Sagedus",
+    monthly: "Igakuine",
+    quarterly: "Kvartaalne",
+    language: "Keel",
+    county: "Maakond",
+    allCounties: "Kogu Eesti",
+    privacy:
+      "Sisestatud e-posti aadressi ja eelistusi haldab Mailchimp (The Rocket Science Group LLC). Andmeid kasutatakse ainult selle uudiskirja saatmiseks; tellimusest saab alati loobuda uudiskirja lingi kaudu.",
+  },
+
   dashboard: {
     loading: "Laen ülevaadet…",
     loadError: (msg) => `Ülevaate laadimine ebaõnnestus: ${msg}`,

@@ -40,6 +40,21 @@ export default {
     caption: (period) => `AI-written summary based on Statistikaamet's latest data (${period}) — not an official Statistikaamet product.`,
   },
 
+  newsletter: {
+    heading: "Subscribe to the newsletter",
+    intro: "Get Estonian tourism statistics summarized straight to your inbox — choose how often, in which language, and which county you're most interested in.",
+    emailPlaceholder: "you@email.com",
+    submit: "Subscribe",
+    cadence: "Frequency",
+    monthly: "Monthly",
+    quarterly: "Quarterly",
+    language: "Language",
+    county: "County",
+    allCounties: "All of Estonia",
+    privacy:
+      "Your email address and preferences are processed by Mailchimp (The Rocket Science Group LLC). Used only to send this newsletter; you can unsubscribe anytime via the link in every email.",
+  },
+
   dashboard: {
     loading: "Loading overview…",
     loadError: (msg) => `Failed to load overview: ${msg}`,

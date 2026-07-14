@@ -5,7 +5,12 @@ on:
     # 5th of each month, 06:00 UTC — buffered a few days after month-end
     # for Statistikaamet to actually publish the new data point.
     - cron: "0 6 5 * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Create newsletter campaigns but don't send them"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -31,4 +36,20 @@ jobs:
         with:
           commit_message: "chore: update narrative data"
           file_pattern: public/data/narrative.json
+
+      # Runs even if the narrative was already up to date (idempotency
+      # guard in generate-narrative.mjs just skips the API call, it still
+      # exits 0) — narrative.json is guaranteed to exist by this point
+      # either way, so the send is always for the current period.
+      - name: Send newsletter
+        run: node scripts/send-newsletter.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
+        env:
+          MAILCHIMP_API_KEY: ${{ secrets.MAILCHIMP_API_KEY }}
+          MAILCHIMP_LIST_ID: ${{ secrets.MAILCHIMP_LIST_ID }}
+          MAILCHIMP_CADENCE_CATEGORY_ID: ${{ secrets.MAILCHIMP_CADENCE_CATEGORY_ID }}
+          MAILCHIMP_CADENCE_MONTHLY_ID: ${{ secrets.MAILCHIMP_CADENCE_MONTHLY_ID }}
+          MAILCHIMP_CADENCE_QUARTERLY_ID: ${{ secrets.MAILCHIMP_CADENCE_QUARTERLY_ID }}
+          MAILCHIMP_LANGUAGE_CATEGORY_ID: ${{ secrets.MAILCHIMP_LANGUAGE_CATEGORY_ID }}
+          MAILCHIMP_LANGUAGE_ET_ID: ${{ secrets.MAILCHIMP_LANGUAGE_ET_ID }}
+          MAILCHIMP_LANGUAGE_EN_ID: ${{ secrets.MAILCHIMP_LANGUAGE_EN_ID }}
 

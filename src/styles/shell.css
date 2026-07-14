@@ -85,6 +85,126 @@
   min-height: 0;
 }
 
+/* Newsletter signup — sits between the main scroll area and the footer,
+   visible regardless of which top-level tab is active (unlike the
+   dashboard-local filters, this is a persistent site-wide element). */
+
+.newsletter-signup {
+  flex-shrink: 0;
+  background: var(--sea-deep);
+  color: var(--paper);
+  padding: 24px 32px;
+}
+
+.newsletter-heading {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.newsletter-intro {
+  margin: 0 0 16px;
+  max-width: 640px;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: rgba(238, 240, 238, 0.75);
+}
+
+.newsletter-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.newsletter-email {
+  flex: 1;
+  min-width: 220px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.newsletter-email:focus-visible {
+  outline: 2px solid var(--midsummer);
+  outline-offset: 1px;
+}
+
+.newsletter-submit {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 999px;
+  background: var(--midsummer);
+  color: var(--ink);
+  cursor: pointer;
+  transition: filter 0.15s var(--ease);
+}
+
+.newsletter-submit:hover {
+  filter: brightness(1.08);
+}
+
+.newsletter-options {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.newsletter-options .operator-control {
+  color: rgba(238, 240, 238, 0.75);
+}
+
+.newsletter-options select {
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* Radio-as-pill: a real, accessible <input type="radio"> visually hidden,
+   its paired <label> styled like the app's existing .pill-tab buttons —
+   Mailchimp's embedded-form mechanics need genuine form controls, not the
+   JS-driven <button> pills used elsewhere in the app. */
+.pill-radio {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.pill-radio:focus-visible + .pill-tab {
+  outline: 2px solid var(--midsummer);
+  outline-offset: 1px;
+}
+
+.pill-radio:checked + .pill-tab {
+  background: var(--sea);
+  color: #fff;
+}
+
+.newsletter-privacy {
+  margin: 0;
+  max-width: 640px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-style: italic;
+  color: rgba(238, 240, 238, 0.6);
+}
+
 /* Sidebar */
 
 .sidebar {

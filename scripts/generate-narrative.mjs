@@ -463,7 +463,20 @@ ${prompts.expenses}`;
 
   const toolUse = response.content.find((block) => block.type === "tool_use");
   if (!toolUse) throw new Error("Claude did not return a tool_use block");
-  return toolUse.input;
+  return normalizeSections(toolUse.input);
+}
+
+// Claude's tool-calling doesn't always respect a nested-object schema for
+// every property in one call — observed in practice returning some
+// sections as a real {et, en} object and others as a JSON-encoded STRING
+// containing the same shape (e.g. "map": "{\"et\": ..., \"en\": ...}").
+// Normalize defensively rather than trust the schema was followed exactly.
+function normalizeSections(sections) {
+  const normalized = {};
+  for (const [key, value] of Object.entries(sections)) {
+    normalized[key] = typeof value === "string" ? JSON.parse(value) : value;
+  }
+  return normalized;
 }
 
 async function readExisting() {

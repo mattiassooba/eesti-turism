@@ -226,7 +226,7 @@ function Dashboard() {
         onDeltaModeChange={setDeltaMode}
       />
 
-      <NarrativeBlock />
+      <NarrativeBlock section="dashboard" />
 
       <div className="kpi-row">
         <div className="hero-card">

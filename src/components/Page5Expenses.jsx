@@ -15,6 +15,7 @@ import {
 import ChartTooltip from "./ChartTooltip";
 import RankedBarList from "./RankedBarList";
 import TableSource from "./TableSource";
+import NarrativeBlock from "./NarrativeBlock";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { formatNumber } from "../i18n/format";
 import { CHART_COLORS, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
@@ -212,6 +213,8 @@ function Page5Expenses() {
           </div>
         </div>
       </div>
+
+      <NarrativeBlock section="expenses" />
 
       <div className="hero-card">
         <div className="hero-label">

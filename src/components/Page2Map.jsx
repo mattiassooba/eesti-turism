@@ -18,6 +18,7 @@ import RankedBarList from "./RankedBarList";
 import ChartTooltip from "./ChartTooltip";
 import SectionFilters from "./SectionFilters";
 import TableSource from "./TableSource";
+import NarrativeBlock from "./NarrativeBlock";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { formatNumber } from "../i18n/format";
 import { countyLabelByMkood } from "../data/counties";
@@ -229,6 +230,8 @@ function Page2Map() {
         timeRangeMonths={timeRangeMonths}
         onTimeRangeChange={setTimeRangeMonths}
       />
+
+      <NarrativeBlock section="map" />
 
       {base.data.topCounty && (
         <div className="hero-card">

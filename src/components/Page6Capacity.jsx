@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import ChartTooltip from "./ChartTooltip";
 import TableSource from "./TableSource";
+import NarrativeBlock from "./NarrativeBlock";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { formatNumber } from "../i18n/format";
 import { CHART_COLORS, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
@@ -206,6 +207,8 @@ function Page6Capacity() {
           />
         </label>
       </div>
+
+      <NarrativeBlock section="capacity" />
 
       <div className="hero-card">
         <div className="hero-label">

@@ -17,6 +17,7 @@ import {
 import ChartTooltip from "./ChartTooltip";
 import SectionFilters from "./SectionFilters";
 import TableSource from "./TableSource";
+import NarrativeBlock from "./NarrativeBlock";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { CHART_COLORS, DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
@@ -155,6 +156,8 @@ function Page3Purpose() {
         timeRangeMonths={timeRangeMonths}
         onTimeRangeChange={setTimeRangeMonths}
       />
+
+      <NarrativeBlock section="purpose" />
 
       {data.topPurpose && (
         <div className="hero-card">

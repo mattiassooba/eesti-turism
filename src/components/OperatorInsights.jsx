@@ -680,13 +680,13 @@ function OperatorInsights() {
         <TableSource path={MAJUTUS_PATH} ids={["TU131.PX", "TU122.PX"]} />
       </div>
 
-      <div className="tile-row-split" id="operator-monthly-snapshot">
-        <div className="data-card">
+      <div className="tile-row-split">
+        <div className="data-card" id="operator-snapshot-national">
           <h3>{t("operator.snapshotHeading", [t("operator.estoniaLabel"), view.latestLabel, view.prevLabel])}</h3>
           <MonthlySnapshotTable snapshot={view.nationalMonthly} locale={locale} t={t} />
           <TableSource path={MAJUTUS_PATH} ids={["TU131.PX", "TU122.PX"]} />
         </div>
-        <div className="data-card">
+        <div className="data-card" id="operator-snapshot-region">
           <h3>
             {t("operator.snapshotHeading", [regionLabel, view.latestLabel, view.prevLabel])}
           </h3>
@@ -695,7 +695,7 @@ function OperatorInsights() {
         </div>
       </div>
 
-      <div className="data-card">
+      <div className="data-card" id="operator-top-origins">
         <h3>{t("operator.topOriginsHeading", regionLabel)}</h3>
         {!latestOriginsTop5 && origins.loading && <div className="panel-status">{t("operator.loading")}</div>}
         {!latestOriginsTop5 && origins.error && (

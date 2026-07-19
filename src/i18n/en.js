@@ -50,6 +50,7 @@ export default {
     otherHighlights: "Other highlights",
     nationalChartTitle: "Guests accommodated in Estonia, by year",
     regionSubheading: "Detailed regional overview",
+    topOriginsHeading: (region) => `Top 3 foreign visitor countries of origin — ${region} (last 12 months)`,
     chartsCaption: (region) => `Reflects the region currently selected on the Ülevaade tab: ${region}.`,
   },
 

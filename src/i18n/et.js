@@ -50,6 +50,7 @@ export default {
     otherHighlights: "Muu statistika",
     nationalChartTitle: "Majutatud Eestis, aastate lõikes",
     regionSubheading: "Piirkonna detailne ülevaade",
+    topOriginsHeading: (region) => `Top 3 väliskülastajate päritoluriiki — ${region} (viimased 12 kuud)`,
     chartsCaption: (region) => `Kajastab hetkel Ülevaate vahekaardil valitud piirkonda: ${region}.`,
   },
 

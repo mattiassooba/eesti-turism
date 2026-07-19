@@ -142,6 +142,8 @@ export default function NewsletterPdfButton() {
       const regionLabel = countyLabelByCode(region, locale);
       const dashboard = narrative.sections.dashboard;
       const regionBlurb = narrative.sections.dashboardByRegion?.[region];
+      const { chartsCanvas, nationalSnapshotCanvas, regionSnapshotCanvas, topOriginsCanvas } =
+        await captureOperatorSnapshots();
 
       // ---- Page 1: Estonia in general ---------------------------------
       paragraph(`${t("app.brand")} — ${periodLabel}`, { font: "bold", size: 20, gap: 4 });
@@ -160,6 +162,8 @@ export default function NewsletterPdfButton() {
         if (highlight) labeledLine(t(SECTION_NAV_KEY[key]), highlight);
       }
 
+      if (nationalSnapshotCanvas) image(nationalSnapshotCanvas, { maxHeight: 150 });
+
       const generatedDate = new Date(narrative.generatedAt).toLocaleDateString(
         locale === "en" ? "en-US" : "et-EE"
       );
@@ -175,8 +179,6 @@ export default function NewsletterPdfButton() {
       doc.addPage();
       y = MARGIN;
 
-      const { chartsCanvas, snapshotCanvas } = await captureOperatorSnapshots();
-
       paragraph(regionLabel, { font: "bold", size: 18, gap: 4 });
       paragraph(t("newsletterPdf.regionSubheading"), { font: "normal", size: 11, color: 110, gap: 10 });
       paragraph(t("newsletterPdf.chartsCaption", regionLabel), { font: "italic", size: 8.5, color: 110, gap: 14 });
@@ -184,7 +186,12 @@ export default function NewsletterPdfButton() {
       if (regionBlurb) paragraph(regionBlurb[locale] ?? regionBlurb.et, { gap: 16 });
 
       if (chartsCanvas) image(chartsCanvas, { maxHeight: 220 });
-      if (snapshotCanvas) image(snapshotCanvas, { maxHeight: 180 });
+      if (regionSnapshotCanvas) image(regionSnapshotCanvas, { maxHeight: 150 });
+
+      if (topOriginsCanvas) {
+        paragraph(t("newsletterPdf.topOriginsHeading", regionLabel), { font: "bold", size: 11, gap: 6 });
+        image(topOriginsCanvas, { maxHeight: 110 });
+      }
 
       ensureSpace(LINE_HEIGHT);
       paragraph(`${t("source.prefix")} ${t("source.agency")}, ${t("source.tables")} TU131.PX, TU122.PX`, {
@@ -207,28 +214,50 @@ export default function NewsletterPdfButton() {
   );
 }
 
-// Captures the Ülevaade tab's two operator charts and its compact
-// "Estonia vs. region, latest year" snapshot table pair as live snapshots
-// (same technique as ExportButtons' PNG export: rasterize what's actually
-// on screen). Best-effort: these nodes only exist once the scroll view has
-// rendered at least once this session (OperatorInsights lives inside the
-// non-lazy Dashboard, so in practice that's true whenever the site is open
-// at all), so a missing node just returns nulls rather than failing the
-// download.
+// Captures the Ülevaade tab's operator charts and its "Estonia vs. region,
+// latest year" snapshot cards as live snapshots (same technique as
+// ExportButtons' PNG export: rasterize what's actually on screen).
+// Best-effort: these nodes only exist once the scroll view has rendered at
+// least once this session (OperatorInsights lives inside the non-lazy
+// Dashboard, so in practice that's true whenever the site is open at all),
+// so a missing node just returns null for that entry rather than failing
+// the whole download.
 async function captureOperatorSnapshots() {
   const chartsRow = document.querySelector("#operator-yearly-card .tile-row-split");
-  const snapshotRow = document.getElementById("operator-monthly-snapshot");
-  if (!chartsRow && !snapshotRow) return { chartsCanvas: null, snapshotCanvas: null };
+  const nationalSnapshot = document.getElementById("operator-snapshot-national");
+  const regionSnapshot = document.getElementById("operator-snapshot-region");
+  // Only the top 3 origin countries go in the PDF (the on-screen card shows
+  // 5) — captured from the row list directly, not the whole card, since the
+  // card's own heading says "Top 5" and a trimmed row list would make that
+  // wrong; the PDF prints its own "Top 3" heading as text instead.
+  const topOriginsList = document.querySelector("#operator-top-origins .ranked-bar-list");
+
+  if (!chartsRow && !nationalSnapshot && !regionSnapshot && !topOriginsList) {
+    return { chartsCanvas: null, nationalSnapshotCanvas: null, regionSnapshotCanvas: null, topOriginsCanvas: null };
+  }
 
   try {
     const html2canvas = (await import("html2canvas")).default;
-    const [chartsCanvas, snapshotCanvas] = await Promise.all([
-      chartsRow ? html2canvas(chartsRow, { scale: 1.5, backgroundColor: "#ffffff" }) : null,
-      snapshotRow ? html2canvas(snapshotRow, { scale: 1.5, backgroundColor: "#ffffff" }) : null,
+    const capture = (node) => (node ? html2canvas(node, { scale: 1.5, backgroundColor: "#ffffff" }) : null);
+    const [chartsCanvas, nationalSnapshotCanvas, regionSnapshotCanvas, topOriginsCanvas] = await Promise.all([
+      capture(chartsRow),
+      capture(nationalSnapshot),
+      capture(regionSnapshot),
+      topOriginsList
+        ? html2canvas(topOriginsList, {
+            scale: 1.5,
+            backgroundColor: "#ffffff",
+            onclone: (_doc, el) => {
+              el.querySelectorAll(".ranked-bar-row").forEach((row, i) => {
+                if (i >= 3) row.remove();
+              });
+            },
+          })
+        : null,
     ]);
-    return { chartsCanvas, snapshotCanvas };
+    return { chartsCanvas, nationalSnapshotCanvas, regionSnapshotCanvas, topOriginsCanvas };
   } catch (err) {
     console.warn("Newsletter PDF: skipping charts/snapshot capture —", err);
-    return { chartsCanvas: null, snapshotCanvas: null };
+    return { chartsCanvas: null, nationalSnapshotCanvas: null, regionSnapshotCanvas: null, topOriginsCanvas: null };
   }
 }

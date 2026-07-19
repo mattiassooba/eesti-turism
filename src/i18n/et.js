@@ -46,8 +46,11 @@ export default {
     intro:
       "Käesolev PDF koondab tehisintellekti kokkuvõtted Statistikaameti uusimate andmete põhjal — AI-kirjutatud, mitte Statistikaameti ametlik toode.",
     generatedOn: "Koostatud:",
-    tableHeading: "Operaatori statistika — aastate lõikes",
-    chartsCaption: (region) => `Graafikud ja tabel kajastavad hetkel Ülevaate vahekaardil valitud piirkonda: ${region}.`,
+    estoniaHeading: "Eesti üldpilt",
+    otherHighlights: "Muu statistika",
+    nationalChartTitle: "Majutatud Eestis, aastate lõikes",
+    regionSubheading: "Piirkonna detailne ülevaade",
+    chartsCaption: (region) => `Kajastab hetkel Ülevaate vahekaardil valitud piirkonda: ${region}.`,
   },
 
   newsletter: {

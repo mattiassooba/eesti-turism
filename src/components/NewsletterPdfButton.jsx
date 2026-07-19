@@ -4,9 +4,8 @@ import { useRegion } from "../context/RegionContext.jsx";
 import { countyLabelByCode } from "../data/counties";
 import { loadNarrative } from "../data/narrative";
 
-const SECTION_ORDER = ["dashboard", "map", "purpose", "capacity", "expenses"];
+const HIGHLIGHT_SECTIONS = ["map", "purpose", "capacity", "expenses"];
 const SECTION_NAV_KEY = {
-  dashboard: "nav.dashboard",
   map: "nav.map",
   purpose: "nav.purpose",
   capacity: "nav.capacity",
@@ -15,6 +14,7 @@ const SECTION_NAV_KEY = {
 
 const MARGIN = 48;
 const LINE_HEIGHT = 14;
+const NATIONAL_BAR_COLOR = [43, 108, 163]; // matches "Eesti kokku" everywhere else in the app
 
 // Only enabled once narrative.json is confirmed present — same
 // graceful-degradation stance as NarrativeBlock (no error UI, just no
@@ -42,9 +42,8 @@ export default function NewsletterPdfButton() {
     try {
       const { jsPDF } = await import("jspdf");
       const doc = new jsPDF({ unit: "pt", format: "a4" });
-      const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
-      const maxWidth = pageWidth - MARGIN * 2;
+      const maxWidth = doc.internal.pageSize.getWidth() - MARGIN * 2;
       let y = MARGIN;
 
       function ensureSpace(needed) {
@@ -68,6 +67,28 @@ export default function NewsletterPdfButton() {
         y += gap;
       }
 
+      // Bold "label: " followed by normal-weight text, wrapping subsequent
+      // lines back to the margin — used for the page-1 highlight lines.
+      function labeledLine(label, text) {
+        ensureSpace(LINE_HEIGHT * 2);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        const labelText = `${label}: `;
+        doc.text(labelText, MARGIN, y);
+        const labelWidth = doc.getTextWidth(labelText);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        const lines = doc.splitTextToSize(text, maxWidth - labelWidth);
+        doc.text(lines[0] ?? "", MARGIN + labelWidth, y);
+        y += LINE_HEIGHT;
+        for (let i = 1; i < lines.length; i++) {
+          ensureSpace(LINE_HEIGHT);
+          doc.text(lines[i], MARGIN, y);
+          y += LINE_HEIGHT;
+        }
+        y += 8;
+      }
+
       // Fits the canvas to maxWidth, paginating first if it wouldn't fit on
       // the remaining space of the current page.
       function image(canvas, { maxHeight = 260, gap = 16 } = {}) {
@@ -85,32 +106,58 @@ export default function NewsletterPdfButton() {
         y += drawHeight + gap;
       }
 
+      // Drawn with jsPDF's own vector primitives, not a DOM screenshot — the
+      // only fully-national charts in the app live on the lazy-mounted Map
+      // tab, so a live capture would frequently just be missing. This has
+      // no DOM dependency at all and works regardless of which tab is open.
+      function nationalBarChart(series, { height = 140, gap = 20 } = {}) {
+        if (!Array.isArray(series) || !series.length) return;
+        ensureSpace(height + 16);
+        const top = y;
+        const max = Math.max(...series.map((d) => d.guests), 1);
+        const barGap = 6;
+        const barWidth = (maxWidth - barGap * (series.length - 1)) / series.length;
+        const axisY = top + height;
+
+        doc.setDrawColor(210);
+        doc.setLineWidth(0.5);
+        doc.line(MARGIN, axisY, MARGIN + maxWidth, axisY);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        series.forEach((d, i) => {
+          const barHeight = (d.guests / max) * (height - 4);
+          const barX = MARGIN + i * (barWidth + barGap);
+          const barY = axisY - barHeight;
+          doc.setFillColor(...NATIONAL_BAR_COLOR);
+          doc.rect(barX, barY, barWidth, barHeight, "F");
+          doc.setTextColor(110);
+          doc.text(String(d.year), barX + barWidth / 2, axisY + 10, { align: "center" });
+        });
+        doc.setTextColor(0);
+        y = axisY + 16 + gap;
+      }
+
       const periodLabel = narrative.periodLabel?.[locale] ?? narrative.periodLabel?.et;
       const regionLabel = countyLabelByCode(region, locale);
-      const { chartsCanvas, tableCanvas } = await captureOperatorSnapshots();
+      const dashboard = narrative.sections.dashboard;
+      const regionBlurb = narrative.sections.dashboardByRegion?.[region];
 
+      // ---- Page 1: Estonia in general ---------------------------------
       paragraph(`${t("app.brand")} — ${periodLabel}`, { font: "bold", size: 20, gap: 4 });
       paragraph(t("newsletterPdf.intro"), { font: "italic", size: 9, color: 110, gap: 18 });
 
-      for (const key of SECTION_ORDER) {
-        // The dashboard blurb has a per-region variant, keyed by the same
-        // region code as the Ülevaade tab's selector — same fallback rule
-        // as NarrativeBlock: use it when available, else the national text.
-        const regionBlurb = key === "dashboard" ? narrative.sections.dashboardByRegion?.[region] : null;
-        const section = regionBlurb ?? narrative.sections[key];
-        if (!section) continue;
-        ensureSpace(LINE_HEIGHT * 2);
-        const heading = key === "dashboard" ? `${t(SECTION_NAV_KEY[key])} — ${regionLabel}` : t(SECTION_NAV_KEY[key]);
-        paragraph(heading, { font: "bold", size: 13, gap: 6 });
-        paragraph(section[locale] ?? section.et, { gap: 16 });
+      paragraph(t("newsletterPdf.estoniaHeading"), { font: "bold", size: 14, gap: 8 });
+      if (dashboard) paragraph(dashboard[locale] ?? dashboard.et, { gap: 16 });
 
-        // The operator charts belong to the same "Vali maakond" selector as
-        // this region-specific blurb, so they're placed right underneath it
-        // rather than tacked on as a separate page at the end of the doc.
-        if (key === "dashboard" && chartsCanvas) {
-          paragraph(t("newsletterPdf.chartsCaption", regionLabel), { font: "italic", size: 8.5, color: 110, gap: 6 });
-          image(chartsCanvas, { maxHeight: 220 });
-        }
+      paragraph(t("newsletterPdf.nationalChartTitle"), { font: "bold", size: 11, gap: 6 });
+      nationalBarChart(dashboard?.nationalYearlyGuests);
+
+      paragraph(t("newsletterPdf.otherHighlights"), { font: "bold", size: 13, gap: 8 });
+      for (const key of HIGHLIGHT_SECTIONS) {
+        const section = narrative.sections[key];
+        const highlight = section?.[locale === "en" ? "highlightEn" : "highlightEt"];
+        if (highlight) labeledLine(t(SECTION_NAV_KEY[key]), highlight);
       }
 
       const generatedDate = new Date(narrative.generatedAt).toLocaleDateString(
@@ -124,15 +171,28 @@ export default function NewsletterPdfButton() {
         gap: 0,
       });
 
-      // The yearly table stays its own appendix page (it's tall regardless
-      // of width) rather than flowing inline like the compact charts image.
-      if (tableCanvas) {
-        doc.addPage();
-        y = MARGIN;
-        paragraph(t("newsletterPdf.tableHeading"), { font: "bold", size: 14, gap: 6 });
-        paragraph(t("newsletterPdf.chartsCaption", regionLabel), { font: "italic", size: 8.5, color: 110, gap: 10 });
-        image(tableCanvas, { maxHeight: pageHeight - y - MARGIN });
-      }
+      // ---- Page 2: the selected region in detail ------------------------
+      doc.addPage();
+      y = MARGIN;
+
+      const { chartsCanvas, snapshotCanvas } = await captureOperatorSnapshots();
+
+      paragraph(regionLabel, { font: "bold", size: 18, gap: 4 });
+      paragraph(t("newsletterPdf.regionSubheading"), { font: "normal", size: 11, color: 110, gap: 10 });
+      paragraph(t("newsletterPdf.chartsCaption", regionLabel), { font: "italic", size: 8.5, color: 110, gap: 14 });
+
+      if (regionBlurb) paragraph(regionBlurb[locale] ?? regionBlurb.et, { gap: 16 });
+
+      if (chartsCanvas) image(chartsCanvas, { maxHeight: 220 });
+      if (snapshotCanvas) image(snapshotCanvas, { maxHeight: 180 });
+
+      ensureSpace(LINE_HEIGHT);
+      paragraph(`${t("source.prefix")} ${t("source.agency")}, ${t("source.tables")} TU131.PX, TU122.PX`, {
+        font: "italic",
+        size: 8,
+        color: 110,
+        gap: 0,
+      });
 
       doc.save(`eesti-turism-${narrative.period}-${locale}.pdf`);
     } finally {
@@ -147,38 +207,28 @@ export default function NewsletterPdfButton() {
   );
 }
 
-// Captures the Ülevaade tab's operator charts + yearly table as a live
-// snapshot (same technique as ExportButtons' PNG export: rasterize what's
-// actually on screen). Best-effort: the node only exists once the scroll
-// view has been rendered at least once this session, so a missing node (or
-// a capture failure) just returns nulls rather than failing the download.
+// Captures the Ülevaade tab's two operator charts and its compact
+// "Estonia vs. region, latest year" snapshot table pair as live snapshots
+// (same technique as ExportButtons' PNG export: rasterize what's actually
+// on screen). Best-effort: these nodes only exist once the scroll view has
+// rendered at least once this session (OperatorInsights lives inside the
+// non-lazy Dashboard, so in practice that's true whenever the site is open
+// at all), so a missing node just returns nulls rather than failing the
+// download.
 async function captureOperatorSnapshots() {
-  const node = document.getElementById("operator-yearly-card");
-  const chartsRow = node?.querySelector(".tile-row-split");
-  const tableWrapper = node?.querySelector(".data-grid-wrapper");
-  if (!chartsRow || !tableWrapper) return { chartsCanvas: null, tableCanvas: null };
+  const chartsRow = document.querySelector("#operator-yearly-card .tile-row-split");
+  const snapshotRow = document.getElementById("operator-monthly-snapshot");
+  if (!chartsRow && !snapshotRow) return { chartsCanvas: null, snapshotCanvas: null };
 
   try {
     const html2canvas = (await import("html2canvas")).default;
-    const chartsCanvas = await html2canvas(chartsRow, { scale: 1.5, backgroundColor: "#ffffff" });
-    // The table wrapper scrolls horizontally on screen (many yearly
-    // columns) — a plain capture only grabs the visible viewport and
-    // silently drops whatever's scrolled out of view. Forcing the clone's
-    // width to the wrapper's full scrollWidth (and disabling its overflow
-    // clipping) makes html2canvas render — and capture — every column.
-    const tableCanvas = await html2canvas(tableWrapper, {
-      scale: 1.5,
-      backgroundColor: "#ffffff",
-      width: tableWrapper.scrollWidth,
-      windowWidth: tableWrapper.scrollWidth,
-      onclone: (_doc, el) => {
-        el.style.overflow = "visible";
-        el.style.width = `${tableWrapper.scrollWidth}px`;
-      },
-    });
-    return { chartsCanvas, tableCanvas };
+    const [chartsCanvas, snapshotCanvas] = await Promise.all([
+      chartsRow ? html2canvas(chartsRow, { scale: 1.5, backgroundColor: "#ffffff" }) : null,
+      snapshotRow ? html2canvas(snapshotRow, { scale: 1.5, backgroundColor: "#ffffff" }) : null,
+    ]);
+    return { chartsCanvas, snapshotCanvas };
   } catch (err) {
-    console.warn("Newsletter PDF: skipping charts/table snapshot —", err);
-    return { chartsCanvas: null, tableCanvas: null };
+    console.warn("Newsletter PDF: skipping charts/snapshot capture —", err);
+    return { chartsCanvas: null, snapshotCanvas: null };
   }
 }

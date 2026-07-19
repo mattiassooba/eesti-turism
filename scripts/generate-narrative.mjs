@@ -184,6 +184,43 @@ function buildRegionDashboardPrompt(region, m) {
 - Share of Estonia's total guests this period: ${m.shareOfNationalPct != null ? m.shareOfNationalPct.toFixed(1) + "%" : "n/a"}`;
 }
 
+// A compact ~10-year national guests-by-year series, used to draw a small
+// native bar chart on page 1 of the PDF newsletter (see
+// NewsletterPdfButton.jsx) — independent of any specific page's DOM, so
+// it's always available regardless of which tab the reader has open when
+// they generate the PDF.
+async function computeNationalYearlyTrend() {
+  const data = await fetchTableData(
+    MAJUTUS_PATH,
+    "TU131.PX",
+    [
+      { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
+      { code: "Maakond", selection: { filter: "item", values: ["EE"] } },
+      { code: "Elukohariik", selection: { filter: "item", values: ["WORLD"] } },
+      // 132 months (11 years) of headroom so the oldest calendar year in
+      // the window is very likely complete once we take the last 10.
+      { code: "Vaatlusperiood", selection: { filter: "top", values: ["132"] } },
+    ],
+    { locale: "et" }
+  );
+
+  const byYear = new Map();
+  const monthsPerYear = new Map();
+  for (const row of flattenToRows(data)) {
+    if (row.value === null) continue;
+    const year = row.Vaatlusperiood.split("M")[0];
+    byYear.set(year, (byYear.get(year) ?? 0) + row.value);
+    monthsPerYear.set(year, (monthsPerYear.get(year) ?? 0) + 1);
+  }
+
+  const years = Array.from(byYear.keys()).sort();
+  // Drop a leading partial year (fewer than 12 months in the fetch window)
+  // rather than showing it as a misleadingly short bar.
+  if (years.length && monthsPerYear.get(years[0]) < 12) years.shift();
+
+  return years.slice(-10).map((year) => ({ year, guests: byYear.get(year) }));
+}
+
 // ---- Map (Kaart ja hooajalisus) ----------------------------------------
 
 async function computeMapMetrics(dashboard) {
@@ -415,16 +452,27 @@ function buildExpensesPrompt(m) {
 
 // ---- Claude calls -----------------------------------------------------------
 
-function sectionSchema(description) {
-  return {
-    type: "object",
-    description,
-    properties: {
-      et: { type: "string", description: "80-150 word Estonian blurb." },
-      en: { type: "string", description: "80-150 word English blurb." },
-    },
-    required: ["et", "en"],
+// `highlight: true` adds a short one-sentence digest of the section, used
+// by the PDF newsletter's compact "Muu statistika" block on page 1 instead
+// of the full blurb (which stays only for the on-site scroll page).
+function sectionSchema(description, { highlight = false } = {}) {
+  const properties = {
+    et: { type: "string", description: "80-150 word Estonian blurb." },
+    en: { type: "string", description: "80-150 word English blurb." },
   };
+  const required = ["et", "en"];
+  if (highlight) {
+    properties.highlightEt = {
+      type: "string",
+      description: "One punchy 20-25 word Estonian sentence distilling this section's single most important fact.",
+    };
+    properties.highlightEn = {
+      type: "string",
+      description: "One punchy 20-25 word English sentence, the same fact as highlightEt.",
+    };
+    required.push("highlightEt", "highlightEn");
+  }
+  return { type: "object", description, properties, required };
 }
 
 async function callClaude(anthropic, model, prompts) {
@@ -451,7 +499,10 @@ ${prompts.expenses}`;
       "(no headings, no bullet points, no markdown), and should read as its own short item, not a continuation " +
       "of the previous section. Produce independently well-written Estonian and English versions of each " +
       "(not literal translations of each other, though they must report the same facts). Estonian must read " +
-      "naturally to a native speaker. Avoid repeating the same opening phrase across sections. " + FORMATTING_RULES,
+      "naturally to a native speaker. Avoid repeating the same opening phrase across sections. Four of the five " +
+      "sections (all but dashboard) also need a short 'highlight' sentence — this is a compact digest for a " +
+      "printed summary page, not a teaser for the full blurb, so it must stand alone and still make sense to " +
+      "someone who never reads the full blurb. " + FORMATTING_RULES,
     messages: [{ role: "user", content: combinedPrompt }],
     tools: [
       {
@@ -461,10 +512,10 @@ ${prompts.expenses}`;
           type: "object",
           properties: {
             dashboard: sectionSchema("Ülevaade (national overview) blurb"),
-            map: sectionSchema("Kaart ja hooajalisus (map & seasonality) blurb"),
-            purpose: sectionSchema("Eesmärk ja kestus (purpose & duration) blurb"),
-            capacity: sectionSchema("Mahutavus (capacity) blurb"),
-            expenses: sectionSchema("Reisikulutused (travel expenses) blurb"),
+            map: sectionSchema("Kaart ja hooajalisus (map & seasonality) blurb", { highlight: true }),
+            purpose: sectionSchema("Eesmärk ja kestus (purpose & duration) blurb", { highlight: true }),
+            capacity: sectionSchema("Mahutavus (capacity) blurb", { highlight: true }),
+            expenses: sectionSchema("Reisikulutused (travel expenses) blurb", { highlight: true }),
           },
           required: ["dashboard", "map", "purpose", "capacity", "expenses"],
         },
@@ -587,11 +638,12 @@ async function main() {
     return;
   }
 
-  const [map, purpose, capacity, expenses] = await Promise.all([
+  const [map, purpose, capacity, expenses, nationalYearlyGuests] = await Promise.all([
     computeMapMetrics(dashboard),
     computePurposeMetrics(),
     computeCapacityMetrics(),
     computeExpensesMetrics(),
+    computeNationalYearlyTrend(),
   ]);
 
   const regionPromptBlocks = ALL_REGIONS.map((r) => buildRegionDashboardPrompt(r, dashboard.regions[r.code])).filter(
@@ -599,7 +651,7 @@ async function main() {
   );
 
   if (process.argv.includes("--debug-metrics")) {
-    console.log(JSON.stringify({ dashboard, map, purpose, capacity, expenses }, null, 2));
+    console.log(JSON.stringify({ dashboard, map, purpose, capacity, expenses, nationalYearlyGuests }, null, 2));
     console.log("--- prompts ---");
     console.log(buildDashboardPrompt(dashboard));
     console.log(buildMapPrompt(map));
@@ -629,6 +681,7 @@ async function main() {
 
   console.log(`Calling Claude to generate ${ALL_REGIONS.length} region-specific dashboard blurbs…`);
   sections.dashboardByRegion = await callClaudeRegions(anthropic, model, ALL_REGIONS, regionPromptBlocks);
+  sections.dashboard.nationalYearlyGuests = nationalYearlyGuests;
 
   const output = {
     generatedAt: new Date().toISOString(),

@@ -46,8 +46,11 @@ export default {
     intro:
       "This PDF collects AI-written summaries based on Statistikaamet's latest data — not an official Statistikaamet product.",
     generatedOn: "Generated:",
-    tableHeading: "Operator statistics — year by year",
-    chartsCaption: (region) => `Charts and table reflect the region currently selected on the Ülevaade tab: ${region}.`,
+    estoniaHeading: "Estonia overview",
+    otherHighlights: "Other highlights",
+    nationalChartTitle: "Guests accommodated in Estonia, by year",
+    regionSubheading: "Detailed regional overview",
+    chartsCaption: (region) => `Reflects the region currently selected on the Ülevaade tab: ${region}.`,
   },
 
   newsletter: {

@@ -680,7 +680,7 @@ function OperatorInsights() {
         <TableSource path={MAJUTUS_PATH} ids={["TU131.PX", "TU122.PX"]} />
       </div>
 
-      <div className="tile-row-split">
+      <div className="tile-row-split" id="operator-monthly-snapshot">
         <div className="data-card">
           <h3>{t("operator.snapshotHeading", [t("operator.estoniaLabel"), view.latestLabel, view.prevLabel])}</h3>
           <MonthlySnapshotTable snapshot={view.nationalMonthly} locale={locale} t={t} />

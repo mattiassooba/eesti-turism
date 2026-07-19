@@ -570,13 +570,13 @@ function OperatorInsights() {
               </tr>
             </thead>
             <tbody>
-              <tr>
+              <tr className="operator-row-national">
                 <th>{t("operator.accommodatedEstonia")}</th>
                 {view.nationalYearly.map((r) => (
                   <td key={r.year}>{fmtInt(r.accommodated, locale)}</td>
                 ))}
               </tr>
-              <tr className="operator-subrow">
+              <tr className="operator-subrow operator-row-national">
                 <th>{t("operator.yoyChange")}</th>
                 {view.nationalYearly.map((r) => (
                   <td key={r.year} className={deltaClass(r.accommodatedYoy)}>
@@ -584,13 +584,13 @@ function OperatorInsights() {
                   </td>
                 ))}
               </tr>
-              <tr>
+              <tr className="operator-row-region">
                 <th>{t("operator.accommodatedRegion", regionLabel)}</th>
                 {view.regionYearly.map((r) => (
                   <td key={r.year}>{fmtInt(r.accommodated, locale)}</td>
                 ))}
               </tr>
-              <tr className="operator-subrow">
+              <tr className="operator-subrow operator-row-region">
                 <th>{t("operator.yoyChange")}</th>
                 {view.regionYearly.map((r) => (
                   <td key={r.year} className={deltaClass(r.accommodatedYoy)}>
@@ -598,37 +598,37 @@ function OperatorInsights() {
                   </td>
                 ))}
               </tr>
-              <tr>
+              <tr className="operator-row-region">
                 <th>{t("operator.shareOfEstonia", regionLabel)}</th>
                 {view.regionYearly.map((r) => (
                   <td key={r.year}>{fmtPct(r.share)}</td>
                 ))}
               </tr>
-              <tr>
+              <tr className="operator-row-region">
                 <th>{t("operator.establishments")}</th>
                 {view.regionYearly.map((r) => (
                   <td key={r.year}>{fmtInt(r.esta, locale)}</td>
                 ))}
               </tr>
-              <tr>
+              <tr className="operator-row-region">
                 <th>{t("operator.rooms")}</th>
                 {view.regionYearly.map((r) => (
                   <td key={r.year}>{fmtInt(r.rooms, locale)}</td>
                 ))}
               </tr>
-              <tr>
+              <tr className="operator-row-region">
                 <th>{t("operator.occupancy")}</th>
                 {view.regionYearly.map((r) => (
                   <td key={r.year}>{fmtPct(r.occ)}</td>
                 ))}
               </tr>
-              <tr>
+              <tr className="operator-row-region">
                 <th>{t("operator.arr")}</th>
                 {view.regionYearly.map((r) => (
                   <td key={r.year}>{fmtEur(r.arr)}</td>
                 ))}
               </tr>
-              <tr className="operator-subrow">
+              <tr className="operator-subrow operator-row-region">
                 <th>{t("operator.yoyChange")}</th>
                 {view.regionYearly.map((r) => (
                   <td key={r.year} className={deltaClass(r.arrYoy)}>
@@ -636,13 +636,13 @@ function OperatorInsights() {
                   </td>
                 ))}
               </tr>
-              <tr>
+              <tr className="operator-row-region">
                 <th>{t("operator.revparStar")}</th>
                 {view.regionYearly.map((r) => (
                   <td key={r.year}>{fmtEur(r.revpar)}</td>
                 ))}
               </tr>
-              <tr className="operator-subrow">
+              <tr className="operator-subrow operator-row-region">
                 <th>{t("operator.yoyChange")}</th>
                 {view.regionYearly.map((r) => (
                   <td key={r.year} className={deltaClass(r.revparYoy)}>
@@ -651,7 +651,10 @@ function OperatorInsights() {
                 ))}
               </tr>
               {[0, 1, 2, 3, 4].map((rank) => (
-                <tr key={`origin-${rank}`} className={rank > 0 ? "operator-subrow" : undefined}>
+                <tr
+                  key={`origin-${rank}`}
+                  className={"operator-row-region" + (rank > 0 ? " operator-subrow" : "")}
+                >
                   <th>{t("operator.topOriginCountry", rank + 1)}</th>
                   {view.regionYearly.map((r) => {
                     const item = originsTop5ByYear?.get(r.year)?.[rank];

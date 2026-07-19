@@ -89,7 +89,7 @@ export default function NewsletterPdfButton() {
           doc.text(lines[i], MARGIN, y);
           y += LINE_HEIGHT;
         }
-        y += 8;
+        y += 5;
       }
 
       // Fits the canvas to maxWidth, paginating first if it wouldn't fit on
@@ -116,7 +116,7 @@ export default function NewsletterPdfButton() {
       // Stacked bars: domestic (bottom) + foreign (top) per year, same
       // residents-vs-visitors split and colors used everywhere else in the
       // app (see DOMESTIC_COLOR/FOREIGN_COLOR in src/theme.js).
-      function nationalResidencyChart(series, { height = 140, gap = 16 } = {}) {
+      function nationalResidencyChart(series, { height = 110, gap = 12 } = {}) {
         if (!Array.isArray(series) || !series.length) return;
         ensureSpace(height + 34);
         const top = y;
@@ -165,22 +165,22 @@ export default function NewsletterPdfButton() {
 
       // ---- Page 1: Estonia in general ---------------------------------
       paragraph(`${t("app.brand")} — ${periodLabel}`, { font: "bold", size: 20, gap: 4 });
-      paragraph(t("newsletterPdf.intro"), { font: "italic", size: 9, color: 110, gap: 18 });
+      paragraph(t("newsletterPdf.intro"), { font: "italic", size: 9, color: 110, gap: 12 });
 
-      paragraph(t("newsletterPdf.estoniaHeading"), { font: "bold", size: 14, gap: 8 });
-      if (dashboard) paragraph(dashboard[locale] ?? dashboard.et, { gap: 16 });
+      paragraph(t("newsletterPdf.estoniaHeading"), { font: "bold", size: 14, gap: 6 });
+      if (dashboard) paragraph(dashboard[locale] ?? dashboard.et, { gap: 12 });
 
-      paragraph(t("newsletterPdf.nationalChartTitle"), { font: "bold", size: 11, gap: 6 });
+      paragraph(t("newsletterPdf.nationalChartTitle"), { font: "bold", size: 11, gap: 4 });
       nationalResidencyChart(dashboard?.nationalYearlyResidency);
 
-      paragraph(t("newsletterPdf.otherHighlights"), { font: "bold", size: 13, gap: 8 });
+      paragraph(t("newsletterPdf.otherHighlights"), { font: "bold", size: 13, gap: 6 });
       for (const key of HIGHLIGHT_SECTIONS) {
         const section = narrative.sections[key];
         const highlight = section?.[locale === "en" ? "highlightEn" : "highlightEt"];
         if (highlight) labeledLine(t(SECTION_NAV_KEY[key]), highlight);
       }
 
-      if (nationalTableCanvas) image(nationalTableCanvas, { maxHeight: 200 });
+      if (nationalTableCanvas) image(nationalTableCanvas, { maxHeight: 180 });
 
       const generatedDate = new Date(narrative.generatedAt).toLocaleDateString(
         locale === "en" ? "en-US" : "et-EE"

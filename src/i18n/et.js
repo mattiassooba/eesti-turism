@@ -189,6 +189,7 @@ export default {
     thIndicator: "Näitaja",
     accommodatedEstonia: "Majutatud Eestis",
     yoyChange: "— muutus (YoY)",
+    cumulativeThrough: (month) => `Kumulatiivne (jaan.–${month})`,
     accommodatedRegion: (region) => `Majutatud: ${region}`,
     shareOfEstonia: (region) => `${region} osakaal Eestist`,
     establishments: "Majutusettevõtteid",

@@ -189,6 +189,7 @@ export default {
     thIndicator: "Indicator",
     accommodatedEstonia: "Accommodated in Estonia",
     yoyChange: "— change (YoY)",
+    cumulativeThrough: (month) => `Cumulative (Jan–${month})`,
     accommodatedRegion: (region) => `Accommodated: ${region}`,
     shareOfEstonia: (region) => `${region} share of Estonia`,
     establishments: "Accommodation establishments",

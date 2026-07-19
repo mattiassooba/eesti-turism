@@ -387,12 +387,23 @@ function OperatorInsights() {
       const arrPrev = capPrev.OCC_NI_COST ?? null;
       const revparCur = arrCur != null && occCur != null ? arrCur * (occCur / 100) : null;
       const revparPrev = arrPrev != null && occPrev != null ? arrPrev * (occPrev / 100) : null;
+
+      // Year-to-date through this same month — e.g. "Jan–May 2026" vs
+      // "Jan–May 2025" — a monthly single-month figure alone doesn't show
+      // how the year is tracking overall.
+      const periodsThisYear = (yearToPeriods.get(y) ?? []).filter((p) => p.split("M")[1] <= m);
+      const periodsPrevYear = (yearToPeriods.get(String(Number(y) - 1)) ?? []).filter((p) => p.split("M")[1] <= m);
+      const cumulativeCur = sumField(guestMap, periodsThisYear);
+      const cumulativePrev = sumField(guestMap, periodsPrevYear);
+
       return {
         key: period,
         label: periodLabels.get(period) ?? period,
         partial: false,
         accommodated: cur,
         accommodatedYoy: yoy(cur, prev),
+        cumulativeAccommodated: cumulativeCur,
+        cumulativeAccommodatedYoy: yoy(cumulativeCur, cumulativePrev),
         share: cur != null && nationalCur ? (cur / nationalCur) * 100 : null,
         esta: capCur.CAP_ESTA ?? null,
         rooms: capCur.CAP_BEDR ?? null,
@@ -423,6 +434,14 @@ function OperatorInsights() {
     const nationalTableColumns = [...tableAnnual.EE, ...recentPeriods.map((p) => snapshotForPeriod("EE", p))];
     const regionTableColumns = [...tableAnnual[region], ...recentPeriods.map((p) => snapshotForPeriod(region, p))];
 
+    // "Jan–May" for the cumulative row's label — shared across all 3 recent
+    // columns since they're all the same month, just different years.
+    const cumulativeMonthName = new Intl.DateTimeFormat(locale === "et" ? "et-EE" : "en-US", {
+      month: "short",
+      timeZone: "UTC",
+    }).format(new Date(Date.UTC(2000, Number(latestMonthStr) - 1, 1)));
+    const cumulativeLabel = t("operator.cumulativeThrough", cumulativeMonthName);
+
     const regionLabel = REGION_LABELS[region];
     const shareKey = t("operator.shareOf", regionLabel);
     const occupancyKey = t("operator.occupancyPct");
@@ -447,6 +466,7 @@ function OperatorInsights() {
       regionYearly,
       nationalTableColumns,
       regionTableColumns,
+      cumulativeLabel,
       nationalMonthly: monthlySnapshot("EE"),
       regionMonthly: monthlySnapshot(region),
       latestLabel: periodLabels.get(latestPeriod) ?? latestPeriod,
@@ -538,7 +558,13 @@ function OperatorInsights() {
               </tr>
             </thead>
             <tbody>
-              <YearlyIndicatorRows columns={view.nationalTableColumns} accommodatedLabel={t("operator.accommodatedEstonia")} locale={locale} t={t} />
+              <YearlyIndicatorRows
+                columns={view.nationalTableColumns}
+                accommodatedLabel={t("operator.accommodatedEstonia")}
+                cumulativeLabel={view.cumulativeLabel}
+                locale={locale}
+                t={t}
+              />
             </tbody>
           </table>
         </div>
@@ -664,6 +690,7 @@ function OperatorInsights() {
                 columns={view.regionTableColumns}
                 accommodatedLabel={t("operator.accommodatedRegion", regionLabel)}
                 shareLabel={t("operator.shareOfEstonia", regionLabel)}
+                cumulativeLabel={view.cumulativeLabel}
                 locale={locale}
                 t={t}
               />
@@ -781,7 +808,7 @@ function MonthlySnapshotTable({ snapshot, locale, t }) {
 // — accommodated guests, capacity, occupancy, and pricing, one column per
 // year. `shareLabel` is omitted for the Estonia table: a region's "share
 // of Estonia" has no national equivalent.
-function YearlyIndicatorRows({ columns, accommodatedLabel, shareLabel, locale, t }) {
+function YearlyIndicatorRows({ columns, accommodatedLabel, shareLabel, cumulativeLabel, locale, t }) {
   return (
     <>
       <tr>
@@ -798,6 +825,24 @@ function YearlyIndicatorRows({ columns, accommodatedLabel, shareLabel, locale, t
           </td>
         ))}
       </tr>
+      {cumulativeLabel && (
+        <>
+          <tr>
+            <th>{cumulativeLabel}</th>
+            {columns.map((r) => (
+              <td key={r.key}>{fmtInt(r.cumulativeAccommodated, locale)}</td>
+            ))}
+          </tr>
+          <tr className="operator-subrow">
+            <th>{t("operator.yoyChange")}</th>
+            {columns.map((r) => (
+              <td key={r.key} className={deltaClass(r.cumulativeAccommodatedYoy)}>
+                {fmtDelta(r.cumulativeAccommodatedYoy)}
+              </td>
+            ))}
+          </tr>
+        </>
+      )}
       {shareLabel && (
         <tr>
           <th>{shareLabel}</th>

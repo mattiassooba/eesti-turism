@@ -50,7 +50,6 @@ export default {
     otherHighlights: "Muu statistika",
     nationalChartTitle: "Majutatud Eestis, aastate lõikes",
     regionSubheading: "Piirkonna detailne ülevaade",
-    topOriginsHeading: (region) => `Top 3 väliskülastajate päritoluriiki — ${region} (viimased 12 kuud)`,
     chartsCaption: (region) => `Kajastab hetkel Ülevaate vahekaardil valitud piirkonda: ${region}.`,
   },
 
@@ -179,6 +178,7 @@ export default {
     guestsLabel: "Külastajad",
     lastYears: (n) => `Viimased ${n} aastat`,
     yearlyHeading: ([region, start, end]) => `${region} vs. Eesti — aastate lõikes (${start}–${end})`,
+    nationalYearlyHeading: ([start, end]) => `Eesti — aastate lõikes (${start}–${end})`,
     trendChartTitle: (region) => `Majutatud Eestis ja ${region} osakaal`,
     kpiChartTitle: (region) => `${region}: täituvus, keskmine ööhind ja RevPAR`,
     totalEstonia: "Eesti kokku",

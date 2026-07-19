@@ -142,8 +142,7 @@ export default function NewsletterPdfButton() {
       const regionLabel = countyLabelByCode(region, locale);
       const dashboard = narrative.sections.dashboard;
       const regionBlurb = narrative.sections.dashboardByRegion?.[region];
-      const { chartsCanvas, nationalSnapshotCanvas, regionSnapshotCanvas, topOriginsCanvas } =
-        await captureOperatorSnapshots();
+      const { chartsCanvas, nationalTableCanvas, regionTableCanvas } = await captureOperatorSnapshots();
 
       // ---- Page 1: Estonia in general ---------------------------------
       paragraph(`${t("app.brand")} — ${periodLabel}`, { font: "bold", size: 20, gap: 4 });
@@ -162,7 +161,7 @@ export default function NewsletterPdfButton() {
         if (highlight) labeledLine(t(SECTION_NAV_KEY[key]), highlight);
       }
 
-      if (nationalSnapshotCanvas) image(nationalSnapshotCanvas, { maxHeight: 150 });
+      if (nationalTableCanvas) image(nationalTableCanvas, { maxHeight: 200 });
 
       const generatedDate = new Date(narrative.generatedAt).toLocaleDateString(
         locale === "en" ? "en-US" : "et-EE"
@@ -185,13 +184,8 @@ export default function NewsletterPdfButton() {
 
       if (regionBlurb) paragraph(regionBlurb[locale] ?? regionBlurb.et, { gap: 16 });
 
-      if (chartsCanvas) image(chartsCanvas, { maxHeight: 220 });
-      if (regionSnapshotCanvas) image(regionSnapshotCanvas, { maxHeight: 150 });
-
-      if (topOriginsCanvas) {
-        paragraph(t("newsletterPdf.topOriginsHeading", regionLabel), { font: "bold", size: 11, gap: 6 });
-        image(topOriginsCanvas, { maxHeight: 110 });
-      }
+      if (chartsCanvas) image(chartsCanvas, { maxHeight: 200 });
+      if (regionTableCanvas) image(regionTableCanvas, { maxHeight: 220 });
 
       ensureSpace(LINE_HEIGHT);
       paragraph(`${t("source.prefix")} ${t("source.agency")}, ${t("source.tables")} TU131.PX, TU122.PX`, {
@@ -214,8 +208,8 @@ export default function NewsletterPdfButton() {
   );
 }
 
-// Captures the Ülevaade tab's operator charts and its "Estonia vs. region,
-// latest year" snapshot cards as live snapshots (same technique as
+// Captures the Ülevaade tab's operator charts and its two yearly tables
+// (Estonia-only and region-specific) as live snapshots (same technique as
 // ExportButtons' PNG export: rasterize what's actually on screen).
 // Best-effort: these nodes only exist once the scroll view has rendered at
 // least once this session (OperatorInsights lives inside the non-lazy
@@ -224,40 +218,52 @@ export default function NewsletterPdfButton() {
 // the whole download.
 async function captureOperatorSnapshots() {
   const chartsRow = document.querySelector("#operator-yearly-card .tile-row-split");
-  const nationalSnapshot = document.getElementById("operator-snapshot-national");
-  const regionSnapshot = document.getElementById("operator-snapshot-region");
-  // Only the top 3 origin countries go in the PDF (the on-screen card shows
-  // 5) — captured from the row list directly, not the whole card, since the
-  // card's own heading says "Top 5" and a trimmed row list would make that
-  // wrong; the PDF prints its own "Top 3" heading as text instead.
-  const topOriginsList = document.querySelector("#operator-top-origins .ranked-bar-list");
+  const nationalTable = document.querySelector("#operator-yearly-national .data-grid-wrapper");
+  const regionTable = document.querySelector("#operator-yearly-card .data-grid-wrapper");
 
-  if (!chartsRow && !nationalSnapshot && !regionSnapshot && !topOriginsList) {
-    return { chartsCanvas: null, nationalSnapshotCanvas: null, regionSnapshotCanvas: null, topOriginsCanvas: null };
+  if (!chartsRow && !nationalTable && !regionTable) {
+    return { chartsCanvas: null, nationalTableCanvas: null, regionTableCanvas: null };
   }
 
   try {
     const html2canvas = (await import("html2canvas")).default;
     const capture = (node) => (node ? html2canvas(node, { scale: 1.5, backgroundColor: "#ffffff" }) : null);
-    const [chartsCanvas, nationalSnapshotCanvas, regionSnapshotCanvas, topOriginsCanvas] = await Promise.all([
-      capture(chartsRow),
-      capture(nationalSnapshot),
-      capture(regionSnapshot),
-      topOriginsList
-        ? html2canvas(topOriginsList, {
+    // Both yearly tables scroll horizontally on screen (many year columns)
+    // — a plain capture only grabs the visible viewport and silently drops
+    // whatever's scrolled out of view. Forcing the clone's width to the
+    // wrapper's full scrollWidth (and disabling its overflow clipping)
+    // makes html2canvas render — and capture — every column.
+    const captureFullWidthTable = (node, { onclone } = {}) =>
+      node
+        ? html2canvas(node, {
             scale: 1.5,
             backgroundColor: "#ffffff",
+            width: node.scrollWidth,
+            windowWidth: node.scrollWidth,
             onclone: (_doc, el) => {
-              el.querySelectorAll(".ranked-bar-row").forEach((row, i) => {
-                if (i >= 3) row.remove();
-              });
+              el.style.overflow = "visible";
+              el.style.width = `${node.scrollWidth}px`;
+              onclone?.(el);
             },
           })
-        : null,
+        : null;
+
+    const [chartsCanvas, nationalTableCanvas, regionTableCanvas] = await Promise.all([
+      capture(chartsRow),
+      captureFullWidthTable(nationalTable),
+      // The region table's own "top origin country" rows show 5 ranks
+      // on-screen (one row per rank) — trimmed to the top 3 for the PDF.
+      captureFullWidthTable(regionTable, {
+        onclone: (el) => {
+          el.querySelectorAll(".operator-origin-row").forEach((row, i) => {
+            if (i >= 3) row.remove();
+          });
+        },
+      }),
     ]);
-    return { chartsCanvas, nationalSnapshotCanvas, regionSnapshotCanvas, topOriginsCanvas };
+    return { chartsCanvas, nationalTableCanvas, regionTableCanvas };
   } catch (err) {
-    console.warn("Newsletter PDF: skipping charts/snapshot capture —", err);
-    return { chartsCanvas: null, nationalSnapshotCanvas: null, regionSnapshotCanvas: null, topOriginsCanvas: null };
+    console.warn("Newsletter PDF: skipping charts/table capture —", err);
+    return { chartsCanvas: null, nationalTableCanvas: null, regionTableCanvas: null };
   }
 }

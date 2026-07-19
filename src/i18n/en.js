@@ -50,7 +50,6 @@ export default {
     otherHighlights: "Other highlights",
     nationalChartTitle: "Guests accommodated in Estonia, by year",
     regionSubheading: "Detailed regional overview",
-    topOriginsHeading: (region) => `Top 3 foreign visitor countries of origin — ${region} (last 12 months)`,
     chartsCaption: (region) => `Reflects the region currently selected on the Ülevaade tab: ${region}.`,
   },
 
@@ -179,6 +178,7 @@ export default {
     guestsLabel: "Guests",
     lastYears: (n) => `Last ${n} years`,
     yearlyHeading: ([region, start, end]) => `${region} vs. Estonia — by year (${start}–${end})`,
+    nationalYearlyHeading: ([start, end]) => `Estonia — by year (${start}–${end})`,
     trendChartTitle: (region) => `Guests accommodated in Estonia and ${region}'s share`,
     kpiChartTitle: (region) => `${region}: occupancy, average nightly rate and RevPAR`,
     totalEstonia: "Estonia total",

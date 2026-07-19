@@ -186,18 +186,6 @@
   z-index: 2;
 }
 
-/* National (Eesti) vs region-specific rows read as a wall of similar
-   numbers at a glance — colored left rails reuse the same blue/orange the
-   "Eesti kokku" bars / "<region> osakaal" line already use in the chart
-   just above this table, so the association reads without a new legend. */
-.operator-row-national th:first-child {
-  border-left: 3px solid #2b6ca3;
-}
-
-.operator-row-region th:first-child {
-  border-left: 3px solid #d98e2b;
-}
-
 .operator-table-transposed tbody tr:nth-child(odd) td:not(:first-child) {
   background: rgba(16, 27, 38, 0.02);
 }

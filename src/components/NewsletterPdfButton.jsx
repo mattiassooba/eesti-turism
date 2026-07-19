@@ -87,8 +87,6 @@ export default function NewsletterPdfButton() {
         paragraph(section[locale] ?? section.et, { gap: 16 });
       }
 
-      await addOperatorSnapshot(doc, { pageHeight, maxWidth, marginY: MARGIN, t, regionLabel });
-
       const generatedDate = new Date(narrative.generatedAt).toLocaleDateString(
         locale === "en" ? "en-US" : "et-EE"
       );
@@ -99,6 +97,11 @@ export default function NewsletterPdfButton() {
         color: 110,
         gap: 0,
       });
+
+      // Added last, on its own page(s) — it switches to landscape for the
+      // wide yearly table, and doing that mid-document would leave the
+      // ensureSpace/paragraph helpers above using stale portrait coordinates.
+      await addOperatorSnapshot(doc, { maxWidth, marginY: MARGIN, t, regionLabel });
 
       doc.save(`eesti-turism-${narrative.period}-${locale}.pdf`);
     } finally {
@@ -115,52 +118,92 @@ export default function NewsletterPdfButton() {
 
 // Captures the Ülevaade tab's operator charts + yearly table as a live
 // snapshot (same technique as ExportButtons' PNG export: rasterize what's
-// actually on screen) and adds it as its own page. Best-effort: the node
-// only exists once the scroll view has been rendered at least once this
-// session, so a missing node (or a capture failure) just skips this page
-// rather than failing the whole download.
-async function addOperatorSnapshot(doc, { pageHeight, maxWidth, marginY, t, regionLabel }) {
+// actually on screen). Best-effort: the node only exists once the scroll
+// view has been rendered at least once this session, so a missing node (or
+// a capture failure) just skips these pages rather than failing the whole
+// download.
+async function addOperatorSnapshot(doc, { maxWidth, marginY, t, regionLabel }) {
   const node = document.getElementById("operator-yearly-card");
-  if (!node) return;
+  const chartsRow = node?.querySelector(".tile-row-split");
+  const tableWrapper = node?.querySelector(".data-grid-wrapper");
+  if (!chartsRow || !tableWrapper) return;
 
-  let canvas;
+  let chartsCanvas;
+  let tableCanvas;
   try {
     const html2canvas = (await import("html2canvas")).default;
-    canvas = await html2canvas(node, { scale: 1.5, backgroundColor: "#ffffff" });
+    chartsCanvas = await html2canvas(chartsRow, { scale: 1.5, backgroundColor: "#ffffff" });
+    // The table wrapper scrolls horizontally on screen (many yearly
+    // columns) — a plain capture only grabs the visible viewport and
+    // silently drops whatever's scrolled out of view. Forcing the clone's
+    // width to the wrapper's full scrollWidth (and disabling its overflow
+    // clipping) makes html2canvas render — and capture — every column.
+    tableCanvas = await html2canvas(tableWrapper, {
+      scale: 1.5,
+      backgroundColor: "#ffffff",
+      width: tableWrapper.scrollWidth,
+      windowWidth: tableWrapper.scrollWidth,
+      onclone: (_doc, el) => {
+        el.style.overflow = "visible";
+        el.style.width = `${tableWrapper.scrollWidth}px`;
+      },
+    });
   } catch (err) {
     console.warn("Newsletter PDF: skipping charts/table snapshot —", err);
     return;
   }
 
-  doc.addPage();
-  let y = marginY;
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text(`${t("newsletterPdf.chartsHeading")} — ${regionLabel}`, marginY, y);
-  y += 20;
-
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(8.5);
-  doc.setTextColor(110);
-  const captionLines = doc.splitTextToSize(t("newsletterPdf.chartsCaption", regionLabel), maxWidth);
-  for (const line of captionLines) {
-    doc.text(line, marginY, y);
-    y += 11;
+  function heading(text) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text(text, marginY, marginY);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8.5);
+    doc.setTextColor(110);
+    const lines = doc.splitTextToSize(t("newsletterPdf.chartsCaption", regionLabel), doc.internal.pageSize.getWidth() - marginY * 2);
+    let y = marginY + 20;
+    for (const line of lines) {
+      doc.text(line, marginY, y);
+      y += 11;
+    }
+    doc.setTextColor(0);
+    return y + 8;
   }
-  doc.setTextColor(0);
-  y += 8;
 
+  // Charts page — portrait, matches the rest of the document.
+  doc.addPage();
+  const chartsTop = heading(`${t("newsletterPdf.chartsHeading")} — ${regionLabel}`);
+  drawImageFit(doc, chartsCanvas, {
+    x: marginY,
+    y: chartsTop,
+    maxWidth,
+    maxHeight: doc.internal.pageSize.getHeight() - chartsTop - marginY,
+  });
+
+  // Table page — landscape, since the full (unclipped) yearly table is
+  // naturally much wider than tall; a portrait page would force the text
+  // down to unreadably small to fit.
+  doc.addPage("a4", "landscape");
+  const tableMaxWidth = doc.internal.pageSize.getWidth() - marginY * 2;
+  const tableTop = heading(t("newsletterPdf.tableHeading"));
+  drawImageFit(doc, tableCanvas, {
+    x: marginY,
+    y: tableTop,
+    maxWidth: tableMaxWidth,
+    maxHeight: doc.internal.pageSize.getHeight() - tableTop - marginY,
+  });
+}
+
+function drawImageFit(doc, canvas, { x, y, maxWidth, maxHeight }) {
   let drawWidth = maxWidth;
   let drawHeight = (canvas.height / canvas.width) * drawWidth;
-  const maxImgHeight = pageHeight - y - marginY;
-  if (drawHeight > maxImgHeight) {
-    drawHeight = maxImgHeight;
+  if (drawHeight > maxHeight) {
+    drawHeight = maxHeight;
     drawWidth = (canvas.width / canvas.height) * drawHeight;
   }
-  const x = marginY + (maxWidth - drawWidth) / 2;
-  // JPEG at less-than-max quality — this is a chart/table screenshot, not a
-  // photo, but a lossless PNG at this resolution ran to 10+ MB, far too
+  const centeredX = x + (maxWidth - drawWidth) / 2;
+  // JPEG at less-than-max quality — these are chart/table screenshots, not
+  // photos, but a lossless PNG at this resolution ran to 10+ MB, far too
   // heavy for a "download the newsletter" button.
-  doc.addImage(canvas.toDataURL("image/jpeg", 0.82), "JPEG", x, y, drawWidth, drawHeight);
+  doc.addImage(canvas.toDataURL("image/jpeg", 0.85), "JPEG", centeredX, y, drawWidth, drawHeight);
 }

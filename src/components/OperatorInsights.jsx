@@ -37,8 +37,23 @@ function yoy(current, previous) {
   return ((current - previous) / previous) * 100;
 }
 
+// Abbreviated rather than full precision (e.g. "3,5 tuh." / "3.5k" instead
+// of "3 544 932") — this table already spans up to decades of yearly
+// columns, and full-width numbers were the reason the yearly table ran
+// wider than its container (forcing horizontal scroll on screen, and
+// silently clipping columns when captured for the newsletter PDF export).
 function fmtInt(n, locale) {
-  return n == null ? "—" : formatNumber(Math.round(n), locale);
+  if (n == null) return "—";
+  const numLocale = locale === "et" ? "et-EE" : "en-US";
+  if (n >= 1_000_000) {
+    const value = (n / 1_000_000).toLocaleString(numLocale, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+    return locale === "et" ? `${value} milj.` : `${value}M`;
+  }
+  if (n >= 1_000) {
+    const value = (n / 1_000).toLocaleString(numLocale, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+    return locale === "et" ? `${value} tuh.` : `${value}k`;
+  }
+  return formatNumber(Math.round(n), locale);
 }
 function fmtPct(n, digits = 1) {
   return n == null ? "—" : `${n.toFixed(digits)}%`;

@@ -68,8 +68,26 @@ export default function NewsletterPdfButton() {
         y += gap;
       }
 
+      // Fits the canvas to maxWidth, paginating first if it wouldn't fit on
+      // the remaining space of the current page.
+      function image(canvas, { maxHeight = 260, gap = 16 } = {}) {
+        let drawWidth = maxWidth;
+        let drawHeight = (canvas.height / canvas.width) * drawWidth;
+        if (drawHeight > maxHeight) {
+          drawHeight = maxHeight;
+          drawWidth = (canvas.width / canvas.height) * drawHeight;
+        }
+        ensureSpace(drawHeight);
+        const x = MARGIN + (maxWidth - drawWidth) / 2;
+        // JPEG at less-than-max quality — this is a chart/table screenshot,
+        // not a photo, but a lossless PNG at this resolution ran 10+ MB.
+        doc.addImage(canvas.toDataURL("image/jpeg", 0.85), "JPEG", x, y, drawWidth, drawHeight);
+        y += drawHeight + gap;
+      }
+
       const periodLabel = narrative.periodLabel?.[locale] ?? narrative.periodLabel?.et;
       const regionLabel = countyLabelByCode(region, locale);
+      const { chartsCanvas, tableCanvas } = await captureOperatorSnapshots();
 
       paragraph(`${t("app.brand")} — ${periodLabel}`, { font: "bold", size: 20, gap: 4 });
       paragraph(t("newsletterPdf.intro"), { font: "italic", size: 9, color: 110, gap: 18 });
@@ -85,6 +103,14 @@ export default function NewsletterPdfButton() {
         const heading = key === "dashboard" ? `${t(SECTION_NAV_KEY[key])} — ${regionLabel}` : t(SECTION_NAV_KEY[key]);
         paragraph(heading, { font: "bold", size: 13, gap: 6 });
         paragraph(section[locale] ?? section.et, { gap: 16 });
+
+        // The operator charts belong to the same "Vali maakond" selector as
+        // this region-specific blurb, so they're placed right underneath it
+        // rather than tacked on as a separate page at the end of the doc.
+        if (key === "dashboard" && chartsCanvas) {
+          paragraph(t("newsletterPdf.chartsCaption", regionLabel), { font: "italic", size: 8.5, color: 110, gap: 6 });
+          image(chartsCanvas, { maxHeight: 220 });
+        }
       }
 
       const generatedDate = new Date(narrative.generatedAt).toLocaleDateString(
@@ -98,10 +124,15 @@ export default function NewsletterPdfButton() {
         gap: 0,
       });
 
-      // Added last, on its own page(s) — it switches to landscape for the
-      // wide yearly table, and doing that mid-document would leave the
-      // ensureSpace/paragraph helpers above using stale portrait coordinates.
-      await addOperatorSnapshot(doc, { maxWidth, marginY: MARGIN, t, regionLabel });
+      // The yearly table stays its own appendix page (it's tall regardless
+      // of width) rather than flowing inline like the compact charts image.
+      if (tableCanvas) {
+        doc.addPage();
+        y = MARGIN;
+        paragraph(t("newsletterPdf.tableHeading"), { font: "bold", size: 14, gap: 6 });
+        paragraph(t("newsletterPdf.chartsCaption", regionLabel), { font: "italic", size: 8.5, color: 110, gap: 10 });
+        image(tableCanvas, { maxHeight: pageHeight - y - MARGIN });
+      }
 
       doc.save(`eesti-turism-${narrative.period}-${locale}.pdf`);
     } finally {
@@ -120,25 +151,22 @@ export default function NewsletterPdfButton() {
 // snapshot (same technique as ExportButtons' PNG export: rasterize what's
 // actually on screen). Best-effort: the node only exists once the scroll
 // view has been rendered at least once this session, so a missing node (or
-// a capture failure) just skips these pages rather than failing the whole
-// download.
-async function addOperatorSnapshot(doc, { maxWidth, marginY, t, regionLabel }) {
+// a capture failure) just returns nulls rather than failing the download.
+async function captureOperatorSnapshots() {
   const node = document.getElementById("operator-yearly-card");
   const chartsRow = node?.querySelector(".tile-row-split");
   const tableWrapper = node?.querySelector(".data-grid-wrapper");
-  if (!chartsRow || !tableWrapper) return;
+  if (!chartsRow || !tableWrapper) return { chartsCanvas: null, tableCanvas: null };
 
-  let chartsCanvas;
-  let tableCanvas;
   try {
     const html2canvas = (await import("html2canvas")).default;
-    chartsCanvas = await html2canvas(chartsRow, { scale: 1.5, backgroundColor: "#ffffff" });
+    const chartsCanvas = await html2canvas(chartsRow, { scale: 1.5, backgroundColor: "#ffffff" });
     // The table wrapper scrolls horizontally on screen (many yearly
     // columns) — a plain capture only grabs the visible viewport and
     // silently drops whatever's scrolled out of view. Forcing the clone's
     // width to the wrapper's full scrollWidth (and disabling its overflow
     // clipping) makes html2canvas render — and capture — every column.
-    tableCanvas = await html2canvas(tableWrapper, {
+    const tableCanvas = await html2canvas(tableWrapper, {
       scale: 1.5,
       backgroundColor: "#ffffff",
       width: tableWrapper.scrollWidth,
@@ -148,61 +176,9 @@ async function addOperatorSnapshot(doc, { maxWidth, marginY, t, regionLabel }) {
         el.style.width = `${tableWrapper.scrollWidth}px`;
       },
     });
+    return { chartsCanvas, tableCanvas };
   } catch (err) {
     console.warn("Newsletter PDF: skipping charts/table snapshot —", err);
-    return;
+    return { chartsCanvas: null, tableCanvas: null };
   }
-
-  function heading(text) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text(text, marginY, marginY);
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(8.5);
-    doc.setTextColor(110);
-    const lines = doc.splitTextToSize(t("newsletterPdf.chartsCaption", regionLabel), doc.internal.pageSize.getWidth() - marginY * 2);
-    let y = marginY + 20;
-    for (const line of lines) {
-      doc.text(line, marginY, y);
-      y += 11;
-    }
-    doc.setTextColor(0);
-    return y + 8;
-  }
-
-  // Charts page — portrait, matches the rest of the document.
-  doc.addPage();
-  const chartsTop = heading(`${t("newsletterPdf.chartsHeading")} — ${regionLabel}`);
-  drawImageFit(doc, chartsCanvas, {
-    x: marginY,
-    y: chartsTop,
-    maxWidth,
-    maxHeight: doc.internal.pageSize.getHeight() - chartsTop - marginY,
-  });
-
-  // Table page — portrait, matching every other page in the document.
-  // drawImageFit already shrinks the (much wider than tall) table image to
-  // fit the available width, so this just needs a normal page.
-  doc.addPage();
-  const tableTop = heading(t("newsletterPdf.tableHeading"));
-  drawImageFit(doc, tableCanvas, {
-    x: marginY,
-    y: tableTop,
-    maxWidth,
-    maxHeight: doc.internal.pageSize.getHeight() - tableTop - marginY,
-  });
-}
-
-function drawImageFit(doc, canvas, { x, y, maxWidth, maxHeight }) {
-  let drawWidth = maxWidth;
-  let drawHeight = (canvas.height / canvas.width) * drawWidth;
-  if (drawHeight > maxHeight) {
-    drawHeight = maxHeight;
-    drawWidth = (canvas.width / canvas.height) * drawHeight;
-  }
-  const centeredX = x + (maxWidth - drawWidth) / 2;
-  // JPEG at less-than-max quality — these are chart/table screenshots, not
-  // photos, but a lossless PNG at this resolution ran to 10+ MB, far too
-  // heavy for a "download the newsletter" button.
-  doc.addImage(canvas.toDataURL("image/jpeg", 0.85), "JPEG", centeredX, y, drawWidth, drawHeight);
 }

@@ -46,7 +46,6 @@ export default {
     intro:
       "This PDF collects AI-written summaries based on Statistikaamet's latest data — not an official Statistikaamet product.",
     generatedOn: "Generated:",
-    chartsHeading: "Operator statistics",
     tableHeading: "Operator statistics — year by year",
     chartsCaption: (region) => `Charts and table reflect the region currently selected on the Ülevaade tab: ${region}.`,
   },

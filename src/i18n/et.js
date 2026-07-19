@@ -46,7 +46,6 @@ export default {
     intro:
       "Käesolev PDF koondab tehisintellekti kokkuvõtted Statistikaameti uusimate andmete põhjal — AI-kirjutatud, mitte Statistikaameti ametlik toode.",
     generatedOn: "Koostatud:",
-    chartsHeading: "Operaatori statistika",
     tableHeading: "Operaatori statistika — aastate lõikes",
     chartsCaption: (region) => `Graafikud ja tabel kajastavad hetkel Ülevaate vahekaardil valitud piirkonda: ${region}.`,
   },

@@ -129,6 +129,15 @@
   text-align: right;
 }
 
+/* Top-origin-country cells: "Soome" then "(676,0 tuh.)" on its own line
+   below, instead of one long inline string — keeps these columns narrower
+   than the numeric-only ones despite carrying a country name. */
+.operator-table-subvalue {
+  display: block;
+  font-size: 10px;
+  color: var(--slate);
+}
+
 .operator-table-compact {
   width: auto;
   min-width: 100%;

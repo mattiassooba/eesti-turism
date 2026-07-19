@@ -657,7 +657,14 @@ function OperatorInsights() {
                     const item = originsTop5ByYear?.get(r.year)?.[rank];
                     return (
                       <td key={r.year}>
-                        {item ? `${item.label} (${fmtInt(item.value, locale)})` : "—"}
+                        {item ? (
+                          <>
+                            {item.label}
+                            <span className="operator-table-subvalue">({fmtInt(item.value, locale)})</span>
+                          </>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                     );
                   })}

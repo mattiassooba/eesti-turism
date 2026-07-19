@@ -180,16 +180,15 @@ async function addOperatorSnapshot(doc, { maxWidth, marginY, t, regionLabel }) {
     maxHeight: doc.internal.pageSize.getHeight() - chartsTop - marginY,
   });
 
-  // Table page — landscape, since the full (unclipped) yearly table is
-  // naturally much wider than tall; a portrait page would force the text
-  // down to unreadably small to fit.
-  doc.addPage("a4", "landscape");
-  const tableMaxWidth = doc.internal.pageSize.getWidth() - marginY * 2;
+  // Table page — portrait, matching every other page in the document.
+  // drawImageFit already shrinks the (much wider than tall) table image to
+  // fit the available width, so this just needs a normal page.
+  doc.addPage();
   const tableTop = heading(t("newsletterPdf.tableHeading"));
   drawImageFit(doc, tableCanvas, {
     x: marginY,
     y: tableTop,
-    maxWidth: tableMaxWidth,
+    maxWidth,
     maxHeight: doc.internal.pageSize.getHeight() - tableTop - marginY,
   });
 }

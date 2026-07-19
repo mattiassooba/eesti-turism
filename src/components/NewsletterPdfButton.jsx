@@ -14,7 +14,10 @@ const SECTION_NAV_KEY = {
 
 const MARGIN = 48;
 const LINE_HEIGHT = 14;
-const NATIONAL_BAR_COLOR = [43, 108, 163]; // matches "Eesti kokku" everywhere else in the app
+// Match DOMESTIC_COLOR / FOREIGN_COLOR from src/theme.js, used everywhere
+// else in the app for this exact residents-vs-foreign-visitors split.
+const DOMESTIC_BAR_COLOR = [91, 107, 122];
+const FOREIGN_BAR_COLOR = [217, 142, 43];
 
 // Only enabled once narrative.json is confirmed present — same
 // graceful-degradation stance as NarrativeBlock (no error UI, just no
@@ -110,11 +113,14 @@ export default function NewsletterPdfButton() {
       // only fully-national charts in the app live on the lazy-mounted Map
       // tab, so a live capture would frequently just be missing. This has
       // no DOM dependency at all and works regardless of which tab is open.
-      function nationalBarChart(series, { height = 140, gap = 20 } = {}) {
+      // Stacked bars: domestic (bottom) + foreign (top) per year, same
+      // residents-vs-visitors split and colors used everywhere else in the
+      // app (see DOMESTIC_COLOR/FOREIGN_COLOR in src/theme.js).
+      function nationalResidencyChart(series, { height = 140, gap = 16 } = {}) {
         if (!Array.isArray(series) || !series.length) return;
-        ensureSpace(height + 16);
+        ensureSpace(height + 34);
         const top = y;
-        const max = Math.max(...series.map((d) => d.guests), 1);
+        const max = Math.max(...series.map((d) => d.domestic + d.foreign), 1);
         const barGap = 6;
         const barWidth = (maxWidth - barGap * (series.length - 1)) / series.length;
         const axisY = top + height;
@@ -126,16 +132,29 @@ export default function NewsletterPdfButton() {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(7.5);
         series.forEach((d, i) => {
-          const barHeight = (d.guests / max) * (height - 4);
+          const domesticHeight = (d.domestic / max) * (height - 4);
+          const foreignHeight = (d.foreign / max) * (height - 4);
           const barX = MARGIN + i * (barWidth + barGap);
-          const barY = axisY - barHeight;
-          doc.setFillColor(...NATIONAL_BAR_COLOR);
-          doc.rect(barX, barY, barWidth, barHeight, "F");
+          doc.setFillColor(...DOMESTIC_BAR_COLOR);
+          doc.rect(barX, axisY - domesticHeight, barWidth, domesticHeight, "F");
+          doc.setFillColor(...FOREIGN_BAR_COLOR);
+          doc.rect(barX, axisY - domesticHeight - foreignHeight, barWidth, foreignHeight, "F");
           doc.setTextColor(110);
           doc.text(String(d.year), barX + barWidth / 2, axisY + 10, { align: "center" });
         });
         doc.setTextColor(0);
-        y = axisY + 16 + gap;
+
+        const legendY = axisY + 26;
+        doc.setFillColor(...DOMESTIC_BAR_COLOR);
+        doc.rect(MARGIN, legendY - 7, 8, 8, "F");
+        doc.setFontSize(8.5);
+        doc.text(t("common.domestic"), MARGIN + 12, legendY);
+        const legendGap = MARGIN + 12 + doc.getTextWidth(t("common.domestic")) + 16;
+        doc.setFillColor(...FOREIGN_BAR_COLOR);
+        doc.rect(legendGap, legendY - 7, 8, 8, "F");
+        doc.text(t("common.foreign"), legendGap + 12, legendY);
+
+        y = legendY + gap;
       }
 
       const periodLabel = narrative.periodLabel?.[locale] ?? narrative.periodLabel?.et;
@@ -152,7 +171,7 @@ export default function NewsletterPdfButton() {
       if (dashboard) paragraph(dashboard[locale] ?? dashboard.et, { gap: 16 });
 
       paragraph(t("newsletterPdf.nationalChartTitle"), { font: "bold", size: 11, gap: 6 });
-      nationalBarChart(dashboard?.nationalYearlyGuests);
+      nationalResidencyChart(dashboard?.nationalYearlyResidency);
 
       paragraph(t("newsletterPdf.otherHighlights"), { font: "bold", size: 13, gap: 8 });
       for (const key of HIGHLIGHT_SECTIONS) {

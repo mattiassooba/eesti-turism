@@ -184,11 +184,11 @@ function buildRegionDashboardPrompt(region, m) {
 - Share of Estonia's total guests this period: ${m.shareOfNationalPct != null ? m.shareOfNationalPct.toFixed(1) + "%" : "n/a"}`;
 }
 
-// A compact ~10-year national guests-by-year series, used to draw a small
-// native bar chart on page 1 of the PDF newsletter (see
-// NewsletterPdfButton.jsx) — independent of any specific page's DOM, so
-// it's always available regardless of which tab the reader has open when
-// they generate the PDF.
+// A compact ~10-year national residents-vs-foreign-visitors series, used
+// to draw a small native stacked-bar chart on page 1 of the PDF newsletter
+// (see NewsletterPdfButton.jsx) — independent of any specific page's DOM,
+// so it's always available regardless of which tab the reader has open
+// when they generate the PDF.
 async function computeNationalYearlyTrend() {
   const data = await fetchTableData(
     MAJUTUS_PATH,
@@ -196,7 +196,7 @@ async function computeNationalYearlyTrend() {
     [
       { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
       { code: "Maakond", selection: { filter: "item", values: ["EE"] } },
-      { code: "Elukohariik", selection: { filter: "item", values: ["WORLD"] } },
+      { code: "Elukohariik", selection: { filter: "item", values: ["EE", "FOR"] } },
       // 132 months (11 years) of headroom so the oldest calendar year in
       // the window is very likely complete once we take the last 10.
       { code: "Vaatlusperiood", selection: { filter: "top", values: ["132"] } },
@@ -209,16 +209,20 @@ async function computeNationalYearlyTrend() {
   for (const row of flattenToRows(data)) {
     if (row.value === null) continue;
     const year = row.Vaatlusperiood.split("M")[0];
-    byYear.set(year, (byYear.get(year) ?? 0) + row.value);
+    if (!byYear.has(year)) byYear.set(year, { domestic: 0, foreign: 0 });
+    const bucket = byYear.get(year);
+    if (row.Elukohariik === "EE") bucket.domestic += row.value;
+    else if (row.Elukohariik === "FOR") bucket.foreign += row.value;
     monthsPerYear.set(year, (monthsPerYear.get(year) ?? 0) + 1);
   }
 
   const years = Array.from(byYear.keys()).sort();
-  // Drop a leading partial year (fewer than 12 months in the fetch window)
-  // rather than showing it as a misleadingly short bar.
-  if (years.length && monthsPerYear.get(years[0]) < 12) years.shift();
+  // Drop a leading partial year (fewer than 12 months in the fetch window,
+  // counting distinct months across both residency series) rather than
+  // showing it as a misleadingly short bar.
+  if (years.length && monthsPerYear.get(years[0]) < 24) years.shift();
 
-  return years.slice(-10).map((year) => ({ year, guests: byYear.get(year) }));
+  return years.slice(-10).map((year) => ({ year, ...byYear.get(year) }));
 }
 
 // ---- Map (Kaart ja hooajalisus) ----------------------------------------
@@ -501,8 +505,12 @@ ${prompts.expenses}`;
       "(not literal translations of each other, though they must report the same facts). Estonian must read " +
       "naturally to a native speaker. Avoid repeating the same opening phrase across sections. Four of the five " +
       "sections (all but dashboard) also need a short 'highlight' sentence — this is a compact digest for a " +
-      "printed summary page, not a teaser for the full blurb, so it must stand alone and still make sense to " +
-      "someone who never reads the full blurb. " + FORMATTING_RULES,
+      "printed monthly newsletter page, not a teaser for the full blurb, so it must stand alone and still make " +
+      "sense to someone who never reads the full blurb. The highlight must lead with the most recent " +
+      "year-over-year comparison available (this year vs. last year) and must NOT reference distant historical " +
+      "baselines (e.g. growth multiples since a decades-old base year like 1992) — that kind of long-horizon " +
+      "framing belongs only in the full blurb, never the highlight, since a monthly reader cares about what " +
+      "changed recently, not multi-decade trends. " + FORMATTING_RULES,
     messages: [{ role: "user", content: combinedPrompt }],
     tools: [
       {
@@ -638,7 +646,7 @@ async function main() {
     return;
   }
 
-  const [map, purpose, capacity, expenses, nationalYearlyGuests] = await Promise.all([
+  const [map, purpose, capacity, expenses, nationalYearlyResidency] = await Promise.all([
     computeMapMetrics(dashboard),
     computePurposeMetrics(),
     computeCapacityMetrics(),
@@ -651,7 +659,7 @@ async function main() {
   );
 
   if (process.argv.includes("--debug-metrics")) {
-    console.log(JSON.stringify({ dashboard, map, purpose, capacity, expenses, nationalYearlyGuests }, null, 2));
+    console.log(JSON.stringify({ dashboard, map, purpose, capacity, expenses, nationalYearlyResidency }, null, 2));
     console.log("--- prompts ---");
     console.log(buildDashboardPrompt(dashboard));
     console.log(buildMapPrompt(map));
@@ -681,7 +689,7 @@ async function main() {
 
   console.log(`Calling Claude to generate ${ALL_REGIONS.length} region-specific dashboard blurbs…`);
   sections.dashboardByRegion = await callClaudeRegions(anthropic, model, ALL_REGIONS, regionPromptBlocks);
-  sections.dashboard.nationalYearlyGuests = nationalYearlyGuests;
+  sections.dashboard.nationalYearlyResidency = nationalYearlyResidency;
 
   const output = {
     generatedAt: new Date().toISOString(),

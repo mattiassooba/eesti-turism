@@ -32,6 +32,11 @@ const REGION_CODES = [...COUNTIES, ...CITIES].map((c) => c.code);
 
 const RESIDENCY_CODE = { all: "WORLD", domestic: "EE", foreign: "FOR" };
 
+// The printable yearly table's annual portion never reaches further back
+// than this — a decade-plus of history matters less in a monthly report
+// than the 3 recent-month columns that replace the most recent years.
+const MIN_TABLE_YEAR = 2020;
+
 function yoy(current, previous) {
   if (current == null || previous == null || previous === 0) return null;
   return ((current - previous) / previous) * 100;
@@ -271,6 +276,27 @@ function OperatorInsights() {
     return rankCountries(origins.data.filter((row) => last12.has(row.Vaatlusperiood)));
   }, [origins.data, indexed]);
 
+  // The same calendar month across the latest 3 years (e.g. "2024M05",
+  // "2025M05", "2026M05") — a monthly publication gains little from a full
+  // decade of annual columns, but a lot from directly comparing the current
+  // month against the same month the last two years.
+  const recentPeriods = useMemo(() => {
+    if (!indexed) return [];
+    const latestPeriod = indexed.allPeriods[indexed.allPeriods.length - 1];
+    const [latestYearStr, latestMonthStr] = latestPeriod.split("M");
+    const latestYearNum = Number(latestYearStr);
+    return [2, 1, 0].map((back) => `${latestYearNum - back}M${latestMonthStr}`);
+  }, [indexed]);
+
+  const originsTopByPeriod = useMemo(() => {
+    if (!origins.data || !recentPeriods.length) return null;
+    const byPeriod = new Map();
+    for (const period of recentPeriods) {
+      byPeriod.set(period, rankCountries(origins.data.filter((row) => row.Vaatlusperiood === period)));
+    }
+    return byPeriod;
+  }, [origins.data, recentPeriods]);
+
   const view = useMemo(() => {
     if (!indexed) return null;
     const { guestsByRegion, capByRegion, allPeriods, periodLabels } = indexed;
@@ -311,6 +337,8 @@ function OperatorInsights() {
         const prevRevpar = prevArr != null && prevOcc != null ? prevArr * (prevOcc / 100) : null;
 
         return {
+          key: year,
+          label: year,
           year,
           partial: periods.length < 12,
           accommodated,
@@ -338,13 +366,21 @@ function OperatorInsights() {
     const [latestYear, latestMonthStr] = latestPeriod.split("M");
     const prevYearPeriod = `${Number(latestYear) - 1}M${latestMonthStr}`;
 
-    function monthlySnapshot(regionCode) {
+    // Generalized version of the latest-vs-prior-year-same-month snapshot,
+    // reused both for the MonthlySnapshotTable widget (always the latest
+    // month) and for the yearly table's 3 "recent months" columns (latest
+    // month across each of the last 3 years).
+    function snapshotForPeriod(regionCode, period) {
+      const [y, m] = period.split("M");
+      const comparePeriod = `${Number(y) - 1}M${m}`;
       const guestMap = guestsByRegion.get(regionCode)?.get(residencyCode);
+      const nationalGuestMap = guestsByRegion.get("EE")?.get(residencyCode);
       const capMap = capByRegion.get(regionCode);
-      const cur = sumField(guestMap, [latestPeriod]);
-      const prev = sumField(guestMap, [prevYearPeriod]);
-      const capCur = capMap?.get(latestPeriod) ?? {};
-      const capPrev = capMap?.get(prevYearPeriod) ?? {};
+      const cur = sumField(guestMap, [period]);
+      const prev = sumField(guestMap, [comparePeriod]);
+      const nationalCur = sumField(nationalGuestMap, [period]);
+      const capCur = capMap?.get(period) ?? {};
+      const capPrev = capMap?.get(comparePeriod) ?? {};
       const occCur = capCur.OCC_OR_BEDR ?? null;
       const occPrev = capPrev.OCC_OR_BEDR ?? null;
       const arrCur = capCur.OCC_NI_COST ?? null;
@@ -352,8 +388,12 @@ function OperatorInsights() {
       const revparCur = arrCur != null && occCur != null ? arrCur * (occCur / 100) : null;
       const revparPrev = arrPrev != null && occPrev != null ? arrPrev * (occPrev / 100) : null;
       return {
+        key: period,
+        label: periodLabels.get(period) ?? period,
+        partial: false,
         accommodated: cur,
         accommodatedYoy: yoy(cur, prev),
+        share: cur != null && nationalCur ? (cur / nationalCur) * 100 : null,
         esta: capCur.CAP_ESTA ?? null,
         rooms: capCur.CAP_BEDR ?? null,
         occ: occCur,
@@ -363,6 +403,25 @@ function OperatorInsights() {
         revparYoy: yoy(revparCur, revparPrev),
       };
     }
+
+    function monthlySnapshot(regionCode) {
+      return snapshotForPeriod(regionCode, latestPeriod);
+    }
+
+    // The printable yearly table: a shortened annual history (stops a few
+    // years back, floored at MIN_TABLE_YEAR) followed by the same calendar
+    // month across the latest 3 years — directly comparable, and far more
+    // relevant to a monthly reader than another decade of full-year columns.
+    const tableAnnualCutoff = Number(latestYear) - recentPeriods.length;
+    const tableAnnual = { EE: [], [region]: [] };
+    for (const r of nationalYearlyAll) {
+      if (Number(r.year) >= MIN_TABLE_YEAR && Number(r.year) <= tableAnnualCutoff) tableAnnual.EE.push(r);
+    }
+    for (const r of regionYearlyAll) {
+      if (Number(r.year) >= MIN_TABLE_YEAR && Number(r.year) <= tableAnnualCutoff) tableAnnual[region].push(r);
+    }
+    const nationalTableColumns = [...tableAnnual.EE, ...recentPeriods.map((p) => snapshotForPeriod("EE", p))];
+    const regionTableColumns = [...tableAnnual[region], ...recentPeriods.map((p) => snapshotForPeriod(region, p))];
 
     const regionLabel = REGION_LABELS[region];
     const shareKey = t("operator.shareOf", regionLabel);
@@ -386,6 +445,8 @@ function OperatorInsights() {
       maxYears: years.length,
       nationalYearly,
       regionYearly,
+      nationalTableColumns,
+      regionTableColumns,
       nationalMonthly: monthlySnapshot("EE"),
       regionMonthly: monthlySnapshot(region),
       latestLabel: periodLabels.get(latestPeriod) ?? latestPeriod,
@@ -398,7 +459,7 @@ function OperatorInsights() {
       revparKey,
       totalEstoniaKey,
     };
-  }, [indexed, region, residency, yearsToShow, locale, t, REGION_LABELS]);
+  }, [indexed, region, residency, yearsToShow, locale, t, REGION_LABELS, recentPeriods]);
 
   if (!state.data && state.loading) {
     return <div className="panel-status">{t("operator.loading")}</div>;
@@ -459,8 +520,8 @@ function OperatorInsights() {
       <div className="data-card" id="operator-yearly-national">
         <h3>
           {t("operator.nationalYearlyHeading", [
-            view.nationalYearly[0]?.year,
-            view.nationalYearly[view.nationalYearly.length - 1]?.year,
+            view.nationalTableColumns[0]?.label,
+            view.nationalTableColumns[view.nationalTableColumns.length - 1]?.label,
           ])}
         </h3>
         <div className="data-grid-wrapper">
@@ -468,16 +529,16 @@ function OperatorInsights() {
             <thead>
               <tr>
                 <th>{t("operator.thIndicator")}</th>
-                {view.nationalYearly.map((r) => (
-                  <th key={r.year}>
-                    {r.year}
+                {view.nationalTableColumns.map((r) => (
+                  <th key={r.key}>
+                    {r.label}
                     {r.partial ? " *" : ""}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              <YearlyIndicatorRows years={view.nationalYearly} accommodatedLabel={t("operator.accommodatedEstonia")} locale={locale} t={t} />
+              <YearlyIndicatorRows columns={view.nationalTableColumns} accommodatedLabel={t("operator.accommodatedEstonia")} locale={locale} t={t} />
             </tbody>
           </table>
         </div>
@@ -489,8 +550,8 @@ function OperatorInsights() {
         <h3>
           {t("operator.yearlyHeading", [
             regionLabel,
-            view.nationalYearly[0]?.year,
-            view.nationalYearly[view.nationalYearly.length - 1]?.year,
+            view.regionTableColumns[0]?.label,
+            view.regionTableColumns[view.regionTableColumns.length - 1]?.label,
           ])}
         </h3>
 
@@ -590,9 +651,9 @@ function OperatorInsights() {
             <thead>
               <tr>
                 <th>{t("operator.thIndicator")}</th>
-                {view.nationalYearly.map((r) => (
-                  <th key={r.year}>
-                    {r.year}
+                {view.regionTableColumns.map((r) => (
+                  <th key={r.key}>
+                    {r.label}
                     {r.partial ? " *" : ""}
                   </th>
                 ))}
@@ -600,7 +661,7 @@ function OperatorInsights() {
             </thead>
             <tbody>
               <YearlyIndicatorRows
-                years={view.regionYearly}
+                columns={view.regionTableColumns}
                 accommodatedLabel={t("operator.accommodatedRegion", regionLabel)}
                 shareLabel={t("operator.shareOfEstonia", regionLabel)}
                 locale={locale}
@@ -612,10 +673,13 @@ function OperatorInsights() {
                   className={"operator-origin-row" + (rank > 0 ? " operator-subrow" : "")}
                 >
                   <th>{t("operator.topOriginCountry", rank + 1)}</th>
-                  {view.regionYearly.map((r) => {
-                    const item = originsTop5ByYear?.get(r.year)?.[rank];
+                  {view.regionTableColumns.map((r) => {
+                    // Annual columns rank by year, the 3 recent columns by
+                    // exact month — a single lookup works for both since
+                    // each column's `key` matches the right map's keys.
+                    const item = (originsTop5ByYear?.get(r.key) ?? originsTopByPeriod?.get(r.key))?.[rank];
                     return (
-                      <td key={r.year}>
+                      <td key={r.key}>
                         {item ? (
                           <>
                             {item.label}
@@ -717,19 +781,19 @@ function MonthlySnapshotTable({ snapshot, locale, t }) {
 // — accommodated guests, capacity, occupancy, and pricing, one column per
 // year. `shareLabel` is omitted for the Estonia table: a region's "share
 // of Estonia" has no national equivalent.
-function YearlyIndicatorRows({ years, accommodatedLabel, shareLabel, locale, t }) {
+function YearlyIndicatorRows({ columns, accommodatedLabel, shareLabel, locale, t }) {
   return (
     <>
       <tr>
         <th>{accommodatedLabel}</th>
-        {years.map((r) => (
-          <td key={r.year}>{fmtInt(r.accommodated, locale)}</td>
+        {columns.map((r) => (
+          <td key={r.key}>{fmtInt(r.accommodated, locale)}</td>
         ))}
       </tr>
       <tr className="operator-subrow">
         <th>{t("operator.yoyChange")}</th>
-        {years.map((r) => (
-          <td key={r.year} className={deltaClass(r.accommodatedYoy)}>
+        {columns.map((r) => (
+          <td key={r.key} className={deltaClass(r.accommodatedYoy)}>
             {fmtDelta(r.accommodatedYoy)}
           </td>
         ))}
@@ -737,53 +801,53 @@ function YearlyIndicatorRows({ years, accommodatedLabel, shareLabel, locale, t }
       {shareLabel && (
         <tr>
           <th>{shareLabel}</th>
-          {years.map((r) => (
-            <td key={r.year}>{fmtPct(r.share)}</td>
+          {columns.map((r) => (
+            <td key={r.key}>{fmtPct(r.share)}</td>
           ))}
         </tr>
       )}
       <tr>
         <th>{t("operator.establishments")}</th>
-        {years.map((r) => (
-          <td key={r.year}>{fmtInt(r.esta, locale)}</td>
+        {columns.map((r) => (
+          <td key={r.key}>{fmtInt(r.esta, locale)}</td>
         ))}
       </tr>
       <tr>
         <th>{t("operator.rooms")}</th>
-        {years.map((r) => (
-          <td key={r.year}>{fmtInt(r.rooms, locale)}</td>
+        {columns.map((r) => (
+          <td key={r.key}>{fmtInt(r.rooms, locale)}</td>
         ))}
       </tr>
       <tr>
         <th>{t("operator.occupancy")}</th>
-        {years.map((r) => (
-          <td key={r.year}>{fmtPct(r.occ)}</td>
+        {columns.map((r) => (
+          <td key={r.key}>{fmtPct(r.occ)}</td>
         ))}
       </tr>
       <tr>
         <th>{t("operator.arr")}</th>
-        {years.map((r) => (
-          <td key={r.year}>{fmtEur(r.arr)}</td>
+        {columns.map((r) => (
+          <td key={r.key}>{fmtEur(r.arr)}</td>
         ))}
       </tr>
       <tr className="operator-subrow">
         <th>{t("operator.yoyChange")}</th>
-        {years.map((r) => (
-          <td key={r.year} className={deltaClass(r.arrYoy)}>
+        {columns.map((r) => (
+          <td key={r.key} className={deltaClass(r.arrYoy)}>
             {fmtDelta(r.arrYoy)}
           </td>
         ))}
       </tr>
       <tr>
         <th>{t("operator.revparStar")}</th>
-        {years.map((r) => (
-          <td key={r.year}>{fmtEur(r.revpar)}</td>
+        {columns.map((r) => (
+          <td key={r.key}>{fmtEur(r.revpar)}</td>
         ))}
       </tr>
       <tr className="operator-subrow">
         <th>{t("operator.yoyChange")}</th>
-        {years.map((r) => (
-          <td key={r.year} className={deltaClass(r.revparYoy)}>
+        {columns.map((r) => (
+          <td key={r.key} className={deltaClass(r.revparYoy)}>
             {fmtDelta(r.revparYoy)}
           </td>
         ))}

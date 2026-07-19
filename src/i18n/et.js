@@ -48,7 +48,7 @@ export default {
     generatedOn: "Koostatud:",
     estoniaHeading: "Eesti üldpilt",
     otherHighlights: "Muu statistika",
-    nationalChartTitle: "Majutatud Eestis, aastate lõikes",
+    nationalChartTitle: "Eesti elanikud vs väliskülastajad, aastate lõikes",
     regionSubheading: "Piirkonna detailne ülevaade",
     chartsCaption: (region) => `Kajastab hetkel Ülevaate vahekaardil valitud piirkonda: ${region}.`,
   },

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { COUNTIES } from "../data/counties";
+import NewsletterPdfButton from "./NewsletterPdfButton.jsx";
 
 // Mailchimp embedded-form mechanics — none of these are secrets (Mailchimp
 // publishes them in every embed snippet it generates), but they ARE
@@ -38,7 +39,10 @@ export default function NewsletterSignup() {
 
   return (
     <div className="newsletter-signup">
-      <h3 className="newsletter-heading">{t("newsletter.heading")}</h3>
+      <div className="newsletter-heading-row">
+        <h3 className="newsletter-heading">{t("newsletter.heading")}</h3>
+        <NewsletterPdfButton />
+      </div>
       <p className="newsletter-intro">{t("newsletter.intro")}</p>
 
       <form action={MAILCHIMP_ACTION} method="post" target="_blank" noValidate>

@@ -40,6 +40,14 @@ export default {
     caption: (period) => `Tehisintellekti kokkuvõte Statistikaameti uusimate andmete põhjal (${period}) — AI-kirjutatud, mitte Statistikaameti ametlik toode.`,
   },
 
+  newsletterPdf: {
+    download: "Lae uudiskiri alla (PDF)",
+    generating: "Koostan PDF-i…",
+    intro:
+      "Käesolev PDF koondab tehisintellekti kokkuvõtted Statistikaameti uusimate andmete põhjal — AI-kirjutatud, mitte Statistikaameti ametlik toode.",
+    generatedOn: "Koostatud:",
+  },
+
   newsletter: {
     heading: "Telli uudiskiri",
     intro: "Saa Eesti turismistatistika kokkuvõte otse e-postile — vali sagedus, keel ja maakond, mis sind kõige rohkem huvitab.",

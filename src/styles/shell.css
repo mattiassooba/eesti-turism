@@ -96,11 +96,43 @@
   padding: 24px 32px;
 }
 
+.newsletter-heading-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .newsletter-heading {
   margin: 0 0 4px;
   font-family: var(--font-display);
   font-size: 18px;
   font-weight: 600;
+}
+
+.newsletter-pdf-button {
+  flex-shrink: 0;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border: 1px solid rgba(238, 240, 238, 0.4);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--paper);
+  cursor: pointer;
+  transition: filter 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+
+.newsletter-pdf-button:hover {
+  border-color: var(--midsummer);
+  filter: brightness(1.08);
+}
+
+.newsletter-pdf-button:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
 .newsletter-intro {

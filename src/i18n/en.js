@@ -40,6 +40,14 @@ export default {
     caption: (period) => `AI-written summary based on Statistikaamet's latest data (${period}) — not an official Statistikaamet product.`,
   },
 
+  newsletterPdf: {
+    download: "Download newsletter (PDF)",
+    generating: "Generating PDF…",
+    intro:
+      "This PDF collects AI-written summaries based on Statistikaamet's latest data — not an official Statistikaamet product.",
+    generatedOn: "Generated:",
+  },
+
   newsletter: {
     heading: "Subscribe to the newsletter",
     intro: "Get Estonian tourism statistics summarized straight to your inbox — choose how often, in which language, and which county you're most interested in.",

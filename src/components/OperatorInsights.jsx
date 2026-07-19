@@ -17,6 +17,7 @@ import ChartTooltip from "./ChartTooltip";
 import RankedBarList from "./RankedBarList";
 import TableSource from "./TableSource";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
+import { useRegion } from "../context/RegionContext.jsx";
 import { formatNumber } from "../i18n/format";
 import { COUNTIES, CITIES } from "../data/counties";
 import { CHART_COLORS, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
@@ -108,7 +109,7 @@ function OperatorInsights() {
     { key: "foreign", label: t("filters.residencyForeign") },
   ];
   const [state, setState] = useState({ data: null, loading: true, error: null });
-  const [region, setRegion] = useState("EE00370000000000");
+  const { region, setRegion } = useRegion();
   const [residency, setResidency] = useState("all");
   const [yearsToShow, setYearsToShow] = useState(10);
   const [origins, setOrigins] = useState({ data: null, loading: true, error: null });
@@ -440,7 +441,7 @@ function OperatorInsights() {
         </label>
       </div>
 
-      <div className="data-card">
+      <div className="data-card" id="operator-yearly-card">
         <h3>
           {t("operator.yearlyHeading", [
             regionLabel,

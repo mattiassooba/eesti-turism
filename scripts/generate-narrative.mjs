@@ -1,6 +1,8 @@
 // Generates the small AI-written "newsletter" blurbs shown under each
 // scroll section (Ülevaade, Kaart ja hooajalisus, Eesmärk ja kestus,
-// Mahutavus, Reisikulutused). Run standalone under Node (not the browser
+// Mahutavus, Reisikulutused), plus one region-specific variant of the
+// Ülevaade blurb per entry in the dashboard's region picker (15 maakonds +
+// Tallinn/Tartu/Pärnu city). Run standalone under Node (not the browser
 // bundle) — imports the same fetch/flatten helpers the app itself uses,
 // since both are pure fetch-based with no browser-only APIs.
 //
@@ -21,6 +23,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { fetchTableData } from "../src/api/pxweb.js";
 import { flattenToRows } from "../src/api/jsonStat.js";
 import { formatPeriodLabel } from "../src/i18n/format.js";
+import { COUNTIES, CITIES } from "../src/data/counties.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = path.join(__dirname, "..", "public", "data", "narrative.json");
@@ -28,25 +31,7 @@ const OUTPUT_PATH = path.join(__dirname, "..", "public", "data", "narrative.json
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
 
-// Same 15 non-overlapping maakonds every page's own topCounty logic uses
-// ("EE" total + city sub-splits excluded to avoid double-counting).
-const REAL_COUNTY_CODES = [
-  "EE00370000000000",
-  "EE00390000000000",
-  "EE00450000000000",
-  "EE00500000000000",
-  "EE00520000000000",
-  "EE00560000000000",
-  "EE00600000000000",
-  "EE00640000000000",
-  "EE00680000000000",
-  "EE00710000000000",
-  "EE00740000000000",
-  "EE00790000000000",
-  "EE00810000000000",
-  "EE00840000000000",
-  "EE00870000000000",
-];
+const ALL_REGIONS = [...COUNTIES, ...CITIES];
 
 const ORIGIN_COUNTRY_CODES = ["FI", "LV", "DE", "SE", "RU", "LT", "NO", "UK", "US", "FR", "NL", "PL", "IT", "ES", "DK"];
 
@@ -73,113 +58,143 @@ function fmtPct(n) {
   return `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
 }
 
-// ---- Dashboard (Ülevaade) ----------------------------------------------
+// Large counts read like a newsletter, not a spreadsheet — Claude is
+// instructed (see FORMATTING_RULES) to keep these exact abbreviated forms,
+// translating only the unit word, rather than spelling out the full number.
+function abbrev(n) {
+  if (n == null) return "n/a";
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} million`;
+  if (abs >= 1_000) return `${(n / 1_000).toFixed(1)} thousand`;
+  return n.toLocaleString("en-US");
+}
+
+const FORMATTING_RULES =
+  "Numbers given to you as 'N thousand' or 'N million' must be rendered abbreviated, never spelled out in full: " +
+  "in English write 'N th' / 'N million' (e.g. '320.3 th', '7.4 million'); in Estonian write 'N tuh.' / 'N milj.' " +
+  "with a comma decimal separator (e.g. '320,3 tuh.', '7,4 milj.'). Numbers given as 'Nx' (a multiplier, e.g. " +
+  "'9.9x') must stay exactly as 'Nx' in both languages — never translate to words like 'times' or 'korda'.";
+
+// ---- Dashboard (Ülevaade) + per-region variants -------------------------
 
 async function computeDashboardMetrics() {
-  const [national, county] = await Promise.all([
-    fetchTableData(
-      MAJUTUS_PATH,
-      "TU131.PX",
-      [
-        { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR", "OCC_NI"] } },
-        { code: "Maakond", selection: { filter: "item", values: ["EE"] } },
-        { code: "Elukohariik", selection: { filter: "item", values: ["WORLD", "EE", "FOR"] } },
-        { code: "Vaatlusperiood", selection: { filter: "top", values: ["13"] } },
-      ],
-      { locale: "et" }
-    ),
-    fetchTableData(
-      MAJUTUS_PATH,
-      "TU131.PX",
-      [
-        { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
-        { code: "Maakond", selection: { filter: "item", values: REAL_COUNTY_CODES } },
-        { code: "Elukohariik", selection: { filter: "item", values: ["WORLD"] } },
-        { code: "Vaatlusperiood", selection: { filter: "top", values: ["13"] } },
-      ],
-      { locale: "et" }
-    ),
-  ]);
+  const allCodes = ALL_REGIONS.map((r) => r.code);
+  const guestData = await fetchTableData(
+    MAJUTUS_PATH,
+    "TU131.PX",
+    [
+      { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR", "OCC_NI"] } },
+      { code: "Maakond", selection: { filter: "item", values: ["EE", ...allCodes] } },
+      { code: "Elukohariik", selection: { filter: "item", values: ["WORLD", "EE", "FOR"] } },
+      { code: "Vaatlusperiood", selection: { filter: "top", values: ["13"] } },
+    ],
+    { locale: "et" }
+  );
 
-  const rows = flattenToRows(national);
-  const byPeriod = new Map();
-  for (const row of rows) {
-    if (!byPeriod.has(row.Vaatlusperiood)) {
-      byPeriod.set(row.Vaatlusperiood, { label: row.Vaatlusperiood_label });
+  const byRegionPeriod = new Map();
+  for (const row of flattenToRows(guestData)) {
+    if (!byRegionPeriod.has(row.Maakond)) byRegionPeriod.set(row.Maakond, new Map());
+    const periodMap = byRegionPeriod.get(row.Maakond);
+    if (!periodMap.has(row.Vaatlusperiood)) {
+      periodMap.set(row.Vaatlusperiood, { label: row.Vaatlusperiood_label });
     }
-    byPeriod.get(row.Vaatlusperiood)[`${row.Näitaja}_${row.Elukohariik}`] = row.value;
+    periodMap.get(row.Vaatlusperiood)[`${row.Näitaja}_${row.Elukohariik}`] = row.value;
   }
-  const periods = Array.from(byPeriod.keys()).sort();
+
+  const nationalByPeriod = byRegionPeriod.get("EE");
+  const periods = Array.from(nationalByPeriod.keys()).sort();
   const latestIdx = periods.length - 1;
-  const latest = byPeriod.get(periods[latestIdx]);
+  const nationalLatestGuests = nationalByPeriod.get(periods[latestIdx])?.OCC_ARR_WORLD ?? null;
 
-  const guestsSeries = periods.map((p) => byPeriod.get(p).OCC_ARR_WORLD ?? 0);
-  const nightsSeries = periods.map((p) => byPeriod.get(p).OCC_NI_WORLD ?? 0);
-  const avgNightsSeries = periods.map((p) => {
-    const g = byPeriod.get(p).OCC_ARR_WORLD ?? 0;
-    const n = byPeriod.get(p).OCC_NI_WORLD ?? 0;
-    return g ? n / g : 0;
-  });
+  function metricsForRegion(regionCode) {
+    const byPeriod = byRegionPeriod.get(regionCode);
+    if (!byPeriod) return null;
+    const latest = byPeriod.get(periods[latestIdx]) ?? {};
+    const guestsSeries = periods.map((p) => byPeriod.get(p)?.OCC_ARR_WORLD ?? 0);
+    const nightsSeries = periods.map((p) => byPeriod.get(p)?.OCC_NI_WORLD ?? 0);
+    const avgNightsSeries = periods.map((p) => {
+      const g = byPeriod.get(p)?.OCC_ARR_WORLD ?? 0;
+      const n = byPeriod.get(p)?.OCC_NI_WORLD ?? 0;
+      return g ? n / g : 0;
+    });
 
-  const totalGuests = latest.OCC_ARR_WORLD ?? 0;
-  const totalNights = latest.OCC_NI_WORLD ?? 0;
-  const domesticGuests = latest.OCC_ARR_EE ?? 0;
-  const foreignGuests = latest.OCC_ARR_FOR ?? 0;
-  const avgNightsPerGuest = totalGuests ? totalNights / totalGuests : 0;
+    const totalGuests = latest.OCC_ARR_WORLD ?? 0;
+    const totalNights = latest.OCC_NI_WORLD ?? 0;
+    const domesticGuests = latest.OCC_ARR_EE ?? 0;
+    const foreignGuests = latest.OCC_ARR_FOR ?? 0;
+    const avgNightsPerGuest = totalGuests ? totalNights / totalGuests : 0;
 
-  const countyRows = flattenToRows(county);
-  const countyByPeriod = new Map();
-  for (const row of countyRows) {
-    if (!countyByPeriod.has(row.Vaatlusperiood)) countyByPeriod.set(row.Vaatlusperiood, new Map());
-    countyByPeriod.get(row.Vaatlusperiood).set(row.Maakond, row.value);
+    return {
+      period: periods[latestIdx],
+      periodLabel: latest.label,
+      totalGuests,
+      totalGuestsYoyPct: periodDelta(guestsSeries, latestIdx, 12),
+      totalNights,
+      totalNightsYoyPct: periodDelta(nightsSeries, latestIdx, 12),
+      domesticGuests,
+      foreignGuests,
+      avgNightsPerGuest,
+      avgNightsPerGuestYoyPct: periodDelta(avgNightsSeries, latestIdx, 12),
+      shareOfNationalPct: nationalLatestGuests ? (totalGuests / nationalLatestGuests) * 100 : null,
+    };
   }
+
+  const national = metricsForRegion("EE");
+
+  // Most-visited of the 15 real (non-overlapping) maakonds — cities are
+  // excluded here since each is already counted inside its own maakond.
   let topCounty = null;
-  for (const row of countyRows) {
-    if (row.Vaatlusperiood !== periods[latestIdx] || row.value === null) continue;
-    if (!topCounty || row.value > topCounty.value) {
-      topCounty = { code: row.Maakond, label: row.Maakond_label, value: row.value };
+  for (const c of COUNTIES) {
+    const m = metricsForRegion(c.code);
+    if (m && (!topCounty || m.totalGuests > topCounty.value)) {
+      topCounty = { label: c.et, value: m.totalGuests, yoyPct: m.totalGuestsYoyPct };
     }
   }
-  const topCountySeries = periods.map((p) => countyByPeriod.get(p)?.get(topCounty?.code) ?? 0);
 
-  return {
-    period: periods[latestIdx],
-    periodLabel: latest.label,
-    totalGuests,
-    totalGuestsYoyPct: periodDelta(guestsSeries, latestIdx, 12),
-    totalNights,
-    totalNightsYoyPct: periodDelta(nightsSeries, latestIdx, 12),
-    domesticGuests,
-    foreignGuests,
-    avgNightsPerGuest,
-    avgNightsPerGuestYoyPct: periodDelta(avgNightsSeries, latestIdx, 12),
-    topCounty: topCounty
-      ? { label: topCounty.label, value: topCounty.value, yoyPct: periodDelta(topCountySeries, latestIdx, 12) }
-      : null,
-  };
+  const regions = {};
+  for (const r of ALL_REGIONS) {
+    regions[r.code] = metricsForRegion(r.code);
+  }
+
+  return { ...national, topCounty, regions };
 }
 
 function buildDashboardPrompt(m) {
   return `Dashboard / "Ülevaade" tab (source: Statistikaamet, table TU131) — national overview:
 - Period: ${m.periodLabel}
-- Total guests accommodated: ${m.totalGuests.toLocaleString("en-US")} (YoY: ${fmtPct(m.totalGuestsYoyPct)})
-- Total nights spent: ${m.totalNights.toLocaleString("en-US")} (YoY: ${fmtPct(m.totalNightsYoyPct)})
-- Domestic (Estonian resident) guests: ${m.domesticGuests.toLocaleString("en-US")}
-- Foreign visitor guests: ${m.foreignGuests.toLocaleString("en-US")}
+- Total guests accommodated: ${abbrev(m.totalGuests)} (YoY: ${fmtPct(m.totalGuestsYoyPct)})
+- Total nights spent: ${abbrev(m.totalNights)} (YoY: ${fmtPct(m.totalNightsYoyPct)})
+- Domestic (Estonian resident) guests: ${abbrev(m.domesticGuests)}
+- Foreign visitor guests: ${abbrev(m.foreignGuests)}
 - Average nights per guest: ${m.avgNightsPerGuest.toFixed(2)} (YoY: ${fmtPct(m.avgNightsPerGuestYoyPct)})
-${m.topCounty ? `- Most-visited county this period: ${m.topCounty.label}, ${m.topCounty.value.toLocaleString("en-US")} guests (YoY: ${fmtPct(m.topCounty.yoyPct)})` : ""}`;
+${m.topCounty ? `- Most-visited county this period: ${m.topCounty.label}, ${abbrev(m.topCounty.value)} guests (YoY: ${fmtPct(m.topCounty.yoyPct)})` : ""}`;
+}
+
+// One prompt block per selectable region/city — grounds the region-specific
+// dashboard blurb shown when a visitor picks that region in the dashboard's
+// "Vali maakond" selector, replacing the national text above.
+function buildRegionDashboardPrompt(region, m) {
+  if (!m) return null;
+  return `Region: ${region.et} (code: ${region.code})
+- Period: ${m.periodLabel}
+- Guests accommodated: ${abbrev(m.totalGuests)} (YoY: ${fmtPct(m.totalGuestsYoyPct)})
+- Nights spent: ${abbrev(m.totalNights)} (YoY: ${fmtPct(m.totalNightsYoyPct)})
+- Domestic vs foreign guests: ${abbrev(m.domesticGuests)} domestic, ${abbrev(m.foreignGuests)} foreign
+- Average nights per guest: ${m.avgNightsPerGuest.toFixed(2)} (YoY: ${fmtPct(m.avgNightsPerGuestYoyPct)})
+- Share of Estonia's total guests this period: ${m.shareOfNationalPct != null ? m.shareOfNationalPct.toFixed(1) + "%" : "n/a"}`;
 }
 
 // ---- Map (Kaart ja hooajalisus) ----------------------------------------
 
 async function computeMapMetrics(dashboard) {
+  const countyCodes = COUNTIES.map((c) => c.code);
   const [countyData, originData] = await Promise.all([
     fetchTableData(
       MAJUTUS_PATH,
       "TU131.PX",
       [
         { code: "Näitaja", selection: { filter: "item", values: ["OCC_NI"] } },
-        { code: "Maakond", selection: { filter: "item", values: REAL_COUNTY_CODES } },
+        { code: "Maakond", selection: { filter: "item", values: countyCodes } },
         { code: "Elukohariik", selection: { filter: "item", values: ["WORLD"] } },
         { code: "Vaatlusperiood", selection: { filter: "top", values: ["24"] } },
       ],
@@ -234,9 +249,9 @@ async function computeMapMetrics(dashboard) {
 
 function buildMapPrompt(m) {
   return `Map & seasonality / "Kaart ja hooajalisus" tab (source: Statistikaamet, table TU131) — regional and origin breakdown:
-- Most nights spent, summed over the last ${m.windowMonths} months: ${m.topCounty.label}, ${m.topCounty.value.toLocaleString("en-US")} nights
-- Top foreign country of origin, last 12 months: ${m.topOrigin.label}, ${m.topOrigin.value.toLocaleString("en-US")} guests
-- For context, the latest month (${m.periodLabel}) split: ${m.domesticGuests.toLocaleString("en-US")} domestic vs ${m.foreignGuests.toLocaleString("en-US")} foreign guests`;
+- Most nights spent, summed over the last ${m.windowMonths} months: ${m.topCounty.label}, ${abbrev(m.topCounty.value)} nights
+- Top foreign country of origin, last 12 months: ${m.topOrigin.label}, ${abbrev(m.topOrigin.value)} guests
+- For context, the latest month (${m.periodLabel}) split: ${abbrev(m.domesticGuests)} domestic vs ${abbrev(m.foreignGuests)} foreign guests`;
 }
 
 // ---- Purpose & duration (Eesmärk ja kestus) -----------------------------
@@ -348,7 +363,7 @@ async function computeCapacityMetrics() {
 
 function buildCapacityPrompt(m) {
   return `Capacity / "Mahutavus" tab (source: Statistikaamet, tables TU11 + TU110) — accommodation supply nationally:
-- Total beds available, ${m.latestCapacityLabel}: ${m.latestCapacity.toLocaleString("en-US")}${
+- Total beds available, ${m.latestCapacityLabel}: ${abbrev(m.latestCapacity)}${
     m.growthMultiple ? ` (${m.growthMultiple.toFixed(1)}x more than in 1992)` : ""
   }
 ${m.occupancyPct != null ? `- Bed occupancy rate, ${m.occupancyPeriodLabel}: ${m.occupancyPct.toFixed(1)}%` : ""}`;
@@ -398,7 +413,7 @@ function buildExpensesPrompt(m) {
 - Largest spending category: ${m.topCategory.label}, €${m.topCategory.value.toFixed(0)} average per trip`;
 }
 
-// ---- Claude call ----------------------------------------------------------
+// ---- Claude calls -----------------------------------------------------------
 
 function sectionSchema(description) {
   return {
@@ -412,10 +427,7 @@ function sectionSchema(description) {
   };
 }
 
-async function callClaude(prompts) {
-  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
-
+async function callClaude(anthropic, model, prompts) {
   const combinedPrompt = `Here is this period's data for five sections of an Estonian tourism statistics site ("Eesti Turism"). Write one short blurb per section using the emit_narrative tool.
 
 ${prompts.dashboard}
@@ -439,7 +451,7 @@ ${prompts.expenses}`;
       "(no headings, no bullet points, no markdown), and should read as its own short item, not a continuation " +
       "of the previous section. Produce independently well-written Estonian and English versions of each " +
       "(not literal translations of each other, though they must report the same facts). Estonian must read " +
-      "naturally to a native speaker. Avoid repeating the same opening phrase across sections.",
+      "naturally to a native speaker. Avoid repeating the same opening phrase across sections. " + FORMATTING_RULES,
     messages: [{ role: "user", content: combinedPrompt }],
     tools: [
       {
@@ -479,6 +491,81 @@ function normalizeSections(sections) {
   return normalized;
 }
 
+// Separate call (own token budget) for the 18 region/city variants of the
+// dashboard blurb — kept apart from callClaude's 5-section call so neither
+// call's output risks truncating the other, and so a failure here doesn't
+// cost the other four sections' already-generated text.
+async function callClaudeRegions(anthropic, model, regions, promptBlocks) {
+  const combinedPrompt =
+    `Here is this period's per-region breakdown for the Ülevaade (dashboard) tab of "Eesti Turism". Write one ` +
+    `short blurb per region using the emit_region_narrative tool — this text replaces the national overview text ` +
+    `when a site visitor picks that specific region/city in the dashboard's region selector.\n\n` +
+    promptBlocks.join("\n\n");
+
+  const response = await anthropic.messages.create({
+    model,
+    max_tokens: 12000,
+    system:
+      "You write short region-specific blurbs for a personal Estonian tourism statistics site ('Eesti Turism'), " +
+      "shown when a visitor picks a specific county or city in the dashboard's region selector, replacing the " +
+      "national overview text. Ground every sentence strictly in the numbers given for THAT region — never " +
+      "invent, round loosely, or borrow a number from another region. Each blurb is 60-100 words of plain prose " +
+      "(no headings, no bullet points, no markdown). Produce independently well-written Estonian and English " +
+      "versions of each (not literal translations of each other, though they must report the same facts). " +
+      "Estonian must read naturally to a native speaker. Vary sentence structure across regions rather than " +
+      "repeating the same template for every one. " + FORMATTING_RULES,
+    messages: [{ role: "user", content: combinedPrompt }],
+    tools: [
+      {
+        name: "emit_region_narrative",
+        description: "Emit one blurb per region, in both languages, matching the exact region codes given.",
+        input_schema: {
+          type: "object",
+          properties: {
+            regions: {
+              type: "array",
+              description: "One entry per region, in the same order as given in the prompt.",
+              items: {
+                type: "object",
+                properties: {
+                  code: { type: "string", description: "The exact region code from the prompt, copied verbatim." },
+                  et: { type: "string", description: "60-100 word Estonian blurb." },
+                  en: { type: "string", description: "60-100 word English blurb." },
+                },
+                required: ["code", "et", "en"],
+              },
+              minItems: regions.length,
+              maxItems: regions.length,
+            },
+          },
+          required: ["regions"],
+        },
+      },
+    ],
+    tool_choice: { type: "tool", name: "emit_region_narrative" },
+  });
+
+  if (response.stop_reason === "max_tokens") {
+    throw new Error("Region narrative generation was truncated (hit max_tokens) — raise max_tokens and retry.");
+  }
+
+  const toolUse = response.content.find((block) => block.type === "tool_use");
+  if (!toolUse) throw new Error("Claude did not return a tool_use block for regions");
+  // Same defensive parsing as normalizeSections above — Claude's tool-calling
+  // doesn't always respect the schema's array type, observed here returning
+  // a JSON-encoded string instead in some runs.
+  const list = typeof toolUse.input.regions === "string" ? JSON.parse(toolUse.input.regions) : toolUse.input.regions;
+  if (!Array.isArray(list)) {
+    throw new Error(`Region narrative tool call did not return an array: ${JSON.stringify(toolUse.input).slice(0, 300)}`);
+  }
+
+  const byCode = {};
+  for (const entry of list) {
+    byCode[entry.code] = { et: entry.et, en: entry.en };
+  }
+  return byCode;
+}
+
 async function readExisting() {
   try {
     return JSON.parse(await readFile(OUTPUT_PATH, "utf8"));
@@ -507,13 +594,20 @@ async function main() {
     computeExpensesMetrics(),
   ]);
 
+  const regionPromptBlocks = ALL_REGIONS.map((r) => buildRegionDashboardPrompt(r, dashboard.regions[r.code])).filter(
+    Boolean
+  );
+
   if (process.argv.includes("--debug-metrics")) {
-    console.log(JSON.stringify({ map, purpose, capacity, expenses }, null, 2));
+    console.log(JSON.stringify({ dashboard, map, purpose, capacity, expenses }, null, 2));
     console.log("--- prompts ---");
+    console.log(buildDashboardPrompt(dashboard));
     console.log(buildMapPrompt(map));
     console.log(buildPurposePrompt(purpose));
     console.log(buildCapacityPrompt(capacity));
     console.log(buildExpensesPrompt(expenses));
+    console.log("--- region prompts ---");
+    console.log(regionPromptBlocks.join("\n\n"));
     return;
   }
 
@@ -521,14 +615,20 @@ async function main() {
     throw new Error("ANTHROPIC_API_KEY is not set.");
   }
 
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
+
   console.log("Calling Claude to generate all five section blurbs…");
-  const sections = await callClaude({
+  const sections = await callClaude(anthropic, model, {
     dashboard: buildDashboardPrompt(dashboard),
     map: buildMapPrompt(map),
     purpose: buildPurposePrompt(purpose),
     capacity: buildCapacityPrompt(capacity),
     expenses: buildExpensesPrompt(expenses),
   });
+
+  console.log(`Calling Claude to generate ${ALL_REGIONS.length} region-specific dashboard blurbs…`);
+  sections.dashboardByRegion = await callClaudeRegions(anthropic, model, ALL_REGIONS, regionPromptBlocks);
 
   const output = {
     generatedAt: new Date().toISOString(),

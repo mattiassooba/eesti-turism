@@ -10,6 +10,7 @@ import SectionFilters from "./SectionFilters";
 import TableSource from "./TableSource";
 import NarrativeBlock from "./NarrativeBlock";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
+import { useRegion } from "../context/RegionContext.jsx";
 import { formatNumber } from "../i18n/format";
 import { countyLabelByCode } from "../data/counties";
 import { DOMESTIC_COLOR, FOREIGN_COLOR } from "../theme";
@@ -67,6 +68,7 @@ function Dashboard() {
   const [state, setState] = useState({ data: null, loading: true, error: null });
   const [residency, setResidency] = useState("all");
   const [deltaMode, setDeltaMode] = useState("yoy");
+  const { region } = useRegion();
 
   useAbortableEffect(
     async (signal, isActive) => {
@@ -226,7 +228,7 @@ function Dashboard() {
         onDeltaModeChange={setDeltaMode}
       />
 
-      <NarrativeBlock section="dashboard" />
+      <NarrativeBlock section="dashboard" regionCode={region} />
 
       <div className="kpi-row">
         <div className="hero-card">

@@ -6,7 +6,7 @@ import { loadNarrative } from "../data/narrative";
 // fetches, a missing or malformed narrative.json (e.g. before the first
 // scheduled generation has ever run) should render nothing, not an error
 // state.
-export default function NarrativeBlock({ section }) {
+export default function NarrativeBlock({ section, regionCode }) {
   const { t, locale } = useTranslation();
   const [narrative, setNarrative] = useState(null);
 
@@ -24,7 +24,12 @@ export default function NarrativeBlock({ section }) {
 
   if (!narrative) return null;
 
-  const text = narrative.sections[section][locale] ?? narrative.sections[section].et;
+  // The dashboard section has a per-region variant, keyed by the region
+  // picker's code, that replaces the national blurb once generated — falls
+  // back to the national blurb for any code not (yet) covered there.
+  const regionBlurb = regionCode ? narrative.sections[`${section}ByRegion`]?.[regionCode] : null;
+  const blurb = regionBlurb ?? narrative.sections[section];
+  const text = blurb[locale] ?? blurb.et;
   const periodLabel = narrative.periodLabel?.[locale] ?? narrative.periodLabel?.et;
 
   return (

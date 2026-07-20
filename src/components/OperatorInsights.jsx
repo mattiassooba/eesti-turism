@@ -419,11 +419,14 @@ function OperatorInsights() {
       return snapshotForPeriod(regionCode, latestPeriod);
     }
 
-    // The printable yearly table: a shortened annual history (stops a few
-    // years back, floored at MIN_TABLE_YEAR) followed by the same calendar
-    // month across the latest 3 years — directly comparable, and far more
-    // relevant to a monthly reader than another decade of full-year columns.
-    const tableAnnualCutoff = Number(latestYear) - recentPeriods.length;
+    // The printable yearly table: every complete year back to MIN_TABLE_YEAR
+    // (2024/2025 included in full, not just their same-month figures),
+    // followed by the same calendar month across the latest 3 years —
+    // directly comparable, on top of the full annual picture rather than
+    // instead of it. The current (partial) year is excluded from the
+    // annual portion since it isn't complete yet; the 3 recent-month
+    // columns plus the cumulative-YTD row cover it instead.
+    const tableAnnualCutoff = Number(latestYear) - 1;
     const tableAnnual = { EE: [], [region]: [] };
     for (const r of nationalYearlyAll) {
       if (Number(r.year) >= MIN_TABLE_YEAR && Number(r.year) <= tableAnnualCutoff) tableAnnual.EE.push(r);

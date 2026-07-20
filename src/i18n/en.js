@@ -50,7 +50,6 @@ export default {
     otherHighlights: "Other highlights",
     nationalChartTitle: "Estonian residents vs. foreign visitors, by year",
     regionSubheading: "Detailed regional overview",
-    chartsCaption: (region) => `Reflects the region currently selected on the Ülevaade tab: ${region}.`,
   },
 
   newsletter: {

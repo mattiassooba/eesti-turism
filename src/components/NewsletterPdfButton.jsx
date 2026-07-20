@@ -113,13 +113,26 @@ export default function NewsletterPdfButton() {
       // only fully-national charts in the app live on the lazy-mounted Map
       // tab, so a live capture would frequently just be missing. This has
       // no DOM dependency at all and works regardless of which tab is open.
+      // "1.2M" / "650k" — kept locale-agnostic and as short as possible,
+      // since these are squeezed into narrow bar segments, not prose.
+      function abbrevShort(n) {
+        if (n == null) return "";
+        if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+        if (n >= 1_000) return `${Math.round(n / 1_000)}k`;
+        return String(Math.round(n));
+      }
+
       // Stacked bars: domestic (bottom) + foreign (top) per year, same
       // residents-vs-visitors split and colors used everywhere else in the
-      // app (see DOMESTIC_COLOR/FOREIGN_COLOR in src/theme.js).
+      // app (see DOMESTIC_COLOR/FOREIGN_COLOR in src/theme.js). Each bar is
+      // labeled with its total, and each segment with its own value where
+      // there's room — otherwise the chart only shows relative shape, not
+      // the actual scale of guests involved.
       function nationalResidencyChart(series, { height = 110, gap = 12 } = {}) {
         if (!Array.isArray(series) || !series.length) return;
-        ensureSpace(height + 34);
-        const top = y;
+        const topPadding = 11;
+        ensureSpace(height + topPadding + 34);
+        const top = y + topPadding;
         const max = Math.max(...series.map((d) => d.domestic + d.foreign), 1);
         const barGap = 6;
         const barWidth = (maxWidth - barGap * (series.length - 1)) / series.length;
@@ -129,18 +142,43 @@ export default function NewsletterPdfButton() {
         doc.setLineWidth(0.5);
         doc.line(MARGIN, axisY, MARGIN + maxWidth, axisY);
 
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7.5);
         series.forEach((d, i) => {
           const domesticHeight = (d.domestic / max) * (height - 4);
           const foreignHeight = (d.foreign / max) * (height - 4);
           const barX = MARGIN + i * (barWidth + barGap);
+          const barCenterX = barX + barWidth / 2;
+
           doc.setFillColor(...DOMESTIC_BAR_COLOR);
           doc.rect(barX, axisY - domesticHeight, barWidth, domesticHeight, "F");
           doc.setFillColor(...FOREIGN_BAR_COLOR);
           doc.rect(barX, axisY - domesticHeight - foreignHeight, barWidth, foreignHeight, "F");
+
+          // Segment value labels, white-on-color, only where the segment is
+          // tall enough to hold a legible line of text without overflowing.
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(6.5);
+          doc.setTextColor(255);
+          if (domesticHeight >= 12) {
+            doc.text(abbrevShort(d.domestic), barCenterX, axisY - domesticHeight / 2 + 2, { align: "center" });
+          }
+          if (foreignHeight >= 12) {
+            doc.text(abbrevShort(d.foreign), barCenterX, axisY - domesticHeight - foreignHeight / 2 + 2, {
+              align: "center",
+            });
+          }
+
+          // Total, above the bar.
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(7);
+          doc.setTextColor(60);
+          doc.text(abbrevShort(d.domestic + d.foreign), barCenterX, axisY - domesticHeight - foreignHeight - 3, {
+            align: "center",
+          });
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(7.5);
           doc.setTextColor(110);
-          doc.text(String(d.year), barX + barWidth / 2, axisY + 10, { align: "center" });
+          doc.text(String(d.year), barCenterX, axisY + 10, { align: "center" });
         });
         doc.setTextColor(0);
 
@@ -198,8 +236,7 @@ export default function NewsletterPdfButton() {
       y = MARGIN;
 
       paragraph(regionLabel, { font: "bold", size: 18, gap: 4 });
-      paragraph(t("newsletterPdf.regionSubheading"), { font: "normal", size: 11, color: 110, gap: 10 });
-      paragraph(t("newsletterPdf.chartsCaption", regionLabel), { font: "italic", size: 8.5, color: 110, gap: 14 });
+      paragraph(t("newsletterPdf.regionSubheading"), { font: "normal", size: 11, color: 110, gap: 14 });
 
       if (regionBlurb) paragraph(regionBlurb[locale] ?? regionBlurb.et, { gap: 16 });
 

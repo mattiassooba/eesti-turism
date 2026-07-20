@@ -86,7 +86,10 @@ async function computeDashboardMetrics() {
       { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR", "OCC_NI"] } },
       { code: "Maakond", selection: { filter: "item", values: ["EE", ...allCodes] } },
       { code: "Elukohariik", selection: { filter: "item", values: ["WORLD", "EE", "FOR"] } },
-      { code: "Vaatlusperiood", selection: { filter: "top", values: ["13"] } },
+      // 24 months — enough to cover the full year-to-date cumulative
+      // comparison (Jan through the latest month, this year vs last),
+      // regardless of which calendar month is latest.
+      { code: "Vaatlusperiood", selection: { filter: "top", values: ["24"] } },
     ],
     { locale: "et" }
   );
@@ -106,6 +109,14 @@ async function computeDashboardMetrics() {
   const latestIdx = periods.length - 1;
   const nationalLatestGuests = nationalByPeriod.get(periods[latestIdx])?.OCC_ARR_WORLD ?? null;
 
+  const [latestYearStr, latestMonthStr] = periods[latestIdx].split("M");
+  const cumulativePeriodsThisYear = periods.filter(
+    (p) => p.startsWith(latestYearStr) && p.split("M")[1] <= latestMonthStr
+  );
+  const cumulativePeriodsPrevYear = periods.filter(
+    (p) => p.startsWith(String(Number(latestYearStr) - 1)) && p.split("M")[1] <= latestMonthStr
+  );
+
   function metricsForRegion(regionCode) {
     const byPeriod = byRegionPeriod.get(regionCode);
     if (!byPeriod) return null;
@@ -124,6 +135,14 @@ async function computeDashboardMetrics() {
     const foreignGuests = latest.OCC_ARR_FOR ?? 0;
     const avgNightsPerGuest = totalGuests ? totalNights / totalGuests : 0;
 
+    // Year-to-date: Jan through the latest month, this year vs. the same
+    // Jan-through-month window last year — a single month's YoY doesn't
+    // say how the year as a whole is tracking.
+    const sumField = (periodsList) =>
+      periodsList.reduce((acc, p) => acc + (byPeriod.get(p)?.OCC_ARR_WORLD ?? 0), 0);
+    const cumulativeGuests = sumField(cumulativePeriodsThisYear);
+    const cumulativeGuestsPrev = sumField(cumulativePeriodsPrevYear);
+
     return {
       period: periods[latestIdx],
       periodLabel: latest.label,
@@ -136,6 +155,10 @@ async function computeDashboardMetrics() {
       avgNightsPerGuest,
       avgNightsPerGuestYoyPct: periodDelta(avgNightsSeries, latestIdx, 12),
       shareOfNationalPct: nationalLatestGuests ? (totalGuests / nationalLatestGuests) * 100 : null,
+      cumulativeGuests,
+      cumulativeGuestsYoyPct: cumulativeGuestsPrev
+        ? ((cumulativeGuests - cumulativeGuestsPrev) / cumulativeGuestsPrev) * 100
+        : null,
     };
   }
 
@@ -159,6 +182,12 @@ async function computeDashboardMetrics() {
   return { ...national, topCounty, regions };
 }
 
+const EN_MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function cumulativeRangeLabel(period) {
+  const [year, month] = period.split("M");
+  return `Jan–${EN_MONTH_ABBR[Number(month) - 1]} ${year}`;
+}
+
 function buildDashboardPrompt(m) {
   return `Dashboard / "Ülevaade" tab (source: Statistikaamet, table TU131) — national overview:
 - Period: ${m.periodLabel}
@@ -167,6 +196,7 @@ function buildDashboardPrompt(m) {
 - Domestic (Estonian resident) guests: ${abbrev(m.domesticGuests)}
 - Foreign visitor guests: ${abbrev(m.foreignGuests)}
 - Average nights per guest: ${m.avgNightsPerGuest.toFixed(2)} (YoY: ${fmtPct(m.avgNightsPerGuestYoyPct)})
+- Cumulative guests accommodated, ${cumulativeRangeLabel(m.period)}: ${abbrev(m.cumulativeGuests)} (YoY vs. same months last year: ${fmtPct(m.cumulativeGuestsYoyPct)})
 ${m.topCounty ? `- Most-visited county this period: ${m.topCounty.label}, ${abbrev(m.topCounty.value)} guests (YoY: ${fmtPct(m.topCounty.yoyPct)})` : ""}`;
 }
 
@@ -177,6 +207,7 @@ function buildRegionDashboardPrompt(region, m) {
   if (!m) return null;
   return `Region: ${region.et} (code: ${region.code})
 - Period: ${m.periodLabel}
+- Cumulative guests accommodated, ${cumulativeRangeLabel(m.period)}: ${abbrev(m.cumulativeGuests)} (YoY vs. same months last year: ${fmtPct(m.cumulativeGuestsYoyPct)})
 - Guests accommodated: ${abbrev(m.totalGuests)} (YoY: ${fmtPct(m.totalGuestsYoyPct)})
 - Nights spent: ${abbrev(m.totalNights)} (YoY: ${fmtPct(m.totalNightsYoyPct)})
 - Domestic vs foreign guests: ${abbrev(m.domesticGuests)} domestic, ${abbrev(m.foreignGuests)} foreign
@@ -510,7 +541,10 @@ ${prompts.expenses}`;
       "year-over-year comparison available (this year vs. last year) and must NOT reference distant historical " +
       "baselines (e.g. growth multiples since a decades-old base year like 1992) — that kind of long-horizon " +
       "framing belongs only in the full blurb, never the highlight, since a monthly reader cares about what " +
-      "changed recently, not multi-decade trends. " + FORMATTING_RULES,
+      "changed recently, not multi-decade trends. The dashboard blurb specifically must also report the " +
+      "cumulative year-to-date figure given (how the year is tracking overall, e.g. 'so far this year, X guests " +
+      "have been recorded, Y% versus the same months last year'), not only the single latest month. " +
+      FORMATTING_RULES,
     messages: [{ role: "user", content: combinedPrompt }],
     tools: [
       {
@@ -563,16 +597,19 @@ async function callClaudeRegions(anthropic, model, regions, promptBlocks) {
 
   const response = await anthropic.messages.create({
     model,
-    max_tokens: 12000,
+    max_tokens: 16000,
     system:
-      "You write short region-specific blurbs for a personal Estonian tourism statistics site ('Eesti Turism'), " +
-      "shown when a visitor picks a specific county or city in the dashboard's region selector, replacing the " +
-      "national overview text. Ground every sentence strictly in the numbers given for THAT region — never " +
-      "invent, round loosely, or borrow a number from another region. Each blurb is 60-100 words of plain prose " +
-      "(no headings, no bullet points, no markdown). Produce independently well-written Estonian and English " +
-      "versions of each (not literal translations of each other, though they must report the same facts). " +
-      "Estonian must read naturally to a native speaker. Vary sentence structure across regions rather than " +
-      "repeating the same template for every one. " + FORMATTING_RULES,
+      "You write region-specific blurbs for a personal Estonian tourism statistics site ('Eesti Turism'), shown " +
+      "when a visitor picks a specific county or city in the dashboard's region selector, replacing the national " +
+      "overview text — this is the centerpiece of that region's own page, so give it real depth, not a caption. " +
+      "Ground every sentence strictly in the numbers given for THAT region — never invent, round loosely, or " +
+      "borrow a number from another region. Each blurb is 130-190 words of plain prose (no headings, no bullet " +
+      "points, no markdown), and must report BOTH the latest single month's year-over-year change AND the " +
+      "cumulative year-to-date figure given (how the region's year is tracking overall, not just the one " +
+      "month). Produce independently well-written Estonian and English versions of each (not literal " +
+      "translations of each other, though they must report the same facts). Estonian must read naturally to a " +
+      "native speaker. Vary sentence structure across regions rather than repeating the same template for " +
+      "every one. " + FORMATTING_RULES,
     messages: [{ role: "user", content: combinedPrompt }],
     tools: [
       {
@@ -588,8 +625,8 @@ async function callClaudeRegions(anthropic, model, regions, promptBlocks) {
                 type: "object",
                 properties: {
                   code: { type: "string", description: "The exact region code from the prompt, copied verbatim." },
-                  et: { type: "string", description: "60-100 word Estonian blurb." },
-                  en: { type: "string", description: "60-100 word English blurb." },
+                  et: { type: "string", description: "130-190 word Estonian blurb." },
+                  en: { type: "string", description: "130-190 word English blurb." },
                 },
                 required: ["code", "et", "en"],
               },

@@ -50,7 +50,6 @@ export default {
     otherHighlights: "Muu statistika",
     nationalChartTitle: "Eesti elanikud vs väliskülastajad, aastate lõikes",
     regionSubheading: "Piirkonna detailne ülevaade",
-    chartsCaption: (region) => `Kajastab hetkel Ülevaate vahekaardil valitud piirkonda: ${region}.`,
   },
 
   newsletter: {

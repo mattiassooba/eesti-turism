@@ -16,10 +16,11 @@ import {
 import ChartTooltip from "./ChartTooltip";
 import RankedBarList from "./RankedBarList";
 import TableSource from "./TableSource";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { useRegion } from "../context/RegionContext.jsx";
 import { formatNumber } from "../i18n/format";
-import { COUNTIES, CITIES } from "../data/counties";
+import { COUNTIES, CITIES, slugForCode } from "../data/counties";
 import { CHART_COLORS, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
@@ -129,10 +130,20 @@ function OperatorInsights() {
     { key: "foreign", label: t("filters.residencyForeign") },
   ];
   const [state, setState] = useState({ data: null, loading: true, error: null });
-  const { region, setRegion } = useRegion();
+  const { region } = useRegion();
+  const navigate = useNavigate();
   const [residency, setResidency] = useState("all");
   const [yearsToShow, setYearsToShow] = useState(10);
   const [origins, setOrigins] = useState({ data: null, loading: true, error: null });
+
+  // Region is derived from the URL (see RegionContext.jsx) — changing the
+  // selector navigates to that region's own page instead of just setting
+  // local state, so /maakond/:slug stays in sync with what's shown.
+  function handleRegionChange(code) {
+    const slug = slugForCode(code, locale);
+    if (!slug) return;
+    navigate(locale === "en" ? `/en/county/${slug}` : `/maakond/${slug}`);
+  }
 
   // Independent of region/residency/yearsToShow — those are all applied
   // client-side to this one broad fetch, so switching them never refetches
@@ -504,7 +515,7 @@ function OperatorInsights() {
       <div className="operator-controls">
         <label className="operator-control">
           <span>{t("operator.regionLabel")}</span>
-          <select value={region} onChange={(e) => setRegion(e.target.value)}>
+          <select value={region} onChange={(e) => handleRegionChange(e.target.value)}>
             {REGION_CODES.map((code) => (
               <option key={code} value={code}>
                 {REGION_LABELS[code]}

@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import et from "./et";
 import en from "./en";
 
@@ -11,16 +12,15 @@ function resolvePath(dict, path) {
   return path.split(".").reduce((node, key) => (node == null ? undefined : node[key]), dict);
 }
 
-function initialLocale() {
-  const stored = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-  if (stored === "et" || stored === "en") return stored;
-  return typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("en")
-    ? "en"
-    : "et";
-}
-
 export function LocaleProvider({ children }) {
-  const [locale, setLocale] = useState(initialLocale);
+  // Locale is derived from the URL, not stored state — /en and
+  // /en/county/:slug are real, independently indexable English pages, so
+  // the same path must always render the same language for every visitor
+  // (including crawlers), never a stored preference or navigator.language.
+  // See src/App.jsx for the language-switch buttons, which navigate to the
+  // equivalent path instead of just flipping this.
+  const { pathname } = useLocation();
+  const locale = pathname === "/en" || pathname.startsWith("/en/") ? "en" : "et";
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, locale);
@@ -38,7 +38,7 @@ export function LocaleProvider({ children }) {
     [locale]
   );
 
-  const value = useMemo(() => ({ locale, setLocale, t }), [locale, t]);
+  const value = useMemo(() => ({ locale, t }), [locale, t]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }

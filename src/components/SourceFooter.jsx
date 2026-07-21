@@ -1,4 +1,6 @@
+import { Link } from "react-router-dom";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
+import { COUNTIES, CITIES } from "../data/counties";
 
 export default function SourceFooter() {
   const { t, locale } = useTranslation();
@@ -22,6 +24,17 @@ export default function SourceFooter() {
         </a>
         {" "}· {t("footer.disclaimer")} · {t("app.localeNote")}
       </span>
+      <nav className="footer-counties" aria-label={t("footer.allCounties")}>
+        <span className="footer-counties-label">{t("footer.allCounties")}</span>
+        {[...COUNTIES, ...CITIES].map((county, i, all) => (
+          <span key={county.code}>
+            <Link to={locale === "en" ? `/en/county/${county.slugEn}` : `/maakond/${county.slugEt}`}>
+              {locale === "en" ? county.en : county.et}
+            </Link>
+            {i < all.length - 1 && ", "}
+          </span>
+        ))}
+      </nav>
     </footer>
   );
 }

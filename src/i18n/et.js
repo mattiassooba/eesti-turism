@@ -277,6 +277,7 @@ export default {
     licensedUnder: "Andmed litsentsiga",
     license: "CC BY-SA 4.0",
     disclaimer: "See rakendus ei ole Statistikaameti ametlik toode.",
+    allCounties: "Kõik maakonnad:",
   },
 
   source: {

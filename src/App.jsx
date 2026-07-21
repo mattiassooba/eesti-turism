@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import TableView from "./components/TableView";
 import Dashboard from "./components/Dashboard";
@@ -12,13 +13,66 @@ import NewsletterSignup from "./components/NewsletterSignup";
 import SourceFooter from "./components/SourceFooter";
 import SectionRail from "./components/SectionRail";
 import { useActiveSection } from "./hooks/useActiveSection";
+import { useDocumentMeta } from "./hooks/useDocumentMeta";
 import { useTranslation } from "./i18n/LocaleContext.jsx";
+import { useRegion } from "./context/RegionContext.jsx";
+import { countyLabelByCode, slugForCode } from "./data/counties";
 import "./App.css";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 
 export default function App() {
-  const { t, locale, setLocale } = useTranslation();
+  const { t, locale } = useTranslation();
+  const { region } = useRegion();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isRegionPage = location.pathname !== "/" && location.pathname !== "/en";
+  const regionLabel = countyLabelByCode(region, locale);
+
+  // Switching language preserves the current region (translating its slug)
+  // when on a region page; from the plain homepage it just goes to the
+  // other homepage. Region pages are real, separately indexable URLs (see
+  // RegionContext.jsx), so this is real navigation, not just a state flip.
+  function switchLocale(newLocale) {
+    if (newLocale === locale) return;
+    if (isRegionPage) {
+      const slug = slugForCode(region, newLocale);
+      navigate(newLocale === "en" ? `/en/county/${slug}` : `/maakond/${slug}`);
+    } else {
+      navigate(newLocale === "en" ? "/en" : "/");
+    }
+  }
+
+  useDocumentMeta(
+    useMemo(() => {
+      if (isRegionPage) {
+        return locale === "en"
+          ? {
+              title: `${regionLabel} tourism statistics — Eesti Turism`,
+              description: `Tourism statistics for ${regionLabel}: visitor numbers, nights stayed, accommodation capacity, and a monthly AI-written summary, based on Statistikaamet data.`,
+              path: location.pathname,
+            }
+          : {
+              title: `${regionLabel} turismistatistika — Eesti Turism`,
+              description: `${regionLabel} turismistatistika: külastajate arv, ööbimised, majutuskohtade mahutavus ning igakuine AI-kokkuvõte Statistikaameti andmete põhjal.`,
+              path: location.pathname,
+            };
+      }
+      return locale === "en"
+        ? {
+            title: "Eesti Turism — Estonian tourism statistics",
+            description:
+              "Estonian tourism statistics overview based on Statistikaamet data: visitor numbers, nights stayed, county and seasonality comparisons, accommodation capacity, and a monthly AI summary.",
+            path: location.pathname,
+          }
+        : {
+            title: "Eesti Turism — turismistatistika ja majutusandmed",
+            description:
+              "Eesti turismistatistika ülevaade Statistikaameti andmete põhjal: külastajate arv, ööbimised, maakondade ja hooajalisuse võrdlus, majutuskohtade mahutavus ning igakuine AI-kokkuvõte.",
+            path: location.pathname,
+          };
+    }, [isRegionPage, locale, regionLabel, location.pathname])
+  );
 
   // Top bar only carries the three distinct destinations now: the scroll
   // entry point, and the two pages that aren't part of the scroll at all.
@@ -126,117 +180,131 @@ export default function App() {
     setScrollRequest({ key, nonce: Date.now() });
   }
 
+  // A single catch-all route: content is identical regardless of which of
+  // /, /en, /maakond/:slug, /en/county/:slug matched (LocaleContext and
+  // RegionContext already derive locale/region straight from the raw
+  // pathname — see those files), so there's nothing route-specific to
+  // switch on here. The element is inline JSX, not a separate component
+  // reference — a nested function-component declaration would get a new
+  // identity every render and force React to remount this whole tree.
   return (
-    <div className="app-shell">
-      <header className="top-nav">
-        <div className="top-nav-title">{t("app.brand")}</div>
-        <nav className="top-nav-tabs">
-          {TOP_NAV_ITEMS.map((item) => (
-            <button
-              key={item.key}
-              className={"top-nav-tab" + (activeTab === item.key ? " active" : "")}
-              onClick={() => handleNavClick(item.key)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-        <div className="pill-tabs locale-switch">
-          <button
-            className={"pill-tab" + (locale === "et" ? " active" : "")}
-            onClick={() => setLocale("et")}
-          >
-            ET
-          </button>
-          <button
-            className={"pill-tab" + (locale === "en" ? " active" : "")}
-            onClick={() => setLocale("en")}
-          >
-            EN
-          </button>
-        </div>
-      </header>
-
-      {view === "scroll" && (
-        <SectionRail items={RAIL_ITEMS} activeKey={activeSection} onSelect={handleNavClick} />
-      )}
-
-      <div className="app-body">
-        {view === "browse" && (
-          <Sidebar onSelectTable={handleSelectTable} selectedTableId={selected?.tableId} />
-        )}
-        <main className="main-panel" ref={mainPanelRef}>
+    <Routes>
+      <Route
+        path="*"
+        element={
+        <div className="app-shell">
+          <header className="top-nav">
+            <div className="top-nav-title">{t("app.brand")}</div>
+            <nav className="top-nav-tabs">
+              {TOP_NAV_ITEMS.map((item) => (
+                <button
+                  key={item.key}
+                  className={"top-nav-tab" + (activeTab === item.key ? " active" : "")}
+                  onClick={() => handleNavClick(item.key)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+            <div className="pill-tabs locale-switch">
+              <button
+                className={"pill-tab" + (locale === "et" ? " active" : "")}
+                onClick={() => switchLocale("et")}
+              >
+                ET
+              </button>
+              <button
+                className={"pill-tab" + (locale === "en" ? " active" : "")}
+                onClick={() => switchLocale("en")}
+              >
+                EN
+              </button>
+            </div>
+          </header>
+    
           {view === "scroll" && (
-            <div className="scroll-sections">
-              <section id="dashboard" className="scroll-section">
-                <h2 className="scroll-section-title">{t("nav.dashboard")}</h2>
-                <Dashboard />
-              </section>
-
-              <section id="map" className="scroll-section">
-                <h2 className="scroll-section-title">{t("nav.map")}</h2>
-                <LazyMount containerRef={mainPanelRef}>
-                  <Page2Map />
-                </LazyMount>
-              </section>
-
-              <section id="purpose" className="scroll-section">
-                <h2 className="scroll-section-title">{t("nav.purpose")}</h2>
-                <LazyMount containerRef={mainPanelRef}>
-                  <Page3Purpose />
-                </LazyMount>
-              </section>
-
-              <section id="capacity" className="scroll-section">
-                <h2 className="scroll-section-title">{t("nav.capacity")}</h2>
-                <LazyMount containerRef={mainPanelRef}>
-                  <Page6Capacity />
-                </LazyMount>
-              </section>
-
-              <section id="expenses" className="scroll-section">
-                <h2 className="scroll-section-title">{t("nav.expenses")}</h2>
-                <LazyMount containerRef={mainPanelRef}>
-                  <Page5Expenses />
-                </LazyMount>
-              </section>
-            </div>
+            <SectionRail items={RAIL_ITEMS} activeKey={activeSection} onSelect={handleNavClick} />
           )}
-
-          {view === "residents" && (
-            <div className="scroll-section">
-              <h2 className="scroll-section-title">{t("nav.residents")}</h2>
-              <Page4Residents />
-            </div>
-          )}
-
-          {view === "browse" &&
-            (selected ? (
-              <TableView path={selected.path} tableId={selected.tableId} title={selected.title} />
-            ) : (
-              <div className="dashboard">
-                <div className="panel-status">{t("app.chooseTable")}</div>
-                <div className="quick-links">
-                  <div className="quick-links-label">{t("app.quickLinks")}</div>
-                  <div className="quick-links-grid">
-                    {QUICK_LINKS.map((link) => (
-                      <button
-                        key={link.tableId}
-                        className="quick-link-card"
-                        onClick={() => handleSelectTable(MAJUTUS_PATH, link.tableId, link.title)}
-                      >
-                        {link.title}
-                      </button>
-                    ))}
-                  </div>
+    
+          <div className="app-body">
+            {view === "browse" && (
+              <Sidebar onSelectTable={handleSelectTable} selectedTableId={selected?.tableId} />
+            )}
+            <main className="main-panel" ref={mainPanelRef}>
+              {view === "scroll" && (
+                <div className="scroll-sections">
+                  <section id="dashboard" className="scroll-section">
+                    <h2 className="scroll-section-title">{t("nav.dashboard")}</h2>
+                    <Dashboard />
+                  </section>
+    
+                  <section id="map" className="scroll-section">
+                    <h2 className="scroll-section-title">{t("nav.map")}</h2>
+                    <LazyMount containerRef={mainPanelRef}>
+                      <Page2Map />
+                    </LazyMount>
+                  </section>
+    
+                  <section id="purpose" className="scroll-section">
+                    <h2 className="scroll-section-title">{t("nav.purpose")}</h2>
+                    <LazyMount containerRef={mainPanelRef}>
+                      <Page3Purpose />
+                    </LazyMount>
+                  </section>
+    
+                  <section id="capacity" className="scroll-section">
+                    <h2 className="scroll-section-title">{t("nav.capacity")}</h2>
+                    <LazyMount containerRef={mainPanelRef}>
+                      <Page6Capacity />
+                    </LazyMount>
+                  </section>
+    
+                  <section id="expenses" className="scroll-section">
+                    <h2 className="scroll-section-title">{t("nav.expenses")}</h2>
+                    <LazyMount containerRef={mainPanelRef}>
+                      <Page5Expenses />
+                    </LazyMount>
+                  </section>
                 </div>
-              </div>
-            ))}
-        </main>
-      </div>
-
-      <NewsletterSignup />
-      <SourceFooter />
-    </div>
+              )}
+    
+              {view === "residents" && (
+                <div className="scroll-section">
+                  <h2 className="scroll-section-title">{t("nav.residents")}</h2>
+                  <Page4Residents />
+                </div>
+              )}
+    
+              {view === "browse" &&
+                (selected ? (
+                  <TableView path={selected.path} tableId={selected.tableId} title={selected.title} />
+                ) : (
+                  <div className="dashboard">
+                    <div className="panel-status">{t("app.chooseTable")}</div>
+                    <div className="quick-links">
+                      <div className="quick-links-label">{t("app.quickLinks")}</div>
+                      <div className="quick-links-grid">
+                        {QUICK_LINKS.map((link) => (
+                          <button
+                            key={link.tableId}
+                            className="quick-link-card"
+                            onClick={() => handleSelectTable(MAJUTUS_PATH, link.tableId, link.title)}
+                          >
+                            {link.title}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </main>
+          </div>
+    
+          <NewsletterSignup />
+          <SourceFooter />
+        </div>
+        }
+      />
+    </Routes>
   );
 }

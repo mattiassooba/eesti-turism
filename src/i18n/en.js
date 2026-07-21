@@ -277,6 +277,7 @@ export default {
     licensedUnder: "Data licensed under",
     license: "CC BY-SA 4.0",
     disclaimer: "This application is not an official product of Statistikaamet.",
+    allCounties: "All counties:",
   },
 
   source: {

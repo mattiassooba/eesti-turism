@@ -4,14 +4,61 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>Eesti Turism</title>
+    <title>Eesti Turism — turismistatistika ja majutusandmed</title>
+    <meta
+      name="description"
+      content="Eesti turismistatistika ülevaade Statistikaameti andmete põhjal: külastajate arv, ööbimised, maakondade ja hooajalisuse võrdlus, majutuskohtade mahutavus ning igakuine AI-kokkuvõte."
+    />
+    <link rel="canonical" href="https://turismistatistika.ee/" />
+
+    <!-- Open Graph / social previews -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Eesti Turism" />
+    <meta property="og:title" content="Eesti Turism — turismistatistika ja majutusandmed" />
+    <meta
+      property="og:description"
+      content="Eesti turismistatistika ülevaade Statistikaameti andmete põhjal: külastajate arv, ööbimised, maakondade ja hooajalisuse võrdlus, majutuskohtade mahutavus ning igakuine AI-kokkuvõte."
+    />
+    <meta property="og:url" content="https://turismistatistika.ee/" />
+    <meta property="og:locale" content="et_EE" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Eesti Turism — turismistatistika ja majutusandmed" />
+    <meta
+      name="twitter:description"
+      content="Eesti turismistatistika ülevaade Statistikaameti andmete põhjal: külastajate arv, ööbimised, maakonnad, hooajalisus ja AI-kokkuvõtted."
+    />
+
     <!-- Self-hosted (not Google's CDN) so no visitor data leaves this
          origin before consent — see /fonts/fonts.css for the @font-face
          rules and public/fonts/ for the woff2 files themselves. -->
     <link rel="stylesheet" href="/fonts/fonts.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Eesti Turism",
+        "url": "https://turismistatistika.ee/",
+        "description": "Eesti turismistatistika ülevaade Statistikaameti andmete põhjal: külastajate arv, ööbimised, maakondade ja hooajalisuse võrdlus, majutuskohtade mahutavus ning igakuine AI-kokkuvõte.",
+        "inLanguage": ["et", "en"],
+        "isAccessibleForFree": true
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <!-- Seen by crawlers/tools that don't run JavaScript — the app itself
+         renders its own content once React mounts, but this keeps the page
+         non-empty and on-topic even if that never happens for a given
+         visitor (bot or otherwise). -->
+    <noscript>
+      <h1>Eesti Turism — turismistatistika ja majutusandmed</h1>
+      <p>
+        Eesti turismistatistika ülevaade Statistikaameti andmete põhjal: külastajate arv, ööbimised, maakondade ja
+        hooajalisuse võrdlus, majutuskohtade mahutavus ning igakuine AI-kokkuvõte. See rakendus vajab
+        JavaScripti töötamiseks.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

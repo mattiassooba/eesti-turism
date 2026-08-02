@@ -121,6 +121,10 @@ function Page2Map() {
             topCounty = { label: countyLabelByMkood(mkood, locale), value };
           }
         }
+        const rankedCounties = Object.entries(countyTotals)
+          .map(([mkood, value]) => ({ label: countyLabelByMkood(mkood, locale), value }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 8);
 
         const historyRows = flattenToRows(historyData);
         const domesticKey = t("common.domestic");
@@ -160,7 +164,7 @@ function Page2Map() {
 
         if (isActive()) {
           setBase({
-            data: { countyTotals, topCounty, historyChart, years, grid },
+            data: { countyTotals, topCounty, rankedCounties, historyChart, years, grid },
             loading: false,
             error: null,
           });
@@ -255,6 +259,7 @@ function Page2Map() {
               setSelectedCounty((prev) => (prev?.mkood === mkood ? null : { mkood, label }))
             }
           />
+          <RankedBarList items={base.data.rankedCounties} unit={t("common.nightsUnit")} locale={locale} />
           <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
         </div>
 

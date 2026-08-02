@@ -18,7 +18,7 @@ import TableSource from "./TableSource";
 import NarrativeBlock from "./NarrativeBlock";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { formatNumber } from "../i18n/format";
-import { CHART_COLORS, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
+import { CHART_COLORS, CHART_DASH_PATTERNS, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
 
 const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
 
@@ -256,6 +256,8 @@ function Page5Expenses() {
                 dataKey={name}
                 stackId="1"
                 stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                strokeDasharray={CHART_DASH_PATTERNS[i % CHART_DASH_PATTERNS.length]}
+                strokeWidth={1.5}
                 fill={CHART_COLORS[i % CHART_COLORS.length]}
                 fillOpacity={0.75}
                 isAnimationActive={false}

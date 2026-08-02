@@ -13,6 +13,12 @@ export const FOREIGN_COLOR = "#d98e2b";
 // categories (e.g. trip purpose, accommodation type).
 export const CHART_COLORS = ["#2b6ca3", "#d98e2b", "#5b6b7a", "#0f3a57", "#9c3b26", "#4d7894"];
 
+// Paired 1:1 with CHART_COLORS by index — multi-series line/area charts
+// apply both color AND dash pattern per series, so series stay
+// distinguishable without relying on color alone (colorblind visitors,
+// grayscale printing).
+export const CHART_DASH_PATTERNS = ["0", "6 3", "2 2", "8 3 2 3", "1 3", "10 2"];
+
 // Chart chrome (gridlines, axis lines/ticks) — tied to the card border and
 // slate tokens instead of Recharts' library-default mid-grey, so charts
 // read as this app's rather than a generic charting library's output.

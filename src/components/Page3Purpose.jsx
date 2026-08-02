@@ -19,7 +19,14 @@ import SectionFilters from "./SectionFilters";
 import TableSource from "./TableSource";
 import NarrativeBlock from "./NarrativeBlock";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
-import { CHART_COLORS, DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
+import {
+  CHART_COLORS,
+  CHART_DASH_PATTERNS,
+  DOMESTIC_COLOR,
+  FOREIGN_COLOR,
+  CHART_GRID_COLOR,
+  CHART_AXIS_COLOR,
+} from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
@@ -199,6 +206,8 @@ function Page3Purpose() {
                 dataKey={name}
                 stackId="1"
                 stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                strokeDasharray={CHART_DASH_PATTERNS[i % CHART_DASH_PATTERNS.length]}
+                strokeWidth={1.5}
                 fill={CHART_COLORS[i % CHART_COLORS.length]}
                 fillOpacity={0.75}
                 isAnimationActive={false}

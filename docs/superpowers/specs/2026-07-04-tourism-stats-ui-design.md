@@ -1,116 +1,236 @@
-# Tourism Statistics UI — Design
+# Eesti Turism — Design
+
+> Originally written 2026-07-04 as the v1 design spec for a personal PxWeb
+> browsing tool. Rewritten 2026-08-02 to describe the site as it actually
+> is now — a public dashboard with AI narrative, per-region SEO pages, and
+> a newsletter — ahead of a frontend visual redesign. The July 4 v1 scope
+> (generic folder/table browser) still exists, but only as the secondary
+> "Kõik tabelid" view; it is no longer the product's primary surface.
 
 ## Purpose
 
-A personal test tool for browsing Statistics Estonia's tourism/accommodation
-data (Turism, majutus ja toitlustus, under Majandus) without using the
-andmed.stat.ee web interface directly. Lets the user browse tables, filter
-them, view results as a sortable datasheet and as charts, and export the
-current view.
+"Eesti Turism" is a public tourism-statistics site for Estonia: a
+dashboard of visitor, accommodation, and spending trends built on
+Statistics Estonia (Statistikaamet) data, plus a secondary raw-table
+browser for anyone who wants to explore the underlying PxWeb tables
+directly. Live at `turismistatistika.ee`.
 
-Audience: single user (author), for personal evaluation. Not intended for
-external users or hosting in this iteration.
+Audience has broadened from the original single-user prototype to the
+general public — the site is indexed by Google, has a bilingual (ET/EN)
+newsletter, and is built for organic/long-tail search discovery
+(journalists, researchers, tourism operators, policymakers, and anyone
+searching for a specific region's tourism numbers).
 
-## Data source
+## Data sources
 
-Statistics Estonia's statistical database (`andmed.stat.ee`) runs on
-**PxWeb 2020** and exposes a public REST API:
+**Statistics Estonia PxWeb API** (unchanged from v1) — `andmed.stat.ee`,
+PxWeb 2020, public REST, CORS-enabled, no backend/proxy needed:
+- `GET` on a folder path lists children; `GET` on a table id returns
+  metadata (variables, codes, possible values); `POST` with a query body
+  returns data (`json-stat2` by default).
+- In-scope tables live under `majandus/turism-ja-majutus` (majutus,
+  eesti-elanike-reisimine, turismi-ja-majutuse-majandusnaitajad).
+- Rate limits (1000 calls/10s, 25M cells/call) are generous for
+  interactive single-visitor use.
 
-- Base: `https://andmed.stat.ee/api/v1/et/stat/...`
-- `GET` on a folder path returns its children (`type: "l"` = folder,
-  `type: "t"` = table).
-- `GET` on a table id returns its metadata: variables, their codes, and
-  possible values (`variables[].code`, `.values`, `.valueTexts`, `.time`,
-  `.elimination`).
-- `POST` on a table id with a JSON query body (per-variable
-  `code`/`selection.filter`/`selection.values`) returns data. Default
-  response format is `json-stat2`; `csv`, `csv2`, `csv3`, `xlsx`, `px`,
-  `sdmx` are also available.
-- Verified live: `https://andmed.stat.ee/api/v1/et/stat/majandus/turism-ja-majutus`
-  returns 3 subfolders — `eesti-elanike-reisimine`, `majutus`,
-  `turismi-ja-majutuse-majandusnaitajad`. `majutus` alone has 13 tables
-  (TU11, TU110–TU116, TU121, TU122, TU131, TU133, TU17).
-- `CORS: true` is set on the API (confirmed via
-  `https://andmed.stat.ee/api/v1/en?config`), so the browser can call it
-  directly — no backend proxy is required.
-- Rate limits: 1000 calls / 10s window, max 25,000,000 values/cells per
-  call — generous for interactive use.
+**AI-generated narrative** (new since v1) — `public/data/narrative.json`,
+regenerated monthly by `scripts/generate-narrative.mjs` (GitHub Actions
+cron, `generate-narrative.yml`, 5th of each month) using the Anthropic
+API. Contains a national blurb and a per-region blurb
+(`sections.dashboardByRegion`, keyed by region code) for the dashboard,
+in both ET and EN, plus similar blurbs for other sections. Fetched
+client-side at runtime (`src/data/narrative.js`); a missing/malformed file
+degrades silently (narrative block just doesn't render — see
+`NarrativeBlock.jsx`).
 
-## Scope (v1)
+## Scope (current)
 
-All 3 subfolders under `turism-ja-majutus` are in scope, browsable via a
-folder tree. No table is hardcoded — the sidebar and filter options are
-built from live API responses (folder listing + table metadata), so newly
-published tables/values show up automatically.
+**Primary: the dashboard.** A single continuous page combining five
+scroll sections — Ülevaade (Dashboard/overview), Kaart ja hooajalisus
+(map + seasonality), Eesmärk ja kestus (trip purpose/duration), Mahutavus
+(accommodation capacity), Reisikulutused (spending) — plus two sibling
+tabs that replace the scroll view: Residentide reisid (residents'
+domestic trips) and Kõik tabelid (the v1 generic table browser). A
+top bar switches between the three destinations (dashboard scroll /
+residents / browse); a floating `SectionRail` navigates within the
+scroll.
 
-Out of scope for v1: authentication, multi-user support, server-side
-caching, scheduled refresh, combining/joining multiple tables into one
-view, automated tests.
+**Region + language dimensions cut across everything.** A region
+selector (`OperatorInsights.jsx`, 18 entries: 15 maakonds + Tallinn/
+Pärnu/Tartu city sub-splits, `src/data/counties.js`) re-slices the
+dashboard's charts and AI narrative to one region. Every page renders in
+Estonian or English (`src/i18n/`). Both dimensions are encoded in the URL
+(see Routing below), not just local state.
+
+**Secondary: Kõik tabelid**, the original v1 scope — recursive
+folder/table browser, filters, sortable grid, chart, CSV/XLSX/PNG
+export — unchanged in spirit from the original design, still exists as
+its own tab for anyone who wants raw PxWeb access instead of the curated
+dashboard.
+
+**Newsletter.** A Mailchimp-embedded signup form (`NewsletterSignup.jsx`)
+with monthly/quarterly cadence and language preference groups, plus a
+"download this month's PDF" button (`NewsletterPdfButton.jsx`, renders
+the current dashboard to PDF via html2canvas + jspdf). `send-newsletter.mjs`
+runs in the same monthly GitHub Actions job as narrative generation,
+sending the AI-written summary as a Mailchimp campaign.
+Note: `NewsletterSignup.jsx`'s Mailchimp form action/group IDs are still
+literal `PLACEHOLDER_*` constants in the component as of this writing —
+worth confirming those were swapped for real Audience/Group IDs before
+or during a redesign of that component.
+
+**SEO.** Meta tags, OG/Twitter cards, JSON-LD, `robots.txt`, and a
+38-URL `sitemap.xml` (2 root + 18 regions × 2 languages) are generated at
+build time; every region+language combination is prerendered to real
+static HTML via Playwright (`scripts/prerender.mjs`) so crawlers see
+actual content, not an empty SPA shell. Full detail below under Routing
+& SEO.
+
+Still out of scope: authentication, multi-user accounts, server-side
+data caching, automated tests.
 
 ## Architecture
 
-Static single-page app: **React + Vite**, built to plain static files.
-No backend — the browser calls the PxWeb API directly, relying on its
-CORS support.
+Static single-page app: **React 18 + Vite 5**, built to plain static
+files, deployed to GitHub Pages (custom domain via `public/CNAME`). No
+backend/database — the browser calls the PxWeb API directly at runtime;
+AI narrative and newsletter sends happen in scheduled CI, not at request
+time.
 
-Libraries:
-- **Recharts** — line and bar charts.
-- **TanStack Table** — sortable data grid.
-- **SheetJS (xlsx)** — CSV/XLSX export of the current filtered rows.
-- Chart PNG export via canvas snapshot (Recharts renders to SVG; convert
-  to canvas/PNG on export, or use a small SVG-to-PNG helper).
+Libraries (grown substantially since v1):
+- **react-router-dom** — client routing for `/`, `/en`, `/maakond/:slug`,
+  `/en/county/:slug`.
+- **Recharts** — line/bar/area charts throughout the dashboard.
+- **TanStack Table** — sortable grid (Kõik tabelid view).
+- **d3-geo + topojson-client** — `EstoniaMap.jsx`'s county choropleth.
+- **SheetJS (xlsx)** — CSV/XLSX export (Kõik tabelid view).
+- **html2canvas + jspdf** — newsletter PDF snapshot export.
+- **@anthropic-ai/sdk** (devDependency, CI-only) — monthly narrative
+  generation script, not shipped to the browser.
+- **playwright** (devDependency, CI-only) — build-time prerendering.
 
-## Data flow
+## Routing & SEO
 
-1. On load, fetch the folder tree rooted at
-   `stat/majandus/turism-ja-majutus`, recursively expanding all subfolders
-   to populate the sidebar (folders and tables both shown, tables are
-   leaf/clickable nodes).
-2. Selecting a table fetches its metadata (`GET` on the table id) to get
-   every variable's code, label, and possible values. This drives the
-   filter UI — no variable list is hardcoded per table.
-3. Changing filters (or on first load with defaults) issues a `POST` query:
-   - Non-time variables default to their elimination value if eliminable,
-     otherwise all values (per API's own default-selection rules) unless
-     the user has picked specific values.
-   - The time variable defaults to `filter: "top", values: ["24"]` (last
-     24 periods) so a table isn't empty or overwhelming by default.
-   - Response format requested: `json-stat2`.
-4. The json-stat2 response is flattened into row objects (one per data
-   point, with resolved dimension labels) for the grid, and into series
-   arrays (grouped by a user-chosen "group by" dimension) for the chart.
+Four route patterns, all rendered by one catch-all `<Route path="*">` in
+`App.jsx` (content is identical regardless of which matched — locale and
+region are derived from the raw pathname, not from route params, since
+`LocaleContext`/`RegionContext` sit above `<Routes>` in the tree):
+
+- `/` — Estonian, default region (Harju)
+- `/en` — English, default region
+- `/maakond/:slug` — Estonian, region set from the slug
+- `/en/county/:slug` — English, region set from the slug
+
+`locale` and `region` are pure functions of `location.pathname`
+(`useLocation()` + regex matching — see `LocaleContext.jsx` and
+`RegionContext.jsx`), not stored state: the same URL must always render
+the same content for every visitor, including crawlers, since these are
+meant to be independently indexable pages. Switching language or region
+navigates (`useNavigate`) to the equivalent URL rather than flipping
+local state. `useDocumentMeta.js` sets `document.title`, meta
+description, canonical link, and OG/Twitter tags per route at runtime.
+
+Two-phase SEO delivery:
+1. **Routing** gives each of the 38 region×language combinations
+   (15 maakonds + 3 cities × 2 languages, + 2 root pages) its own real
+   URL.
+2. **Prerendering** (`scripts/prerender.mjs`, runs in `deploy.yml` after
+   `vite build`) serves the build locally, drives headless Chromium
+   through all 38 routes, waits for the region's AI narrative text to
+   render, and saves the fully-rendered HTML into
+   `dist/<route>/index.html` — so the content is present in the raw HTTP
+   response, not only after JS executes. Also regenerates
+   `dist/sitemap.xml` with all 38 URLs.
+
+`postbuild` (`scripts/copy-404.mjs`) copies `dist/index.html` to
+`dist/404.html` — the standard GitHub Pages SPA-routing fallback, since
+GH Pages has no server-side rewrites and a direct visit to
+`/maakond/harju-maakond` would otherwise 404.
+
+`SourceFooter.jsx` renders a real `<a href>` link list to all 18 region
+pages (in the current locale) on every page, so crawlers discover them
+by following links, not only via the sitemap.
 
 ## Components
 
-- `Sidebar` — recursive folder/table tree; lazy-loads a folder's children
-  on first expand (caches the result so re-expanding doesn't refetch).
-- `TableView` — top-level view for a selected table; owns metadata + data
-  fetch state and coordinates the child components below.
-- `FilterBar` — one control per non-time variable (dropdown, or multi-select
-  where useful); a separate control for the time range (e.g. last N
-  periods, or explicit range).
-- `DataGrid` — TanStack Table instance over the flattened rows; sortable
-  columns, one row per data point.
-- `ChartPanel` — Recharts line chart (default, for time-series) with a
-  toggle to bar chart (for single-period category comparisons); splits
-  into series by a user-selected "group by" variable when the table has
-  more than one non-time dimension.
-- `ExportButtons` — "Export CSV", "Export XLSX" (current filtered rows via
-  SheetJS), "Export PNG" (current chart).
+**Layout/shell:** `App.jsx` (routes, top nav, locale switch, scroll
+orchestration), `SectionRail.jsx` (floating in-page nav), `ErrorBoundary`,
+`SourceFooter.jsx`, `LazyMount.jsx` (defers offscreen dashboard sections).
+
+**Dashboard scroll sections:** `Dashboard.jsx` (Ülevaade — headline
+stats, cumulative yearly tables, residency chart), `Page2Map.jsx` +
+`EstoniaMap.jsx` + `SeasonalityHeatmap.jsx`/`SeasonalityStrip.jsx` (Kaart
+ja hooajalisus), `Page3Purpose.jsx` (Eesmärk ja kestus), `Page6Capacity.jsx`
+(Mahutavus), `Page5Expenses.jsx` (Reisikulutused).
+
+**Other tabs:** `Page4Residents.jsx` (Residentide reisid, standalone),
+`OperatorInsights.jsx` (region selector + region-scoped charts, feeds the
+region into `RegionContext`), `TableView.jsx` + `Sidebar.jsx` +
+`FilterBar.jsx` + `DataGrid.jsx` + `ChartPanel.jsx` + `ExportButtons.jsx`
+(Kõik tabelid — the original v1 generic browser, unchanged in spirit).
+
+**Shared chart primitives:** `ChartTooltip.jsx`, `RankedBarList.jsx`,
+`Sparkline.jsx`, `SplitBar.jsx`, `TableSource.jsx`, `SectionFilters.jsx`,
+`colorScale.js`, `theme.js` (chart color tokens, kept in sync by hand
+with the CSS custom properties in `App.css`: `--sea`, `--midsummer`,
+`--slate`, `--sea-deep`, `--ink`).
+
+**Content/growth:** `NarrativeBlock.jsx` (renders the AI blurb for a
+section, region-aware), `NewsletterSignup.jsx`, `NewsletterPdfButton.jsx`.
+
+**Data/state:** `api/pxweb.js` + `api/jsonStat.js` (PxWeb client +
+json-stat2 flattening, unchanged from v1), `data/counties.js` (region
+list + slugs), `data/narrative.js` (fetches `narrative.json`),
+`i18n/LocaleContext.jsx` + `i18n/et.js` + `i18n/en.js`,
+`context/RegionContext.jsx`, `hooks/useAbortableEffect.js`,
+`hooks/useActiveSection.js` (scroll-spy for `SectionRail`),
+`hooks/useDocumentMeta.js`.
+
+## Data flow
+
+**Live PxWeb data** (dashboard + Kõik tabelid): unchanged from v1 —
+fetch table metadata to drive filters, `POST` a query, flatten
+`json-stat2` into rows (grid) and series (chart). Dashboard components
+fetch their own broad slice once and apply region/residency/year filters
+client-side rather than refetching per filter change.
+
+**AI narrative**: build-independent — `narrative.json` is fetched once
+at runtime by any component rendering a `NarrativeBlock`, cached in
+module state (`data/narrative.js`) so multiple sections on one page
+share a single fetch.
+
+**Region-specific view**: `RegionContext` derives the active region code
+from the URL; components needing region-scoped data (charts, narrative)
+read it via `useRegion()` and filter their already-fetched dataset by
+that code.
 
 ## Error handling
 
-Minimal, appropriate for a single-user test tool:
-- Any failed fetch (network error, non-2xx, including `429 Too Many
-  Requests`) shows an inline error message in place of the affected panel
-  (sidebar, filters, grid, or chart) with a "Retry" button.
-- No automatic retry/backoff — the generous rate limit (1000 calls/10s)
-  makes this unnecessary for interactive single-user use.
+Unchanged from v1: failed fetches show an inline error with Retry, no
+automatic retry/backoff (rate limits are generous for interactive use).
+`NarrativeBlock` degrades silently instead of showing an error, since
+missing AI content isn't a failure state worth surfacing to visitors.
 
 ## Testing
 
-No automated test suite for v1. Verification is manual: exercise the app
-against a handful of real tables spanning all 3 subfolders (e.g. TU121,
-TU11, and one table each from Eesti elanike reisimine and Turismi ja
-majutuse majandusnäitajad) to confirm folder browsing, filtering,
-grid/chart rendering, and all three export formats work end-to-end.
+Still no automated test suite. Verification remains manual, now
+routinely done via ad-hoc Playwright smoke scripts (drive the dev server
+or a `vite preview` of `dist/`, assert on rendered text/titles/URLs,
+check for console errors) rather than exercising the UI by hand — see
+this session's `test-routing.mjs`/`test-footer.mjs` pattern for the
+template. `scripts/prerender.mjs`'s own run is itself a lightweight
+regression check: it fails loudly (per-route console-error logging) if a
+route stops rendering real content.
+
+## Known gaps / caveats for whoever redesigns the frontend
+
+- `NewsletterSignup.jsx` Mailchimp IDs may still be literal placeholders
+  in the deployed component (see above) — check before assuming the
+  signup form is live.
+- `recharts` and a few other chunks exceed Vite's 500kB warning
+  threshold on build; not addressed, not blocking, but worth knowing
+  before adding more chart weight.
+- Visual design tokens (colors, type, spacing) currently live only in
+  `App.css`/`theme.js` by convention, not documented separately from the
+  code — read those directly rather than trusting any description here,
+  since a redesign will change them.

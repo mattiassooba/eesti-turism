@@ -72,7 +72,8 @@
   color: var(--paper);
   background: none;
   font-weight: 600;
-  box-shadow: inset 0 -2px 0 var(--midsummer);
+  border-radius: 0;
+  box-shadow: inset 0 -2px 0 var(--sea);
 }
 
 .top-nav-tab:focus-visible {
@@ -126,9 +127,11 @@
   min-height: 0;
 }
 
-/* Newsletter signup — sits between the main scroll area and the footer,
-   visible regardless of which top-level tab is active (unlike the
-   dashboard-local filters, this is a persistent site-wide element). */
+/* Newsletter signup — renders once per top-level view (scroll/residents/
+   browse), as the last element in that view's own scrollable content, so
+   it only appears once a visitor reaches the actual end of whichever view
+   they're on. Collapsed to a single-line CTA by default (see
+   .newsletter-signup-collapsed below); expands to the full form on click. */
 
 .newsletter-signup {
   background: var(--sea-deep);
@@ -142,6 +145,7 @@
   padding: 0;
   background: none;
   border-radius: 0;
+  color: var(--ink);
 }
 
 .newsletter-cta {

@@ -194,7 +194,9 @@ export default function App() {
         element={
         <div className="app-shell">
           <header className="top-nav">
-            <div className="top-nav-title">{t("app.brand")}</div>
+            <div className="top-nav-title" aria-label={t("app.brand")}>
+              <span aria-hidden="true">{t("app.brand")}</span>
+            </div>
             <nav className="top-nav-tabs">
               {TOP_NAV_ITEMS.map((item) => (
                 <button

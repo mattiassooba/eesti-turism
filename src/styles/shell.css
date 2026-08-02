@@ -80,6 +80,35 @@
   outline-offset: 2px;
 }
 
+@media (max-width: 640px) {
+  .top-nav {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .top-nav-title {
+    font-size: 0;
+  }
+
+  .top-nav-title::before {
+    width: 9px;
+    height: 9px;
+  }
+
+  .top-nav-tabs {
+    gap: 0;
+  }
+
+  .top-nav-tab {
+    font-size: 12.5px;
+    padding: 7px 10px;
+  }
+
+  .top-nav .locale-switch {
+    flex-shrink: 0;
+  }
+}
+
 .app-body {
   flex: 1;
   display: flex;

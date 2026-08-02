@@ -14,8 +14,9 @@
 }
 
 .source-footer a {
-  color: var(--midsummer);
-  text-decoration: none;
+  color: var(--paper);
+  text-decoration: underline;
+  text-decoration-color: rgba(238, 240, 238, 0.4);
 }
 
 .source-footer a:hover {

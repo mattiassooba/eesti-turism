@@ -1,13 +1,13 @@
 :root {
   --ink: #101b26;
-  --paper: #eef0ee;
+  --paper: #f5f6f3;
   --sea: #2b6ca3;
   --sea-deep: #0f3a57;
   --midsummer: #d98e2b;
   --slate: #5b6b7a;
   --alert: #9c3b26;
 
-  --font-display: "Space Grotesk", sans-serif;
+  --font-display: "Fraunces", serif;
   --font-body: "IBM Plex Sans", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
 

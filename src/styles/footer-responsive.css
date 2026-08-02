@@ -25,14 +25,41 @@
 
 .footer-counties {
   flex-basis: 100%;
-  font-size: 11px;
-  line-height: 1.6;
-  opacity: 0.85;
+  margin-top: 4px;
 }
 
 .footer-counties-label {
-  margin-right: 6px;
+  display: block;
+  margin-bottom: 8px;
+  font-size: 11px;
   opacity: 0.75;
+}
+
+.footer-counties-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.footer-county-chip {
+  display: inline-flex;
+  border: 1px solid rgba(238, 240, 238, 0.25);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: rgba(238, 240, 238, 0.75) !important;
+  text-decoration: none !important;
+  transition: border-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.footer-county-chip:hover {
+  border-color: var(--sea);
+  color: var(--paper) !important;
+}
+
+.footer-county-chip:focus-visible {
+  outline: 2px solid var(--midsummer);
+  outline-offset: 2px;
 }
 
 /* Responsive */

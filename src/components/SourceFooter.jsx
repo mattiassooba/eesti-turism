@@ -26,14 +26,17 @@ export default function SourceFooter() {
       </span>
       <nav className="footer-counties" aria-label={t("footer.allCounties")}>
         <span className="footer-counties-label">{t("footer.allCounties")}</span>
-        {[...COUNTIES, ...CITIES].map((county, i, all) => (
-          <span key={county.code}>
-            <Link to={locale === "en" ? `/en/county/${county.slugEn}` : `/maakond/${county.slugEt}`}>
+        <div className="footer-counties-grid">
+          {[...COUNTIES, ...CITIES].map((county) => (
+            <Link
+              key={county.code}
+              className="footer-county-chip"
+              to={locale === "en" ? `/en/county/${county.slugEn}` : `/maakond/${county.slugEt}`}
+            >
               {locale === "en" ? county.en : county.et}
             </Link>
-            {i < all.length - 1 && ", "}
-          </span>
-        ))}
+          ))}
+        </div>
       </nav>
     </footer>
   );

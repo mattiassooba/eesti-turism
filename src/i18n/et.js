@@ -65,6 +65,7 @@ export default {
     allCounties: "Kogu Eesti",
     privacy:
       "Sisestatud e-posti aadressi ja eelistusi haldab Mailchimp (The Rocket Science Group LLC). Andmeid kasutatakse ainult selle uudiskirja saatmiseks; tellimusest saab alati loobuda uudiskirja lingi kaudu.",
+    collapsedCta: "Saa Eesti turismistatistika kokkuvõte e-postile →",
   },
 
   dashboard: {

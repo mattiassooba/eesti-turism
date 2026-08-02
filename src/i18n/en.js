@@ -65,6 +65,7 @@ export default {
     allCounties: "All of Estonia",
     privacy:
       "Your email address and preferences are processed by Mailchimp (The Rocket Science Group LLC). Used only to send this newsletter; you can unsubscribe anytime via the link in every email.",
+    collapsedCta: "Get Estonia's tourism stats by email →",
   },
 
   dashboard: {

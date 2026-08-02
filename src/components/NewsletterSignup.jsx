@@ -36,6 +36,17 @@ export default function NewsletterSignup() {
   const { t, locale } = useTranslation();
   const [cadence, setCadence] = useState("monthly");
   const [language, setLanguage] = useState(locale === "en" ? "en" : "et");
+  const [expanded, setExpanded] = useState(false);
+
+  if (!expanded) {
+    return (
+      <div className="newsletter-signup newsletter-signup-collapsed">
+        <button className="newsletter-cta" onClick={() => setExpanded(true)}>
+          {t("newsletter.collapsedCta")}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="newsletter-signup">

@@ -91,10 +91,42 @@
    dashboard-local filters, this is a persistent site-wide element). */
 
 .newsletter-signup {
-  flex-shrink: 0;
   background: var(--sea-deep);
   color: var(--paper);
   padding: 24px 32px;
+  border-radius: var(--radius-md);
+  margin-top: 24px;
+}
+
+.newsletter-signup-collapsed {
+  padding: 0;
+  background: none;
+  border-radius: 0;
+}
+
+.newsletter-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid #dbe0df;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+
+.newsletter-cta:hover {
+  border-color: var(--sea);
+  background: rgba(43, 108, 163, 0.05);
+}
+
+.newsletter-cta:focus-visible {
+  outline: 2px solid var(--midsummer);
+  outline-offset: 2px;
 }
 
 .newsletter-heading-row {

@@ -265,42 +265,48 @@ export default function App() {
                       <Page5Expenses />
                     </LazyMount>
                   </section>
+
+                  <NewsletterSignup />
                 </div>
               )}
-    
+
               {view === "residents" && (
                 <div className="scroll-section">
                   <h2 className="scroll-section-title">{t("nav.residents")}</h2>
                   <Page4Residents />
+                  <NewsletterSignup />
                 </div>
               )}
     
-              {view === "browse" &&
-                (selected ? (
-                  <TableView path={selected.path} tableId={selected.tableId} title={selected.title} />
-                ) : (
-                  <div className="dashboard">
-                    <div className="panel-status">{t("app.chooseTable")}</div>
-                    <div className="quick-links">
-                      <div className="quick-links-label">{t("app.quickLinks")}</div>
-                      <div className="quick-links-grid">
-                        {QUICK_LINKS.map((link) => (
-                          <button
-                            key={link.tableId}
-                            className="quick-link-card"
-                            onClick={() => handleSelectTable(MAJUTUS_PATH, link.tableId, link.title)}
-                          >
-                            {link.title}
-                          </button>
-                        ))}
+              {view === "browse" && (
+                <>
+                  {selected ? (
+                    <TableView path={selected.path} tableId={selected.tableId} title={selected.title} />
+                  ) : (
+                    <div className="dashboard">
+                      <div className="panel-status">{t("app.chooseTable")}</div>
+                      <div className="quick-links">
+                        <div className="quick-links-label">{t("app.quickLinks")}</div>
+                        <div className="quick-links-grid">
+                          {QUICK_LINKS.map((link) => (
+                            <button
+                              key={link.tableId}
+                              className="quick-link-card"
+                              onClick={() => handleSelectTable(MAJUTUS_PATH, link.tableId, link.title)}
+                            >
+                              {link.title}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )}
+                  <NewsletterSignup />
+                </>
+              )}
             </main>
           </div>
-    
-          <NewsletterSignup />
+
           <SourceFooter />
         </div>
         }

@@ -7,7 +7,12 @@
   --slate: #5b6b7a;
   --alert: #9c3b26;
 
-  --font-display: "Fraunces", serif;
+  /* One family for display and body (was Fraunces + IBM Plex Sans) — two
+     visually distinct typefaces read as mismatched at this site's scale;
+     IBM Plex Sans carries both roles now, distinguished by weight/size/
+     spacing instead. IBM Plex Mono stays separate for numerals, since
+     it's the same coordinated Plex family, not an unrelated third voice. */
+  --font-display: "IBM Plex Sans", sans-serif;
   --font-body: "IBM Plex Sans", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
 

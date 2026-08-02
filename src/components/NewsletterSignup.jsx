@@ -44,6 +44,7 @@ export default function NewsletterSignup() {
         <button className="newsletter-cta" onClick={() => setExpanded(true)}>
           {t("newsletter.collapsedCta")}
         </button>
+        <NewsletterPdfButton />
       </div>
     );
   }

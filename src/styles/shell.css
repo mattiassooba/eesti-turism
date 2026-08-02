@@ -142,10 +142,27 @@
 }
 
 .newsletter-signup-collapsed {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
   padding: 0;
   background: none;
   border-radius: 0;
   color: var(--ink);
+}
+
+/* NewsletterPdfButton's default styling (see .newsletter-pdf-button below)
+   is light-text-on-transparent, meant for the dark .newsletter-signup
+   background — inside the collapsed strip it sits directly on the page's
+   light background instead, so it needs the inverse treatment. */
+.newsletter-signup-collapsed .newsletter-pdf-button {
+  border-color: #dbe0df;
+  color: var(--ink);
+}
+
+.newsletter-signup-collapsed .newsletter-pdf-button:hover {
+  border-color: var(--sea);
 }
 
 .newsletter-cta {

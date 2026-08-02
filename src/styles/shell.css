@@ -427,15 +427,33 @@
 
 .scroll-section {
   /* Room to breathe above the section when scrollIntoView lands on it,
-     and a clear break between what used to be separate tabs. */
+     and a clear break between what used to be separate tabs. The divider
+     itself echoes the seasonality strip's quiet-to-midsummer gradient
+     (src/colorScale.js) — the site's signature motif, reused here so the
+     page's own section-to-section rhythm nods at the seasonal rhythm the
+     data describes. */
+  position: relative;
   scroll-margin-top: 16px;
-  padding-top: 20px;
-  border-top: 1px solid #dbe0df;
+  padding-top: 24px;
+}
+
+.scroll-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 64px;
+  height: 2px;
+  background: linear-gradient(to right, rgb(77, 120, 148), rgb(217, 142, 43));
+  border-radius: 2px;
 }
 
 .scroll-section:first-child {
   padding-top: 0;
-  border-top: none;
+}
+
+.scroll-section:first-child::before {
+  display: none;
 }
 
 .scroll-section-title {

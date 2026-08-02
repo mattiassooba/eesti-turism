@@ -232,15 +232,17 @@ function Page2Map() {
       />
 
       {base.data.topCounty && (
-        <div className="hero-card">
-          <div className="hero-label">{t("map.topNights")}</div>
-          <div className="hero-number hero-number-text">{base.data.topCounty.label}</div>
-          <div className="hero-caption">{t("map.nights", formatNumber(base.data.topCounty.value, locale))}</div>
-          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
-        </div>
-      )}
+        <>
+          <div className="hero-card">
+            <div className="hero-label">{t("map.topNights")}</div>
+            <div className="hero-number hero-number-text">{base.data.topCounty.label}</div>
+            <div className="hero-caption">{t("map.nights", formatNumber(base.data.topCounty.value, locale))}</div>
+            <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
+          </div>
 
-      <NarrativeBlock section="map" />
+          <NarrativeBlock section="map" />
+        </>
+      )}
 
       <div className="tile-row-split">
         <div className="data-card">

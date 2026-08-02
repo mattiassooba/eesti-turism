@@ -158,17 +158,19 @@ function Page3Purpose() {
       />
 
       {data.topPurpose && (
-        <div className="hero-card">
-          <div className="hero-label">{t("purpose.topPurpose")}</div>
-          <div className="hero-number hero-number-text">{data.topPurpose.name}</div>
-          {data.topPurposeShare !== null && (
-            <div className="hero-caption">{t("purpose.topPurposeShare", data.topPurposeShare.toFixed(0))}</div>
-          )}
-          <TableSource path={MAJUTUS_PATH} ids={["TU133.PX"]} dark />
-        </div>
-      )}
+        <>
+          <div className="hero-card">
+            <div className="hero-label">{t("purpose.topPurpose")}</div>
+            <div className="hero-number hero-number-text">{data.topPurpose.name}</div>
+            {data.topPurposeShare !== null && (
+              <div className="hero-caption">{t("purpose.topPurposeShare", data.topPurposeShare.toFixed(0))}</div>
+            )}
+            <TableSource path={MAJUTUS_PATH} ids={["TU133.PX"]} dark />
+          </div>
 
-      <NarrativeBlock section="purpose" />
+          <NarrativeBlock section="purpose" />
+        </>
+      )}
 
       <div className="data-card">
         <h3>{t("purpose.byPurposeHeading", [title, data.windowSize])}</h3>

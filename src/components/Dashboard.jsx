@@ -228,8 +228,6 @@ function Dashboard() {
         onDeltaModeChange={setDeltaMode}
       />
 
-      <NarrativeBlock section="dashboard" regionCode={region} />
-
       <div className="kpi-row">
         <div className="hero-card">
           <div className="hero-label">
@@ -265,6 +263,8 @@ function Dashboard() {
           <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
         </div>
       </div>
+
+      <NarrativeBlock section="dashboard" regionCode={region} />
 
       {residency === "all" && (
         <div>

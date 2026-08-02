@@ -157,8 +157,6 @@ function Page3Purpose() {
         onTimeRangeChange={setTimeRangeMonths}
       />
 
-      <NarrativeBlock section="purpose" />
-
       {data.topPurpose && (
         <div className="hero-card">
           <div className="hero-label">{t("purpose.topPurpose")}</div>
@@ -169,6 +167,8 @@ function Page3Purpose() {
           <TableSource path={MAJUTUS_PATH} ids={["TU133.PX"]} dark />
         </div>
       )}
+
+      <NarrativeBlock section="purpose" />
 
       <div className="data-card">
         <h3>{t("purpose.byPurposeHeading", [title, data.windowSize])}</h3>

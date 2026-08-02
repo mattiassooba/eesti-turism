@@ -15,19 +15,19 @@
 }
 
 .narrative-card {
-  background: #fff;
-  border-left: 3px solid var(--midsummer);
-  border-radius: var(--radius-md);
-  padding: 20px 24px;
-  box-shadow: var(--shadow-sm);
+  background: none;
+  border-left: 2px solid #dbe0df;
+  border-radius: 0;
+  padding: 4px 0 4px 18px;
+  box-shadow: none;
 }
 
 .narrative-text {
   margin: 0;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 13.5px;
   line-height: 1.6;
-  color: var(--ink);
+  color: var(--slate);
 }
 
 .narrative-caption {

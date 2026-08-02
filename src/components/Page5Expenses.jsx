@@ -214,8 +214,6 @@ function Page5Expenses() {
         </div>
       </div>
 
-      <NarrativeBlock section="expenses" />
-
       <div className="hero-card">
         <div className="hero-label">
           {COST_TYPE_HERO_LABEL[costType]} · {data.latestYear}
@@ -228,6 +226,8 @@ function Page5Expenses() {
         )}
         <TableSource path={REISIMINE_PATH} ids={["TU552.px"]} dark />
       </div>
+
+      <NarrativeBlock section="expenses" />
 
       <div className="data-card">
         <h3>{t("expenses.byPurposeHeading", data.quarters)}</h3>

@@ -231,8 +231,6 @@ function Page2Map() {
         onTimeRangeChange={setTimeRangeMonths}
       />
 
-      <NarrativeBlock section="map" />
-
       {base.data.topCounty && (
         <div className="hero-card">
           <div className="hero-label">{t("map.topNights")}</div>
@@ -241,6 +239,8 @@ function Page2Map() {
           <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
         </div>
       )}
+
+      <NarrativeBlock section="map" />
 
       <div className="tile-row-split">
         <div className="data-card">

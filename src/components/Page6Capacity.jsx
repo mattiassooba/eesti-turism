@@ -208,8 +208,6 @@ function Page6Capacity() {
         </label>
       </div>
 
-      <NarrativeBlock section="capacity" />
-
       <div className="hero-card">
         <div className="hero-label">
           {region !== "EE" ? t("capacity.bedsTotalRegion", regionLabel) : t("capacity.bedsTotal")}
@@ -222,6 +220,8 @@ function Page6Capacity() {
         )}
         <TableSource path={MAJUTUS_PATH} ids={["TU11.PX"]} dark />
       </div>
+
+      <NarrativeBlock section="capacity" />
 
       <div className="data-card">
         <h3>{t("capacity.bedsByRegionHeading", data.regionLatestLabel)}</h3>

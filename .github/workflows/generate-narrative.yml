@@ -2,9 +2,16 @@ name: Generate narrative
 
 on:
   schedule:
-    # 5th of each month, 06:00 UTC — buffered a few days after month-end
-    # for Statistikaamet to actually publish the new data point.
-    - cron: "0 6 5 * *"
+    # Every Friday, 06:00 UTC. Was "5th of each month" only, on the
+    # assumption Statistikaamet reliably publishes within a few days of
+    # month-end — in practice that lag varies (one month it wasn't out
+    # until after the 5th), leaving the live dashboard and the narrative
+    # visibly out of sync for weeks with no scheduled run in between to
+    # catch it. generate-narrative.mjs is idempotent (skips the API call
+    # entirely when the latest published period hasn't changed — see its
+    # "already up to date" log line), so a weekly check costs nothing
+    # extra beyond a few seconds of CI time on the weeks nothing changed.
+    - cron: "0 6 * * 5"
   workflow_dispatch:
     inputs:
       dry_run:

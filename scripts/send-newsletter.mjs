@@ -144,6 +144,19 @@ async function sendCampaign({ apiKey, dc, listId, cadence, language, narrative, 
 async function main() {
   const dryRun = process.argv.includes("--dry-run");
 
+  // The Mailchimp Audience/Group setup described at the top of
+  // NewsletterSignup.jsx hasn't been completed yet (its embed constants
+  // are still PLACEHOLDER_*, so the signup form has never collected a
+  // real subscriber either) — until MAILCHIMP_API_KEY is actually set,
+  // there's nothing to send. Skip cleanly instead of throwing, so this
+  // known, expected gap doesn't mark the whole generate-narrative run as
+  // failed and mask a real failure in the narrative-generation step that
+  // runs before this one.
+  if (!process.env.MAILCHIMP_API_KEY) {
+    console.log("MAILCHIMP_API_KEY is not set — Mailchimp isn't configured yet, skipping newsletter send.");
+    return;
+  }
+
   const apiKey = requireEnv("MAILCHIMP_API_KEY");
   const dc = apiKey.split("-").pop();
   const listId = requireEnv("MAILCHIMP_LIST_ID");

@@ -655,10 +655,41 @@ async function callClaudeRegions(anthropic, model, regions, promptBlocks) {
     throw new Error(`Region narrative tool call did not return an array: ${JSON.stringify(toolUse.input).slice(0, 300)}`);
   }
 
+  // Claude's tool call has occasionally returned malformed entries for a
+  // subset of regions on this large a batch (18 regions in one call) —
+  // observed once as a literal "__ET_PLACEHOLDER__" string and missing
+  // `et` fields entirely for the rest, silently shipped to production
+  // since nothing checked the content before this validation existed.
+  // An isolated bad entry is dropped (NarrativeBlock.jsx already falls
+  // back to the national blurb for any region code missing from this
+  // map); if a large fraction fail, that's a systemic generation
+  // problem, not a one-off glitch — fail loudly instead of shipping a
+  // broken/degraded regional experience for most of the country.
+  function isValidBlurb(text) {
+    return typeof text === "string" && !text.includes("PLACEHOLDER") && text.trim().split(/\s+/).length >= 40;
+  }
+
   const byCode = {};
+  let invalidCount = 0;
   for (const entry of list) {
+    if (!entry?.code || !isValidBlurb(entry.et) || !isValidBlurb(entry.en)) {
+      console.warn(
+        `  region blurb for ${entry?.code ?? "(missing code)"} failed validation — omitting, will fall back to the national blurb for this region`
+      );
+      invalidCount++;
+      continue;
+    }
     byCode[entry.code] = { et: entry.et, en: entry.en };
   }
+
+  if (invalidCount > regions.length * 0.3) {
+    throw new Error(
+      `${invalidCount} of ${regions.length} region blurbs failed validation (missing/placeholder/too-short text) — ` +
+        "this looks like a systemic generation failure, not an isolated glitch. Aborting instead of shipping " +
+        "degraded region data; re-run once fixed."
+    );
+  }
+
   return byCode;
 }
 

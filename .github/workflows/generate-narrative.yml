@@ -18,6 +18,10 @@ on:
         description: "Create newsletter campaigns but don't send them"
         type: boolean
         default: false
+      force:
+        description: "Regenerate even if narrative.json is already up to date for the latest period"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -34,7 +38,7 @@ jobs:
 
       - run: npm ci
 
-      - run: node scripts/generate-narrative.mjs
+      - run: node scripts/generate-narrative.mjs ${{ inputs.force && '--force' || '' }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_MODEL: claude-sonnet-5

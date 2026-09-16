@@ -595,56 +595,65 @@ async function callClaudeRegions(anthropic, model, regions, promptBlocks) {
     `when a site visitor picks that specific region/city in the dashboard's region selector.\n\n` +
     promptBlocks.join("\n\n");
 
-  const response = await anthropic.messages.create({
-    model,
-    // 18 regions x 2 languages x up to 190 words, plus tool-call JSON
-    // overhead, occasionally exceeded the old 16000 ceiling (observed
-    // 2026-09-11: truncated mid-generation, whole run aborted safely with
-    // no bad data committed, but also no update until the next retry).
-    // Generous headroom here instead of a tight estimate.
-    max_tokens: 32000,
-    system:
-      "You write region-specific blurbs for a personal Estonian tourism statistics site ('Eesti Turism'), shown " +
-      "when a visitor picks a specific county or city in the dashboard's region selector, replacing the national " +
-      "overview text — this is the centerpiece of that region's own page, so give it real depth, not a caption. " +
-      "Ground every sentence strictly in the numbers given for THAT region — never invent, round loosely, or " +
-      "borrow a number from another region. Each blurb is 130-190 words of plain prose (no headings, no bullet " +
-      "points, no markdown), and must report BOTH the latest single month's year-over-year change AND the " +
-      "cumulative year-to-date figure given (how the region's year is tracking overall, not just the one " +
-      "month). Produce independently well-written Estonian and English versions of each (not literal " +
-      "translations of each other, though they must report the same facts). Estonian must read naturally to a " +
-      "native speaker. Vary sentence structure across regions rather than repeating the same template for " +
-      "every one. " + FORMATTING_RULES,
-    messages: [{ role: "user", content: combinedPrompt }],
-    tools: [
-      {
-        name: "emit_region_narrative",
-        description: "Emit one blurb per region, in both languages, matching the exact region codes given.",
-        input_schema: {
-          type: "object",
-          properties: {
-            regions: {
-              type: "array",
-              description: "One entry per region, in the same order as given in the prompt.",
-              items: {
-                type: "object",
-                properties: {
-                  code: { type: "string", description: "The exact region code from the prompt, copied verbatim." },
-                  et: { type: "string", description: "130-190 word Estonian blurb." },
-                  en: { type: "string", description: "130-190 word English blurb." },
+  // .stream() + .finalMessage() instead of .create(): the Anthropic SDK
+  // refuses a non-streaming call at this max_tokens ("Streaming is
+  // required for operations that may take longer than 10 minutes") since
+  // it can't rule out a long generation up front. finalMessage() waits
+  // for the stream to finish and hands back the same assembled Message
+  // shape .create() would have, so nothing below this call needs to
+  // change for it.
+  const response = await anthropic.messages
+    .stream({
+      model,
+      // 18 regions x 2 languages x up to 190 words, plus tool-call JSON
+      // overhead, occasionally exceeded the old 16000 ceiling (observed
+      // 2026-09-11: truncated mid-generation, whole run aborted safely with
+      // no bad data committed, but also no update until the next retry).
+      // Generous headroom here instead of a tight estimate.
+      max_tokens: 32000,
+      system:
+        "You write region-specific blurbs for a personal Estonian tourism statistics site ('Eesti Turism'), shown " +
+        "when a visitor picks a specific county or city in the dashboard's region selector, replacing the national " +
+        "overview text — this is the centerpiece of that region's own page, so give it real depth, not a caption. " +
+        "Ground every sentence strictly in the numbers given for THAT region — never invent, round loosely, or " +
+        "borrow a number from another region. Each blurb is 130-190 words of plain prose (no headings, no bullet " +
+        "points, no markdown), and must report BOTH the latest single month's year-over-year change AND the " +
+        "cumulative year-to-date figure given (how the region's year is tracking overall, not just the one " +
+        "month). Produce independently well-written Estonian and English versions of each (not literal " +
+        "translations of each other, though they must report the same facts). Estonian must read naturally to a " +
+        "native speaker. Vary sentence structure across regions rather than repeating the same template for " +
+        "every one. " + FORMATTING_RULES,
+      messages: [{ role: "user", content: combinedPrompt }],
+      tools: [
+        {
+          name: "emit_region_narrative",
+          description: "Emit one blurb per region, in both languages, matching the exact region codes given.",
+          input_schema: {
+            type: "object",
+            properties: {
+              regions: {
+                type: "array",
+                description: "One entry per region, in the same order as given in the prompt.",
+                items: {
+                  type: "object",
+                  properties: {
+                    code: { type: "string", description: "The exact region code from the prompt, copied verbatim." },
+                    et: { type: "string", description: "130-190 word Estonian blurb." },
+                    en: { type: "string", description: "130-190 word English blurb." },
+                  },
+                  required: ["code", "et", "en"],
                 },
-                required: ["code", "et", "en"],
+                minItems: regions.length,
+                maxItems: regions.length,
               },
-              minItems: regions.length,
-              maxItems: regions.length,
             },
+            required: ["regions"],
           },
-          required: ["regions"],
         },
-      },
-    ],
-    tool_choice: { type: "tool", name: "emit_region_narrative" },
-  });
+      ],
+      tool_choice: { type: "tool", name: "emit_region_narrative" },
+    })
+    .finalMessage();
 
   if (response.stop_reason === "max_tokens") {
     throw new Error("Region narrative generation was truncated (hit max_tokens) — raise max_tokens and retry.");

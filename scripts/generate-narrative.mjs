@@ -597,7 +597,12 @@ async function callClaudeRegions(anthropic, model, regions, promptBlocks) {
 
   const response = await anthropic.messages.create({
     model,
-    max_tokens: 16000,
+    // 18 regions x 2 languages x up to 190 words, plus tool-call JSON
+    // overhead, occasionally exceeded the old 16000 ceiling (observed
+    // 2026-09-11: truncated mid-generation, whole run aborted safely with
+    // no bad data committed, but also no update until the next retry).
+    // Generous headroom here instead of a tight estimate.
+    max_tokens: 32000,
     system:
       "You write region-specific blurbs for a personal Estonian tourism statistics site ('Eesti Turism'), shown " +
       "when a visitor picks a specific county or city in the dashboard's region selector, replacing the national " +

@@ -119,6 +119,10 @@
     font-size: 11px;
     padding: 4px 10px;
   }
+
+  #dashboard .scroll-section-title {
+    display: none;
+  }
 }
 
 .app-body {
@@ -157,12 +161,16 @@
    background — inside the collapsed strip it sits directly on the page's
    light background instead, so it needs the inverse treatment. */
 .newsletter-signup-collapsed .newsletter-pdf-button {
-  border-color: #dbe0df;
-  color: var(--ink);
+  border-color: transparent;
+  color: var(--slate);
+  text-decoration: underline;
+  text-decoration-color: #dbe0df;
+  padding-inline: 4px;
 }
 
 .newsletter-signup-collapsed .newsletter-pdf-button:hover {
-  border-color: var(--sea);
+  color: var(--ink);
+  text-decoration-color: var(--slate);
 }
 
 .newsletter-cta {
@@ -582,7 +590,14 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 2px 0;
+  padding: 4px 8px;
+  margin: 0 -8px;
+  border-radius: 999px;
+  transition: background-color 0.15s var(--ease);
+}
+
+.section-rail-item:hover {
+  background: rgba(16, 27, 38, 0.05);
 }
 
 .section-rail-dot {

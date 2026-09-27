@@ -218,7 +218,7 @@
 }
 
 .delta-up-text {
-  color: #1f7a4d;
+  color: var(--positive);
 }
 
 .delta-down-text {
@@ -245,13 +245,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-#operator-yearly-national .data-grid th,
-#operator-yearly-card .data-grid th {
+#operator-yearly-national .data-grid th:not(:first-child),
+#operator-yearly-card .data-grid th:not(:first-child) {
   background: none;
   border-bottom: 1px solid #dbe0df;
 }
 
 #operator-yearly-national .data-grid tbody tr:last-child td,
-#operator-yearly-card .data-grid tbody tr:last-child td {
+#operator-yearly-national .data-grid tbody tr:last-child th,
+#operator-yearly-card .data-grid tbody tr:last-child td,
+#operator-yearly-card .data-grid tbody tr:last-child th {
   border-bottom: none;
 }

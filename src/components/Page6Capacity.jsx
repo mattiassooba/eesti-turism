@@ -218,7 +218,7 @@ function Page6Capacity() {
         {data.growthMultiple !== null && (
           <div className="hero-delta delta-up">{t("capacity.growthMultiple", data.growthMultiple.toFixed(1))}</div>
         )}
-        <TableSource path={MAJUTUS_PATH} ids={["TU11.PX"]} dark />
+        <TableSource path={MAJUTUS_PATH} ids={["TU11.PX"]} />
       </div>
 
       <NarrativeBlock section="capacity" />

@@ -256,19 +256,6 @@
   color: var(--sea);
 }
 
-.table-source-dark {
-  color: rgba(238, 240, 238, 0.55);
-}
-
-.table-source-dark a {
-  color: inherit;
-  text-decoration-color: rgba(238, 240, 238, 0.35);
-}
-
-.table-source-dark a:hover {
-  color: var(--sea);
-}
-
 .quick-links-label {
   font-family: var(--font-display);
   font-size: 13px;

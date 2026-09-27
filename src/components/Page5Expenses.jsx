@@ -224,7 +224,7 @@ function Page5Expenses() {
             {deltaText(data.heroDelta)}
           </div>
         )}
-        <TableSource path={REISIMINE_PATH} ids={["TU552.px"]} dark />
+        <TableSource path={REISIMINE_PATH} ids={["TU552.px"]} />
       </div>
 
       <NarrativeBlock section="expenses" />

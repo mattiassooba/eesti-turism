@@ -245,7 +245,7 @@ export default {
   heatmap: {
     quietSeason: "Low season",
     peakSeason: "Peak season",
-    explainer: "Each square is one month — color shows whether guest numbers were low (blue) or high (yellow) that month.",
+    explainer: "Each square is one month — color shows whether guest numbers were low (cool grey-blue) or high (warm amber) that month.",
     months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
   },
 

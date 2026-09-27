@@ -241,7 +241,7 @@ function Page2Map() {
             <div className="hero-label">{t("map.topNights")}</div>
             <div className="hero-number hero-number-text">{base.data.topCounty.label}</div>
             <div className="hero-caption">{t("map.nights", formatNumber(base.data.topCounty.value, locale))}</div>
-            <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
+            <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
           </div>
 
           <NarrativeBlock section="map" />

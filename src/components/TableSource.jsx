@@ -6,9 +6,9 @@ function buildBrowseUrl(pathSegments, tableId) {
   return `https://andmed.stat.ee/et/stat/${pathSegments.join("__")}/${cleanId}`;
 }
 
-export default function TableSource({ path, ids, dark = false }) {
+export default function TableSource({ path, ids }) {
   return (
-    <div className={"table-source" + (dark ? " table-source-dark" : "")}>
+    <div className="table-source">
       Allikas: <strong>Statistikaamet</strong>, {ids.length > 1 ? "tabelid" : "tabel"}{" "}
       {ids.map((id, i) => (
         <span key={id}>

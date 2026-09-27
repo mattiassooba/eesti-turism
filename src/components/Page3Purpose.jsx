@@ -172,7 +172,7 @@ function Page3Purpose() {
             {data.topPurposeShare !== null && (
               <div className="hero-caption">{t("purpose.topPurposeShare", data.topPurposeShare.toFixed(0))}</div>
             )}
-            <TableSource path={MAJUTUS_PATH} ids={["TU133.PX"]} dark />
+            <TableSource path={MAJUTUS_PATH} ids={["TU133.PX"]} />
           </div>
 
           <NarrativeBlock section="purpose" />

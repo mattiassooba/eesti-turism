@@ -205,7 +205,7 @@ function Page4Residents() {
           <div className="hero-label">{t("residents.topDestination")}</div>
           <div className="hero-number hero-number-text">{topCountry.label}</div>
           <div className="hero-caption">{t("residents.thousandTrips", formatNumber(topCountry.value, locale))}</div>
-          <TableSource path={REISIMINE_PATH} ids={["TU63.PX"]} dark />
+          <TableSource path={REISIMINE_PATH} ids={["TU63.PX"]} />
         </div>
       )}
 

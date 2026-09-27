@@ -171,6 +171,7 @@
 .newsletter-signup-collapsed .newsletter-pdf-button:hover {
   color: var(--ink);
   text-decoration-color: var(--slate);
+  border-color: transparent;
 }
 
 .newsletter-cta {

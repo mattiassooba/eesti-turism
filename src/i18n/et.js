@@ -245,7 +245,7 @@ export default {
   heatmap: {
     quietSeason: "Vaikne hooaeg",
     peakSeason: "Tipphooaeg",
-    explainer: "Iga ruut on üks kuu — värv näitab, kas majutati vähe (sinine) või palju (kollane) külastajaid.",
+    explainer: "Iga ruut on üks kuu — värv näitab, kas majutati vähe (jahe sinakashall) või palju (soe merevaigukollane) külastajaid.",
     months: ["Jaan", "Veebr", "Märts", "Apr", "Mai", "Juuni", "Juuli", "Aug", "Sept", "Okt", "Nov", "Dets"],
   },
 

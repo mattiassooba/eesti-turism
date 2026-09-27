@@ -245,7 +245,7 @@ function Dashboard() {
             <span className="seasonality-legend-gradient" />
             <span>{t("dashboard.peakSeason")}</span>
           </div>
-          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
+          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
         </div>
 
         <div className="hero-card">
@@ -258,9 +258,9 @@ function Dashboard() {
               {deltaText(data.nightsDelta)}
             </div>
           )}
-          <Sparkline data={data.nightsSparkline} />
+          <Sparkline data={data.nightsSparkline} color="#2b6ca3" />
           <div className="hero-caption">{t("dashboard.lastMonths", data.sparkWindow)}</div>
-          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} dark />
+          <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />
         </div>
       </div>
 

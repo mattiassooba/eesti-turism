@@ -1,8 +1,7 @@
 // Quiet-season-to-midsummer gradient, used by both the seasonality strip
 // and the county choropleth map so "low value" and "high value" always
-// mean the same colors across the app. QUIET is deliberately lighter than
-// the hero card's own background (--sea-deep, #0f3a57) so low-value cells
-// stay visible against it instead of blending in.
+// mean the same colors across the app. Muted rather than saturated so the
+// strip and map read as calm data, not an alert.
 const QUIET = [140, 165, 182];
 const MIDSUMMER = [224, 168, 96];
 

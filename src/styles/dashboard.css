@@ -39,27 +39,29 @@
 }
 
 .hero-card {
+  /* Quiet card (Direction 03 from the Style Directions review): white,
+     bordered, no gradient — the old dark "evening sun over the water"
+     treatment tied this card to the seasonality strip's color story
+     ambiently; that link now lives only in the strip's own gradient
+     (still gold-to-slate), not the card background. Deliberate trade,
+     made to fix the audit's #1 finding: these cards were ~280px tall
+     for two numbers, nearly 2x taller than comparable dashboards use. */
   position: relative;
   overflow: hidden;
   flex: 1;
-  min-width: 320px;
-  /* Deep-sea gradient with a faint midsummer glow in the corner — the
-     signature treatment: evening sun over the water, tying the hero
-     cards directly to the seasonality-strip color story below them. */
-  background:
-    radial-gradient(480px 320px at 100% -10%, rgba(217, 142, 43, 0.22), transparent 60%),
-    linear-gradient(155deg, #164a6e 0%, var(--sea-deep) 55%, #0b2e45 100%);
-  background-color: var(--sea-deep);
-  color: var(--paper);
+  min-width: 280px;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid #dbe0df;
   border-radius: var(--radius-lg);
-  padding: 30px 32px;
-  box-shadow: var(--shadow-hero);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-sm);
 }
 
 .hero-caption {
   font-family: var(--font-body);
   font-size: 12px;
-  color: rgba(238, 240, 238, 0.55);
+  color: var(--slate);
   margin-top: 4px;
 }
 
@@ -111,39 +113,41 @@
 
 .hero-label {
   font-family: var(--font-body);
-  font-size: 13px;
-  color: rgba(238, 240, 238, 0.7);
+  font-size: 12.5px;
+  color: var(--slate);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .hero-number {
   font-family: var(--font-mono);
-  font-size: 60px;
+  font-size: 40px;
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
+  color: var(--ink);
 }
 
 .hero-number-text {
   font-family: var(--font-display);
-  font-size: 34px;
+  font-size: 26px;
   letter-spacing: 0;
+  color: var(--ink);
 }
 
 .hero-delta {
   font-family: var(--font-body);
-  font-size: 14px;
-  margin-top: 10px;
+  font-size: 13px;
+  margin-top: 8px;
 }
 
 .delta-up {
-  color: #8fd3a0;
+  color: var(--positive);
 }
 
 .delta-down {
-  color: #f2a08e;
+  color: var(--alert);
 }
 
 .seasonality-strip {
@@ -158,7 +162,7 @@
   flex: 1;
   height: 100%;
   border-radius: 5px 5px 2px 2px;
-  border: 1px solid rgba(238, 240, 238, 0.2);
+  border: 1px solid rgba(16, 27, 38, 0.12);
   transition: transform 0.15s var(--ease);
 }
 
@@ -178,7 +182,7 @@
   margin-top: 8px;
   font-family: var(--font-body);
   font-size: 11px;
-  color: rgba(238, 240, 238, 0.6);
+  color: var(--slate);
 }
 
 .seasonality-legend-gradient {

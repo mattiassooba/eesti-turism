@@ -224,3 +224,34 @@
 .delta-down-text {
   color: var(--alert);
 }
+
+/* Quiet variant for the two Eesti-vs-region comparison cards specifically
+   — everywhere else, .data-grid's full cell borders are correct (Kõik
+   tabelid is meant to read as a real spreadsheet). Here, next to the
+   quiet hero cards above them (see dashboard.css .hero-card), the same
+   full grid read as a mismatched, older product. Row separators only,
+   no vertical lines, tabular numerals so the numbers still align. */
+#operator-yearly-national .data-grid,
+#operator-yearly-card .data-grid {
+  border: none;
+}
+
+#operator-yearly-national .data-grid th,
+#operator-yearly-national .data-grid td,
+#operator-yearly-card .data-grid th,
+#operator-yearly-card .data-grid td {
+  border: none;
+  border-bottom: 1px solid #eef0ee;
+  font-variant-numeric: tabular-nums;
+}
+
+#operator-yearly-national .data-grid th,
+#operator-yearly-card .data-grid th {
+  background: none;
+  border-bottom: 1px solid #dbe0df;
+}
+
+#operator-yearly-national .data-grid tbody tr:last-child td,
+#operator-yearly-card .data-grid tbody tr:last-child td {
+  border-bottom: none;
+}

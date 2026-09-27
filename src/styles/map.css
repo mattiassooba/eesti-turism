@@ -100,7 +100,7 @@
   width: 70px;
   height: 8px;
   border-radius: 4px;
-  background: linear-gradient(to right, rgb(77, 120, 148), rgb(217, 142, 43));
+  background: linear-gradient(to right, rgb(140, 165, 182), rgb(224, 168, 96));
 }
 
 .heatmap-legend-values {

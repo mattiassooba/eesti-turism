@@ -171,8 +171,8 @@
 }
 
 .seasonality-current {
-  border-color: var(--paper);
-  box-shadow: 0 0 0 2px rgba(238, 240, 238, 0.5), 0 2px 8px rgba(0, 0, 0, 0.25);
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px rgba(16, 27, 38, 0.15), 0 2px 8px rgba(16, 27, 38, 0.2);
 }
 
 .seasonality-legend {
@@ -189,7 +189,7 @@
   width: 60px;
   height: 8px;
   border-radius: 4px;
-  background: linear-gradient(to right, rgb(77, 120, 148), rgb(217, 142, 43));
+  background: linear-gradient(to right, rgb(140, 165, 182), rgb(224, 168, 96));
 }
 
 .tile-row {

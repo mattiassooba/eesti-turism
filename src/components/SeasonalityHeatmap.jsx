@@ -13,6 +13,7 @@ export default function SeasonalityHeatmap({ years, grid }) {
 
   return (
     <div className="heatmap-wrapper">
+      <p className="heatmap-explainer">{t("heatmap.explainer")}</p>
       <div
         className="heatmap-grid"
         style={{ gridTemplateColumns: `52px repeat(${years.length}, minmax(20px, 1fr))` }}

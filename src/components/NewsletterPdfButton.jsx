@@ -103,9 +103,10 @@ export default function NewsletterPdfButton() {
         }
         ensureSpace(drawHeight);
         const x = MARGIN + (maxWidth - drawWidth) / 2;
-        // JPEG at less-than-max quality — this is a chart/table screenshot,
-        // not a photo, but a lossless PNG at this resolution ran 10+ MB.
-        doc.addImage(canvas.toDataURL("image/jpeg", 0.85), "JPEG", x, y, drawWidth, drawHeight);
+        // JPEG at high (not max) quality — this is a chart/table screenshot
+        // with small text, where compression artifacts read as blur, but a
+        // lossless PNG at this resolution ran 10+ MB.
+        doc.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", x, y, drawWidth, drawHeight);
         y += drawHeight + gap;
       }
 
@@ -209,7 +210,7 @@ export default function NewsletterPdfButton() {
       if (dashboard) paragraph(dashboard[locale] ?? dashboard.et, { gap: 12 });
 
       paragraph(t("newsletterPdf.nationalChartTitle"), { font: "bold", size: 11, gap: 4 });
-      nationalResidencyChart(dashboard?.nationalYearlyResidency);
+      nationalResidencyChart(dashboard?.nationalYearlyResidency, { gap: 28 });
 
       paragraph(t("newsletterPdf.otherHighlights"), { font: "bold", size: 13, gap: 6 });
       for (const key of HIGHLIGHT_SECTIONS) {
@@ -283,7 +284,11 @@ async function captureOperatorSnapshots() {
 
   try {
     const html2canvas = (await import("html2canvas")).default;
-    const capture = (node) => (node ? html2canvas(node, { scale: 1.5, backgroundColor: "#ffffff" }) : null);
+    // scale: 3 (not the default 1 or the old 1.5) — these tables carry small
+    // (11-12px) text that reads as blurry once rasterized and squeezed to
+    // page width; a higher source resolution keeps that text sharp at the
+    // size it's actually printed at.
+    const capture = (node) => (node ? html2canvas(node, { scale: 3, backgroundColor: "#ffffff" }) : null);
     // Both yearly tables scroll horizontally on screen (many year columns)
     // — a plain capture only grabs the visible viewport and silently drops
     // whatever's scrolled out of view. Forcing the clone's width to the
@@ -292,7 +297,7 @@ async function captureOperatorSnapshots() {
     const captureFullWidthTable = (node, { onclone } = {}) =>
       node
         ? html2canvas(node, {
-            scale: 1.5,
+            scale: 3,
             backgroundColor: "#ffffff",
             width: node.scrollWidth,
             windowWidth: node.scrollWidth,

@@ -6,7 +6,9 @@ import {
   ResponsiveContainer,
   ComposedChart,
   Bar,
+  Cell,
   Line,
+  LabelList,
   XAxis,
   YAxis,
   Tooltip,
@@ -16,12 +18,20 @@ import {
 import ChartTooltip from "./ChartTooltip";
 import RankedBarList from "./RankedBarList";
 import TableSource from "./TableSource";
+import { BarValueLabel, LineEndLabel, ringedDot } from "./ChartLabels";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { useRegion } from "../context/RegionContext.jsx";
 import { formatNumber } from "../i18n/format";
 import { COUNTIES, CITIES, slugForCode } from "../data/counties";
-import { CHART_COLORS, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
+import {
+  CHART_COLORS,
+  FOREIGN_COLOR,
+  CHART_GRID_COLOR,
+  CHART_AXIS_COLOR,
+  ALERT_COLOR,
+  PANDEMIC_YEARS,
+} from "../theme";
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 
@@ -61,8 +71,30 @@ function fmtInt(n, locale) {
   }
   return formatNumber(Math.round(n), locale);
 }
+
+// Compact axis-tick form ("3,8M" / "3.8M") — fmtInt's "milj."/"tuh." suffixes
+// read fine once in a table cell, but are too wide to repeat on every tick
+// of a Y-axis at this chart's scale.
+function fmtAxisCount(n, locale) {
+  if (n == null) return "";
+  const numLocale = locale === "et" ? "et-EE" : "en-US";
+  if (n >= 1_000_000) {
+    return `${(n / 1_000_000).toLocaleString(numLocale, { maximumFractionDigits: 1 })}M`;
+  }
+  if (n >= 1_000) {
+    return `${(n / 1_000).toLocaleString(numLocale, { maximumFractionDigits: 1 })}k`;
+  }
+  return formatNumber(Math.round(n), locale);
+}
 function fmtPct(n, digits = 1) {
   return n == null ? "—" : `${n.toFixed(digits)}%`;
+}
+// Marks the current, still-in-progress year's X-axis tick with the same "*"
+// the table uses, so a January-through-August bar never reads as a silent
+// like-for-like comparison against full prior years.
+function partialYearTick(year, chartData) {
+  const point = chartData.find((d) => d.x === year);
+  return point?.partial ? `${year} *` : year;
 }
 function fmtEur(n) {
   return n == null ? "—" : `${n.toFixed(2)} €`;
@@ -324,6 +356,11 @@ function OperatorInsights() {
     function buildYearly(regionCode) {
       const guestMap = guestsByRegion.get(regionCode)?.get(residencyCode);
       const nationalGuestMap = guestsByRegion.get("EE")?.get(residencyCode);
+      // Independent of the residency tab filter — on the "domestic" or
+      // "foreign" tab this would otherwise collapse to a trivial 100%/0%,
+      // so it's always domestic-of-total regardless of what's selected.
+      const domesticGuestMap = guestsByRegion.get(regionCode)?.get("EE");
+      const worldGuestMap = guestsByRegion.get(regionCode)?.get("WORLD");
       const capMap = capByRegion.get(regionCode);
 
       return years.map((year, i) => {
@@ -336,16 +373,14 @@ function OperatorInsights() {
         const accommodated = sumField(guestMap, periods);
         const prevAccommodated = prevPeriods ? sumField(guestMap, prevPeriods) : null;
         const nationalAccommodated = sumField(nationalGuestMap, periods);
+        const domesticAccommodated = sumField(domesticGuestMap, periods);
+        const totalAccommodated = sumField(worldGuestMap, periods);
 
         const esta = avgAndLast(capMap, periods, "CAP_ESTA").last;
         const rooms = avgAndLast(capMap, periods, "CAP_BEDR").last;
         const occ = avgAndLast(capMap, periods, "OCC_OR_BEDR").avg;
         const arr = avgAndLast(capMap, periods, "OCC_NI_COST").avg;
-        const prevOcc = prevPeriods ? avgAndLast(capMap, prevPeriods, "OCC_OR_BEDR").avg : null;
         const prevArr = prevPeriods ? avgAndLast(capMap, prevPeriods, "OCC_NI_COST").avg : null;
-
-        const revpar = arr != null && occ != null ? arr * (occ / 100) : null;
-        const prevRevpar = prevArr != null && prevOcc != null ? prevArr * (prevOcc / 100) : null;
 
         return {
           key: year,
@@ -355,13 +390,15 @@ function OperatorInsights() {
           accommodated,
           accommodatedYoy: yoy(accommodated, prevAccommodated),
           share: accommodated != null && nationalAccommodated ? (accommodated / nationalAccommodated) * 100 : null,
+          domesticShare:
+            domesticAccommodated != null && totalAccommodated
+              ? (domesticAccommodated / totalAccommodated) * 100
+              : null,
           esta,
           rooms,
           occ,
           arr,
           arrYoy: yoy(arr, prevArr),
-          revpar,
-          revparYoy: yoy(revpar, prevRevpar),
         };
       });
     }
@@ -386,18 +423,19 @@ function OperatorInsights() {
       const comparePeriod = `${Number(y) - 1}M${m}`;
       const guestMap = guestsByRegion.get(regionCode)?.get(residencyCode);
       const nationalGuestMap = guestsByRegion.get("EE")?.get(residencyCode);
+      const domesticGuestMap = guestsByRegion.get(regionCode)?.get("EE");
+      const worldGuestMap = guestsByRegion.get(regionCode)?.get("WORLD");
       const capMap = capByRegion.get(regionCode);
       const cur = sumField(guestMap, [period]);
       const prev = sumField(guestMap, [comparePeriod]);
       const nationalCur = sumField(nationalGuestMap, [period]);
+      const domesticCur = sumField(domesticGuestMap, [period]);
+      const totalCur = sumField(worldGuestMap, [period]);
       const capCur = capMap?.get(period) ?? {};
       const capPrev = capMap?.get(comparePeriod) ?? {};
       const occCur = capCur.OCC_OR_BEDR ?? null;
-      const occPrev = capPrev.OCC_OR_BEDR ?? null;
       const arrCur = capCur.OCC_NI_COST ?? null;
       const arrPrev = capPrev.OCC_NI_COST ?? null;
-      const revparCur = arrCur != null && occCur != null ? arrCur * (occCur / 100) : null;
-      const revparPrev = arrPrev != null && occPrev != null ? arrPrev * (occPrev / 100) : null;
 
       // Year-to-date through this same month — e.g. "Jan–May 2026" vs
       // "Jan–May 2025" — a monthly single-month figure alone doesn't show
@@ -416,13 +454,12 @@ function OperatorInsights() {
         cumulativeAccommodated: cumulativeCur,
         cumulativeAccommodatedYoy: yoy(cumulativeCur, cumulativePrev),
         share: cur != null && nationalCur ? (cur / nationalCur) * 100 : null,
+        domesticShare: domesticCur != null && totalCur ? (domesticCur / totalCur) * 100 : null,
         esta: capCur.CAP_ESTA ?? null,
         rooms: capCur.CAP_BEDR ?? null,
         occ: occCur,
         arr: arrCur,
         arrYoy: yoy(arrCur, arrPrev),
-        revpar: revparCur,
-        revparYoy: yoy(revparCur, revparPrev),
       };
     }
 
@@ -460,18 +497,23 @@ function OperatorInsights() {
     const shareKey = t("operator.shareOf", regionLabel);
     const occupancyKey = t("operator.occupancyPct");
     const avgNightRateKey = t("operator.avgNightRate");
-    const revparKey = t("operator.revpar");
     const totalEstoniaKey = t("operator.totalEstonia");
+    // `partial` carries through so the chart can mark the current (still
+    // in-progress) year differently from completed years — otherwise a
+    // January–August bar sits at the same height as 12 full months and
+    // reads as a decline that isn't real (see Task: never compare a
+    // partial year to full years without saying so).
     const trendChart = nationalYearly.map((r, i) => ({
       x: r.year,
+      partial: r.partial,
       [totalEstoniaKey]: r.accommodated,
       [shareKey]: regionYearly[i]?.share ?? null,
     }));
     const kpiChart = regionYearly.map((r) => ({
       x: r.year,
+      partial: r.partial,
       [occupancyKey]: r.occ != null ? Number(r.occ.toFixed(1)) : null,
       [avgNightRateKey]: r.arr != null ? Number(r.arr.toFixed(2)) : null,
-      [revparKey]: r.revpar != null ? Number(r.revpar.toFixed(2)) : null,
     }));
 
     return {
@@ -490,7 +532,6 @@ function OperatorInsights() {
       shareKey,
       occupancyKey,
       avgNightRateKey,
-      revparKey,
       totalEstoniaKey,
     };
   }, [indexed, region, residency, yearsToShow, locale, t, REGION_LABELS, recentPeriods]);
@@ -606,12 +647,14 @@ function OperatorInsights() {
                   tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
                   axisLine={{ stroke: CHART_GRID_COLOR }}
                   tickLine={{ stroke: CHART_GRID_COLOR }}
+                  tickFormatter={(year) => partialYearTick(year, view.trendChart)}
                 />
                 <YAxis
                   yAxisId="left"
                   tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
                   axisLine={{ stroke: CHART_GRID_COLOR }}
                   tickLine={{ stroke: CHART_GRID_COLOR }}
+                  tickFormatter={(n) => fmtAxisCount(n, locale)}
                 />
                 <YAxis
                   yAxisId="right"
@@ -623,15 +666,40 @@ function OperatorInsights() {
                 />
                 <Tooltip content={<ChartTooltip locale={locale} />} />
                 <Legend />
-                <Bar yAxisId="left" dataKey={view.totalEstoniaKey} fill={CHART_COLORS[0]} isAnimationActive={false} />
+                <Bar
+                  yAxisId="left"
+                  dataKey={view.totalEstoniaKey}
+                  fill={CHART_COLORS[0]}
+                  radius={[4, 4, 0, 0]}
+                  isAnimationActive={false}
+                >
+                  {view.trendChart.map((d) => (
+                    <Cell
+                      key={d.x}
+                      fill={PANDEMIC_YEARS.has(d.x) ? ALERT_COLOR : CHART_COLORS[0]}
+                      fillOpacity={d.partial ? 0.45 : 1}
+                    />
+                  ))}
+                </Bar>
                 <Line
                   yAxisId="right"
                   type="monotone"
                   dataKey={view.shareKey}
                   stroke={FOREIGN_COLOR}
-                  dot={false}
+                  dot={ringedDot(FOREIGN_COLOR)}
                   isAnimationActive={false}
-                />
+                >
+                  <LabelList
+                    dataKey={view.shareKey}
+                    content={(props) => (
+                      <LineEndLabel
+                        {...props}
+                        dataLength={view.trendChart.length}
+                        formatter={(v) => `${formatNumber(v, locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`}
+                      />
+                    )}
+                  />
+                </Line>
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -646,6 +714,7 @@ function OperatorInsights() {
                   tick={{ fontSize: 11, fill: CHART_AXIS_COLOR }}
                   axisLine={{ stroke: CHART_GRID_COLOR }}
                   tickLine={{ stroke: CHART_GRID_COLOR }}
+                  tickFormatter={(year) => partialYearTick(year, view.kpiChart)}
                 />
                 <YAxis
                   yAxisId="left"
@@ -664,23 +733,50 @@ function OperatorInsights() {
                 />
                 <Tooltip content={<ChartTooltip locale={locale} />} />
                 <Legend />
-                <Bar yAxisId="left" dataKey={view.occupancyKey} fill={CHART_COLORS[2]} isAnimationActive={false} />
+                <Bar
+                  yAxisId="left"
+                  dataKey={view.occupancyKey}
+                  fill={CHART_COLORS[2]}
+                  radius={[4, 4, 0, 0]}
+                  isAnimationActive={false}
+                >
+                  {view.kpiChart.map((d) => (
+                    <Cell
+                      key={d.x}
+                      fill={PANDEMIC_YEARS.has(d.x) ? ALERT_COLOR : CHART_COLORS[2]}
+                      fillOpacity={d.partial ? 0.45 : 1}
+                    />
+                  ))}
+                  <LabelList
+                    dataKey={view.occupancyKey}
+                    content={(props) => (
+                      <BarValueLabel
+                        {...props}
+                        formatter={(v) => `${formatNumber(v, locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`}
+                      />
+                    )}
+                  />
+                </Bar>
                 <Line
                   yAxisId="right"
                   type="monotone"
                   dataKey={view.avgNightRateKey}
                   stroke={CHART_COLORS[1]}
-                  dot={false}
+                  dot={ringedDot(CHART_COLORS[1])}
                   isAnimationActive={false}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey={view.revparKey}
-                  stroke={CHART_COLORS[3]}
-                  dot={false}
-                  isAnimationActive={false}
-                />
+                >
+                  <LabelList
+                    dataKey={view.avgNightRateKey}
+                    content={(props) => (
+                      <LineEndLabel
+                        {...props}
+                        dataLength={view.kpiChart.length}
+                        formatter={(v) => `${formatNumber(v, locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`}
+                        dy={-10}
+                      />
+                    )}
+                  />
+                </Line>
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -808,11 +904,6 @@ function MonthlySnapshotTable({ snapshot, locale, t }) {
           <td>{fmtEur(snapshot.arr)}</td>
           <td className={deltaClass(snapshot.arrYoy)}>{fmtDelta(snapshot.arrYoy)}</td>
         </tr>
-        <tr>
-          <th>{t("operator.revparStar")}</th>
-          <td>{fmtEur(snapshot.revpar)}</td>
-          <td className={deltaClass(snapshot.revparYoy)}>{fmtDelta(snapshot.revparYoy)}</td>
-        </tr>
       </tbody>
     </table>
   );
@@ -866,6 +957,12 @@ function YearlyIndicatorRows({ columns, accommodatedLabel, shareLabel, cumulativ
         </tr>
       )}
       <tr>
+        <th>{t("operator.domesticShare")}</th>
+        {columns.map((r) => (
+          <td key={r.key}>{fmtPct(r.domesticShare)}</td>
+        ))}
+      </tr>
+      <tr>
         <th>{t("operator.establishments")}</th>
         {columns.map((r) => (
           <td key={r.key}>{fmtInt(r.esta, locale)}</td>
@@ -894,20 +991,6 @@ function YearlyIndicatorRows({ columns, accommodatedLabel, shareLabel, cumulativ
         {columns.map((r) => (
           <td key={r.key} className={deltaClass(r.arrYoy)}>
             {fmtDelta(r.arrYoy)}
-          </td>
-        ))}
-      </tr>
-      <tr>
-        <th>{t("operator.revparStar")}</th>
-        {columns.map((r) => (
-          <td key={r.key}>{fmtEur(r.revpar)}</td>
-        ))}
-      </tr>
-      <tr className="operator-subrow">
-        <th>{t("operator.yoyChange")}</th>
-        {columns.map((r) => (
-          <td key={r.key} className={deltaClass(r.revparYoy)}>
-            {fmtDelta(r.revparYoy)}
           </td>
         ))}
       </tr>

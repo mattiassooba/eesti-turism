@@ -23,6 +23,12 @@
   text-decoration: underline;
 }
 
+.source-footer-scope {
+  flex-basis: 100%;
+  color: rgba(238, 240, 238, 0.55);
+  font-style: italic;
+}
+
 .footer-counties {
   flex-basis: 100%;
   margin-top: 4px;

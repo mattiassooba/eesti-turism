@@ -9,6 +9,7 @@ import {
   Cell,
   LineChart,
   Line,
+  LabelList,
   XAxis,
   YAxis,
   Tooltip,
@@ -17,6 +18,7 @@ import {
 import ChartTooltip from "./ChartTooltip";
 import TableSource from "./TableSource";
 import NarrativeBlock from "./NarrativeBlock";
+import { LineEndLabel, lastPointDot } from "./ChartLabels";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { formatNumber } from "../i18n/format";
 import { CHART_COLORS, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
@@ -240,7 +242,7 @@ function Page6Capacity() {
               tickLine={{ stroke: CHART_GRID_COLOR }}
             />
             <Tooltip content={<ChartTooltip locale={locale} />} />
-            <Bar dataKey="Voodikohad" isAnimationActive={false}>
+            <Bar dataKey="Voodikohad" radius={[4, 4, 0, 0]} isAnimationActive={false}>
               {data.regionChart.map((entry) => (
                 <Cell key={entry.code} fill={entry.code === region ? FOREIGN_COLOR : CHART_COLORS[0]} />
               ))}
@@ -273,9 +275,20 @@ function Page6Capacity() {
                 type="monotone"
                 dataKey="Voodikohad"
                 stroke={CHART_COLORS[3]}
-                dot={false}
+                dot={lastPointDot(CHART_COLORS[3], visibleTrend.length)}
                 isAnimationActive={false}
-              />
+              >
+                <LabelList
+                  dataKey="Voodikohad"
+                  content={(props) => (
+                    <LineEndLabel
+                      {...props}
+                      dataLength={visibleTrend.length}
+                      formatter={(v) => formatNumber(v, locale)}
+                    />
+                  )}
+                />
+              </Line>
             </LineChart>
           </ResponsiveContainer>
           <TableSource path={MAJUTUS_PATH} ids={["TU11.PX"]} />
@@ -304,9 +317,20 @@ function Page6Capacity() {
                 type="monotone"
                 dataKey={occupancyKey}
                 stroke={CHART_COLORS[1]}
-                dot={false}
+                dot={lastPointDot(CHART_COLORS[1], visibleOccupancy.length)}
                 isAnimationActive={false}
-              />
+              >
+                <LabelList
+                  dataKey={occupancyKey}
+                  content={(props) => (
+                    <LineEndLabel
+                      {...props}
+                      dataLength={visibleOccupancy.length}
+                      formatter={(v) => `${formatNumber(v, locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`}
+                    />
+                  )}
+                />
+              </Line>
             </LineChart>
           </ResponsiveContainer>
           <TableSource path={MAJUTUS_PATH} ids={["TU110.PX"]} />

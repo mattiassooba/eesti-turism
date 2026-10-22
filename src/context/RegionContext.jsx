@@ -23,15 +23,27 @@ const SLUG_PATTERN_ET = /^\/maakond\/([a-z0-9-]+)/;
 export function RegionProvider({ children }) {
   const { pathname } = useLocation();
 
-  const region = useMemo(() => {
+  // isExplicitRegion: true only when the URL itself named a county — false
+  // on the root "/" dashboard, where `region` is just the Harju routing
+  // fallback, not something the visitor actually chose. The newsletter PDF
+  // uses this to tell "reader picked a county" (preserve it) apart from
+  // "reader is on the generic overview" (pick the most newsworthy county
+  // instead of always defaulting to Harju).
+  const { region, isExplicitRegion } = useMemo(() => {
     const enMatch = SLUG_PATTERN_EN.exec(pathname);
-    if (enMatch) return countyBySlug(enMatch[1], "en")?.code ?? DEFAULT_REGION;
+    if (enMatch) {
+      const code = countyBySlug(enMatch[1], "en")?.code;
+      return { region: code ?? DEFAULT_REGION, isExplicitRegion: Boolean(code) };
+    }
     const etMatch = SLUG_PATTERN_ET.exec(pathname);
-    if (etMatch) return countyBySlug(etMatch[1], "et")?.code ?? DEFAULT_REGION;
-    return DEFAULT_REGION;
+    if (etMatch) {
+      const code = countyBySlug(etMatch[1], "et")?.code;
+      return { region: code ?? DEFAULT_REGION, isExplicitRegion: Boolean(code) };
+    }
+    return { region: DEFAULT_REGION, isExplicitRegion: false };
   }, [pathname]);
 
-  const value = useMemo(() => ({ region }), [region]);
+  const value = useMemo(() => ({ region, isExplicitRegion }), [region, isExplicitRegion]);
   return <RegionContext.Provider value={value}>{children}</RegionContext.Provider>;
 }
 

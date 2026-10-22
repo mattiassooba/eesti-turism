@@ -237,8 +237,8 @@ function Page3Purpose() {
             />
             <Tooltip content={<ChartTooltip locale={locale} />} />
             <Legend />
-            <Bar dataKey={t("purpose.domesticTrips")} fill={DOMESTIC_COLOR} isAnimationActive={false} />
-            <Bar dataKey={t("purpose.foreignTrips")} fill={FOREIGN_COLOR} isAnimationActive={false} />
+            <Bar dataKey={t("purpose.domesticTrips")} fill={DOMESTIC_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+            <Bar dataKey={t("purpose.foreignTrips")} fill={FOREIGN_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
         <TableSource path={REISIMINE_PATH} ids={["TU54.PX"]} />

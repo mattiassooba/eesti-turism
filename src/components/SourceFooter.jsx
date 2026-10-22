@@ -24,6 +24,7 @@ export default function SourceFooter() {
         </a>
         {" "}· {t("footer.disclaimer")} · {t("app.localeNote")}
       </span>
+      <span className="source-footer-scope">{t("footer.scopeNote")}</span>
       <nav className="footer-counties" aria-label={t("footer.allCounties")}>
         <span className="footer-counties-label">{t("footer.allCounties")}</span>
         <div className="footer-counties-grid">

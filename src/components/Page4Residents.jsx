@@ -8,6 +8,7 @@ import {
   Bar,
   LineChart,
   Line,
+  LabelList,
   XAxis,
   YAxis,
   Tooltip,
@@ -18,6 +19,7 @@ import RankedBarList from "./RankedBarList";
 import ChartTooltip from "./ChartTooltip";
 import SectionFilters from "./SectionFilters";
 import TableSource from "./TableSource";
+import { LineEndLabel, ringedDot, endLabelOffsets } from "./ChartLabels";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { formatNumber } from "../i18n/format";
 import { DOMESTIC_COLOR, FOREIGN_COLOR, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
@@ -192,6 +194,15 @@ function Page4Residents() {
 
   const topCountry = data.countries[0] ?? null;
 
+  // Which of domestic/foreign spend is ahead varies by period — no
+  // guaranteed ordering — so the two end labels' placement is decided from
+  // the actual last values, not a fixed assumption, to keep them apart.
+  const spendLastRow = data.spendChart[data.spendChart.length - 1];
+  const spendEndDy = endLabelOffsets(
+    spendLastRow?.[t("residents.domesticTrip")],
+    spendLastRow?.[t("residents.foreignTrip")]
+  );
+
   return (
     <div className={"dashboard" + (state.loading ? " refetching" : "")}>
       <SectionFilters
@@ -229,8 +240,8 @@ function Page4Residents() {
             />
             <Tooltip content={<ChartTooltip unit="tuh" locale={locale} />} />
             <Legend />
-            <Bar dataKey={t("residents.domesticTrips")} fill={DOMESTIC_COLOR} isAnimationActive={false} />
-            <Bar dataKey={t("residents.foreignTrips")} fill={FOREIGN_COLOR} isAnimationActive={false} />
+            <Bar dataKey={t("residents.domesticTrips")} fill={DOMESTIC_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+            <Bar dataKey={t("residents.foreignTrips")} fill={FOREIGN_COLOR} radius={[4, 4, 0, 0]} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
         <TableSource path={REISIMINE_PATH} ids={["TU51.PX"]} />
@@ -274,16 +285,40 @@ function Page4Residents() {
               type="monotone"
               dataKey={t("residents.domesticTrip")}
               stroke={DOMESTIC_COLOR}
-              dot={false}
+              dot={ringedDot(DOMESTIC_COLOR, 3)}
               isAnimationActive={false}
-            />
+            >
+              <LabelList
+                dataKey={t("residents.domesticTrip")}
+                content={(props) => (
+                  <LineEndLabel
+                    {...props}
+                    dataLength={data.spendChart.length}
+                    formatter={(v) => `${formatNumber(v, locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €`}
+                    dy={spendEndDy[0]}
+                  />
+                )}
+              />
+            </Line>
             <Line
               type="monotone"
               dataKey={t("residents.foreignTrip")}
               stroke={FOREIGN_COLOR}
-              dot={false}
+              dot={ringedDot(FOREIGN_COLOR, 3)}
               isAnimationActive={false}
-            />
+            >
+              <LabelList
+                dataKey={t("residents.foreignTrip")}
+                content={(props) => (
+                  <LineEndLabel
+                    {...props}
+                    dataLength={data.spendChart.length}
+                    formatter={(v) => `${formatNumber(v, locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €`}
+                    dy={spendEndDy[1]}
+                  />
+                )}
+              />
+            </Line>
           </LineChart>
         </ResponsiveContainer>
         <TableSource path={REISIMINE_PATH} ids={["TU56.PX", "TU661.PX"]} />

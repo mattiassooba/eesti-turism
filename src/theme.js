@@ -13,6 +13,16 @@ export const FOREIGN_COLOR = "#d98e2b";
 // categories (e.g. trip purpose, accommodation type).
 export const CHART_COLORS = ["#2b6ca3", "#d98e2b", "#5b6b7a", "#0f3a57", "#9c3b26", "#4d7894"];
 
+// Matches --alert in tokens.css — used to flag specific bars (e.g. the
+// 2020-2021 pandemic dip) without introducing a separate legend entry.
+export const ALERT_COLOR = "#9c3b26";
+
+// 2020-2021: the two years COVID-19 collapsed international travel. Any
+// yearly bar chart spanning this range highlights those two bars in
+// ALERT_COLOR instead of a separate background band — shared here so every
+// chart that does this agrees on exactly which years.
+export const PANDEMIC_YEARS = new Set(["2020", "2021"]);
+
 // Paired 1:1 with CHART_COLORS by index — multi-series line/area charts
 // apply both color AND dash pattern per series, so series stay
 // distinguishable without relying on color alone (colorblind visitors,

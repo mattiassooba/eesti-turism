@@ -6,6 +6,7 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  LabelList,
   XAxis,
   YAxis,
   Tooltip,
@@ -19,6 +20,7 @@ import ChartTooltip from "./ChartTooltip";
 import SectionFilters from "./SectionFilters";
 import TableSource from "./TableSource";
 import NarrativeBlock from "./NarrativeBlock";
+import { LineEndLabel, ringedDot, endLabelOffsets } from "./ChartLabels";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { formatNumber } from "../i18n/format";
 import { countyLabelByMkood } from "../data/counties";
@@ -224,6 +226,13 @@ function Page2Map() {
   if (!base.data && base.error)
     return <div className="panel-error">{t("map.loadError", base.error)}</div>;
 
+  // Which of domestic/foreign is ahead varies by region and time range —
+  // there's no guaranteed ordering — so the two end labels' above/below
+  // placement is decided from the actual last values, not a fixed
+  // assumption, to keep them from landing on top of each other.
+  const historyLastRow = base.data?.historyChart[base.data.historyChart.length - 1];
+  const historyEndDy = endLabelOffsets(historyLastRow?.[t("common.domestic")], historyLastRow?.[t("common.foreign")]);
+
   return (
     <div className={"dashboard" + (base.loading ? " refetching" : "")}>
       <SectionFilters
@@ -312,16 +321,40 @@ function Page2Map() {
               type="monotone"
               dataKey={t("common.domestic")}
               stroke={DOMESTIC_COLOR}
-              dot={false}
+              dot={ringedDot(DOMESTIC_COLOR, 3)}
               isAnimationActive={false}
-            />
+            >
+              <LabelList
+                dataKey={t("common.domestic")}
+                content={(props) => (
+                  <LineEndLabel
+                    {...props}
+                    dataLength={base.data.historyChart.length}
+                    formatter={(v) => formatNumber(v, locale)}
+                    dy={historyEndDy[0]}
+                  />
+                )}
+              />
+            </Line>
             <Line
               type="monotone"
               dataKey={t("common.foreign")}
               stroke={FOREIGN_COLOR}
-              dot={false}
+              dot={ringedDot(FOREIGN_COLOR, 3)}
               isAnimationActive={false}
-            />
+            >
+              <LabelList
+                dataKey={t("common.foreign")}
+                content={(props) => (
+                  <LineEndLabel
+                    {...props}
+                    dataLength={base.data.historyChart.length}
+                    formatter={(v) => formatNumber(v, locale)}
+                    dy={historyEndDy[1]}
+                  />
+                )}
+              />
+            </Line>
           </LineChart>
         </ResponsiveContainer>
         <TableSource path={MAJUTUS_PATH} ids={["TU131.PX"]} />

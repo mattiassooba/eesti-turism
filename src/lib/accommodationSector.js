@@ -183,11 +183,11 @@ export function buildRevenueInsight(latestRevenue, growthHighlights, locale) {
   if (!latestRevenue || !latestGrowth) return null;
   const value = formatPct1(latestRevenue.valueMillionEur, locale);
   const yoy = formatPct1(Math.abs(latestGrowth.pct), locale);
-  const period = latestRevenue.period;
+  const label = latestRevenue.label;
   if (locale === "en") {
-    return `Accommodation-sector revenue was €${value} million in ${period}, ${latestGrowth.pct >= 0 ? "up" : "down"} ${yoy}% year-over-year.`;
+    return `Accommodation-sector revenue was €${value} million in ${label}, ${latestGrowth.pct >= 0 ? "up" : "down"} ${yoy}% year-over-year.`;
   }
-  return `Majutussektori käive oli ${period} ${value} miljonit eurot, ${latestGrowth.pct >= 0 ? "kasvades" : "vähenedes"} aastaga ${yoy}%.`;
+  return `Majutussektori käive oli ${value} miljonit eurot (${label}), ${latestGrowth.pct >= 0 ? "kasvades" : "vähenedes"} aastaga ${yoy}%.`;
 }
 
 export function buildGrowthInsight(growthHighlights, locale) {
@@ -195,9 +195,9 @@ export function buildGrowthInsight(growthHighlights, locale) {
   if (!latest) return null;
   const pct = formatPct1(Math.abs(latest.pct), locale);
   if (locale === "en") {
-    return `Accommodation-sector revenue ${latest.pct >= 0 ? "grew" : "fell"} ${pct}% in ${latest.period}.`;
+    return `Accommodation-sector revenue ${latest.pct >= 0 ? "grew" : "fell"} ${pct}% in ${latest.label}.`;
   }
-  return `Majutussektori käive ${latest.pct >= 0 ? "kasvas" : "vähenes"} ${latest.period}. kvartalis ${pct}%.`;
+  return `Majutussektori käive ${latest.pct >= 0 ? "kasvas" : "vähenes"} ${pct}% (${latest.label}).`;
 }
 
 export function buildBusinessInsight(enterpriseCounts, hotelsVsOther, locale) {
@@ -211,7 +211,7 @@ export function buildBusinessInsight(enterpriseCounts, hotelsVsOther, locale) {
   if (locale === "en") {
     return `Estonia had ${count} accommodation businesses in ${latest.year}, ${hotelsPct}% of them hotels.`;
   }
-  return `Eestis tegutses ${latest.year} aastal ${count} majutusettevõtet, neist ${hotelsPct}% hotellid.`;
+  return `Eestis tegutses ${latest.year}. aastal ${count} majutusettevõtet, neist ${hotelsPct}% hotellid.`;
 }
 
 export function buildWageInsight(wageComparison, locale) {
@@ -220,9 +220,9 @@ export function buildWageInsight(wageComparison, locale) {
   const accommodation = formatNumber(latest.accommodation, locale, { maximumFractionDigits: 0 });
   const allActivities = formatNumber(latest.allActivities, locale, { maximumFractionDigits: 0 });
   if (locale === "en") {
-    return `Accommodation-sector average gross wage was €${accommodation} in ${latest.period}, versus Estonia's €${allActivities} average.`;
+    return `Accommodation-sector average gross wage was €${accommodation} in ${latest.label}, versus Estonia's €${allActivities} average.`;
   }
-  return `Majutussektori keskmine brutopalk oli ${latest.period} ${accommodation} eurot, Eesti keskmine oli ${allActivities} eurot.`;
+  return `Majutussektori keskmine brutopalk oli ${accommodation} eurot (${latest.label}), Eesti keskmine oli ${allActivities} eurot.`;
 }
 
 export function buildCostInsight(costStructure, locale) {

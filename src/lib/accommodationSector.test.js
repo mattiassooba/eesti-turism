@@ -224,10 +224,16 @@ describe("computeLatestKpis", () => {
 
 describe("insight builders", () => {
   it("buildRevenueInsight phrases an increase in Estonian and English", () => {
-    const latestRevenue = { period: "2026Q2", label: "2026Q2", valueMillionEur: 48.1 };
-    const growthHighlights = { latest: { period: "2026Q2", label: "2026Q2", pct: 6.8 }, strongestIncrease: null, strongestDecline: null };
-    expect(buildRevenueInsight(latestRevenue, growthHighlights, "et")).toContain("kasvades");
-    expect(buildRevenueInsight(latestRevenue, growthHighlights, "en")).toContain("up");
+    const latestRevenue = { period: "2026Q2", label: "2026 II kvartal", valueMillionEur: 48.1 };
+    const growthHighlights = { latest: { period: "2026Q2", label: "2026 II kvartal", pct: 6.8 }, strongestIncrease: null, strongestDecline: null };
+    const et = buildRevenueInsight(latestRevenue, growthHighlights, "et");
+    expect(et).toContain("kasvades");
+    expect(et).toContain("2026 II kvartal");
+    expect(et).not.toContain("2026Q2");
+    const en = buildRevenueInsight({ ...latestRevenue, label: "2026 Q2" }, growthHighlights, "en");
+    expect(en).toContain("up");
+    expect(en).toContain("2026 Q2");
+    expect(en).not.toContain("2026Q2");
   });
 
   it("buildRevenueInsight returns null when either input is null", () => {
@@ -243,9 +249,15 @@ describe("insight builders", () => {
 
   it("buildGrowthInsight returns null without a latest point, and phrases a fall in English", () => {
     expect(buildGrowthInsight({ latest: null }, "en")).toBeNull();
-    expect(buildGrowthInsight({ latest: { period: "2026Q2", label: "2026Q2", pct: -1.5 } }, "en")).toBe(
-      "Accommodation-sector revenue fell 1.5% in 2026Q2.",
+    expect(buildGrowthInsight({ latest: { period: "2026Q2", label: "2026 Q2", pct: -1.5 } }, "en")).toBe(
+      "Accommodation-sector revenue fell 1.5% in 2026 Q2.",
     );
+  });
+
+  it("buildGrowthInsight uses the human label in Estonian, without the broken 'kvartalis' form", () => {
+    const sentence = buildGrowthInsight({ latest: { period: "2026Q2", label: "2026 II kvartal", pct: 6.8 } }, "et");
+    expect(sentence).toBe("Majutussektori käive kasvas 6,8% (2026 II kvartal).");
+    expect(sentence).not.toContain("kvartalis");
   });
 
   it("buildBusinessInsight rounds the hotel share from the matching year", () => {
@@ -254,6 +266,7 @@ describe("insight builders", () => {
     expect(buildBusinessInsight(counts, hotelsVsOther, "en")).toBe(
       "Estonia had 937 accommodation businesses in 2024, 32% of them hotels.",
     );
+    expect(buildBusinessInsight(counts, hotelsVsOther, "et")).toContain("2024. aastal");
   });
 
   it("buildBusinessInsight returns null when the count or the matching hotel split is missing", () => {
@@ -262,10 +275,13 @@ describe("insight builders", () => {
   });
 
   it("buildWageInsight compares the latest accommodation wage against the all-activities average", () => {
-    const wages = [{ period: "2026Q2", label: "2026Q2", accommodation: 1500, allActivities: 2150 }];
+    const wages = [{ period: "2026Q2", label: "2026 Q2", accommodation: 1500, allActivities: 2150 }];
     expect(buildWageInsight(wages, "en")).toBe(
-      "Accommodation-sector average gross wage was €1,500 in 2026Q2, versus Estonia's €2,150 average.",
+      "Accommodation-sector average gross wage was €1,500 in 2026 Q2, versus Estonia's €2,150 average.",
     );
+    const et = buildWageInsight([{ period: "2026Q2", label: "2026 II kvartal", accommodation: 1500, allActivities: 2150 }], "et");
+    expect(et).toContain("(2026 II kvartal)");
+    expect(et).not.toContain("2026Q2");
     expect(buildWageInsight([], "en")).toBeNull();
   });
 

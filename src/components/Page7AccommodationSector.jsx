@@ -41,6 +41,7 @@ import {
   buildGrowthInsight,
   buildWageInsight,
   buildCostInsight,
+  buildSectionOverview,
 } from "../lib/accommodationSector.js";
 
 // Fixed display order for EM001's 6 cost categories, paired 1:1 with
@@ -285,6 +286,10 @@ function Page7AccommodationSector() {
   const latestEM001Year = lastOf(data.revenueSeries)?.year ?? null;
   const costStructure = latestEM001Year ? computeCostStructure(data.em001Rows, latestEM001Year) : null;
   const costInsight = buildCostInsight(costStructure, locale);
+  // Section-level overview, shown right under the subheading — just the 4
+  // module insights above joined into one short paragraph, so it can never
+  // say something different from what each module shows below it.
+  const sectionOverview = buildSectionOverview({ revenueInsight, growthInsight, wageInsight, costInsight });
   const costChartData = costStructure
     ? COST_KEYS.map((key) => ({ key, name: t(`accommodationSector.costCategories.${key}`), value: costStructure[key] / 1000 }))
     : [];
@@ -318,6 +323,7 @@ function Page7AccommodationSector() {
   return (
     <div className={"dashboard" + (state.loading ? " refetching" : "")}>
       <p className="operator-intro">{t("accommodationSector.subheading")}</p>
+      {sectionOverview && <p className="operator-intro">{sectionOverview}</p>}
       <p className="operator-footnote">{t("accommodationSector.nationalOnlyNote")}</p>
 
       <div className="tile-row">

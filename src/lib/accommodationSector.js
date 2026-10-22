@@ -260,3 +260,15 @@ export function buildCostInsight(costStructure, locale) {
   }
   return `Suurim kulukategooria oli ${label} (${pct}% kogukuludest).`;
 }
+
+// A short section-level overview (revenue, growth, wages, costs) built by
+// joining the already-computed, already-verified per-module insight
+// sentences — no new data or wording of its own, so it can never drift out
+// of sync with what each module itself shows below it. Any insight that's
+// null (its own data wasn't available) is simply skipped rather than
+// leaving a gap or placeholder text.
+export function buildSectionOverview({ revenueInsight, growthInsight, wageInsight, costInsight }) {
+  const parts = [revenueInsight, growthInsight, wageInsight, costInsight].filter(Boolean);
+  if (!parts.length) return null;
+  return parts.join(" ");
+}

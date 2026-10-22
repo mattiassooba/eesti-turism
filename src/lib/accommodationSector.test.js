@@ -16,6 +16,7 @@ import {
   buildBusinessInsight,
   buildWageInsight,
   buildCostInsight,
+  buildSectionOverview,
 } from "./accommodationSector.js";
 
 const EMP_TOTAL = "Tööga hõivatud isikute arv";
@@ -320,5 +321,35 @@ describe("insight builders", () => {
 
   it("buildCostInsight returns null when there is no cost structure", () => {
     expect(buildCostInsight(null, "en")).toBeNull();
+  });
+});
+
+describe("buildSectionOverview", () => {
+  it("joins the 4 given insight sentences, in order, with a single space", () => {
+    expect(
+      buildSectionOverview({
+        revenueInsight: "Revenue sentence.",
+        growthInsight: "Growth sentence.",
+        wageInsight: "Wage sentence.",
+        costInsight: "Cost sentence.",
+      }),
+    ).toBe("Revenue sentence. Growth sentence. Wage sentence. Cost sentence.");
+  });
+
+  it("skips any insight that's null instead of leaving a gap", () => {
+    expect(
+      buildSectionOverview({
+        revenueInsight: "Revenue sentence.",
+        growthInsight: null,
+        wageInsight: "Wage sentence.",
+        costInsight: null,
+      }),
+    ).toBe("Revenue sentence. Wage sentence.");
+  });
+
+  it("returns null when none of the 4 insights are available", () => {
+    expect(
+      buildSectionOverview({ revenueInsight: null, growthInsight: null, wageInsight: null, costInsight: null }),
+    ).toBeNull();
   });
 });

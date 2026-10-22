@@ -325,31 +325,58 @@ describe("insight builders", () => {
 });
 
 describe("buildSectionOverview", () => {
-  it("joins the 4 given insight sentences, in order, with a single space", () => {
-    expect(
-      buildSectionOverview({
-        revenueInsight: "Revenue sentence.",
-        growthInsight: "Growth sentence.",
-        wageInsight: "Wage sentence.",
-        costInsight: "Cost sentence.",
-      }),
-    ).toBe("Revenue sentence. Growth sentence. Wage sentence. Cost sentence.");
+  const fullData = {
+    latestRevenue: { period: "2026Q2", label: "2026 Q2", valueMillionEur: 83.5 },
+    growthHighlights: { latest: { period: "2026Q2", label: "2026 Q2", pct: 12.1 } },
+    enterpriseCounts: [{ year: "2023", count: 1700 }, { year: "2024", count: 1809 }],
+    hotelsVsOther: [{ year: "2024", hotels: 338, other: 1471 }],
+    wageComparison: [{ period: "2026Q2", label: "2026 Q2", accommodation: 1554, allActivities: 2243 }],
+    costStructure: {
+      personnel: 129177.8,
+      resale: 3856.8,
+      materials: 66633.8,
+      energy: 28235.2,
+      rent: 63566,
+      other: 147942.4,
+      total: 439412,
+    },
+  };
+
+  it("writes one continuous paragraph answering revenue, businesses, wages and costs — stating the growth % once", () => {
+    const text = buildSectionOverview(fullData, "en");
+    expect(text).toBe(
+      "Accommodation-sector revenue was €83.5 million in 2026 Q2, up 12.1% year-over-year. " +
+        "Estonia had 1,809 accommodation businesses in 2024, 19% of them hotels. " +
+        "The sector's average gross wage was €1,554 in 2026 Q2, compared with Estonia's €2,243 average. " +
+        "The largest cost category was personnel costs, accounting for 29% of total costs.",
+    );
+    // "12.1" (the growth figure) appears in the revenue clause only, not repeated in a separate growth sentence.
+    expect(text.match(/12\.1/g)?.length).toBe(1);
   });
 
-  it("skips any insight that's null instead of leaving a gap", () => {
-    expect(
-      buildSectionOverview({
-        revenueInsight: "Revenue sentence.",
-        growthInsight: null,
-        wageInsight: "Wage sentence.",
-        costInsight: null,
-      }),
-    ).toBe("Revenue sentence. Wage sentence.");
+  it("writes grammatically correct Estonian, with the period in a parenthetical", () => {
+    const text = buildSectionOverview(fullData, "et");
+    expect(text).toBe(
+      "Majutussektori käive oli 83,5 miljonit eurot (2026 Q2), kasvades aastaga 12,1%. " +
+        "Eestis tegutses 2024. aastal 1809 majutusettevõtet, millest 19% olid hotellid. " +
+        "Keskmine brutopalk majutussektoris oli 1554 eurot (2026 Q2), Eesti keskmine oli 2243 eurot. " +
+        "Suurim kulukategooria oli personalikulud, mis moodustas 29% kogukuludest.",
+    );
   });
 
-  it("returns null when none of the 4 insights are available", () => {
+  it("skips a clause whose own data is missing, without leaving a gap", () => {
+    const text = buildSectionOverview({ ...fullData, wageComparison: [] }, "en");
+    expect(text).not.toContain("average gross wage");
+    expect(text).toContain("accommodation-sector revenue was €83.5 million".replace("accommodation", "Accommodation"));
+    expect(text).toContain("The largest cost category");
+  });
+
+  it("returns null when no data is available at all", () => {
     expect(
-      buildSectionOverview({ revenueInsight: null, growthInsight: null, wageInsight: null, costInsight: null }),
+      buildSectionOverview(
+        { latestRevenue: null, growthHighlights: null, enterpriseCounts: [], hotelsVsOther: [], wageComparison: [], costStructure: null },
+        "en",
+      ),
     ).toBeNull();
   });
 });

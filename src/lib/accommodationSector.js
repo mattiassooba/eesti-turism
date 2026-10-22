@@ -261,14 +261,70 @@ export function buildCostInsight(costStructure, locale) {
   return `Suurim kulukategooria oli ${label} (${pct}% kogukuludest).`;
 }
 
-// A short section-level overview (revenue, growth, wages, costs) built by
-// joining the already-computed, already-verified per-module insight
-// sentences — no new data or wording of its own, so it can never drift out
-// of sync with what each module itself shows below it. Any insight that's
-// null (its own data wasn't available) is simply skipped rather than
-// leaving a gap or placeholder text.
-export function buildSectionOverview({ revenueInsight, growthInsight, wageInsight, costInsight }) {
-  const parts = [revenueInsight, growthInsight, wageInsight, costInsight].filter(Boolean);
-  if (!parts.length) return null;
-  return parts.join(" ");
+// A short section-level overview, written as continuous prose (not a join
+// of the per-module insight sentences, which repeats itself when read back
+// to back — e.g. the growth % would appear twice). Computed fresh from the
+// same underlying data every module already uses, so it answers, in order:
+// how revenue is developing, how many businesses operate, how fast the
+// sector is growing (the same revenue-growth figure, stated once), how
+// wages compare to the national average, and what the largest cost
+// category is. Any clause whose own data isn't available is simply
+// skipped, never leaving a gap or a placeholder.
+export function buildSectionOverview(
+  { latestRevenue, growthHighlights, enterpriseCounts, hotelsVsOther, wageComparison, costStructure },
+  locale,
+) {
+  const latestGrowth = growthHighlights?.latest ?? null;
+  const latestCount = lastOf(enterpriseCounts);
+  const split = latestCount ? hotelsVsOther?.find((p) => p.year === latestCount.year) : null;
+  const splitTotal = split ? split.hotels + split.other : 0;
+  const latestWage = lastOf(wageComparison);
+
+  const sentences = [];
+
+  if (latestRevenue && latestGrowth) {
+    const value = formatPct1(latestRevenue.valueMillionEur, locale);
+    const yoy = formatPct1(Math.abs(latestGrowth.pct), locale);
+    sentences.push(
+      locale === "en"
+        ? `Accommodation-sector revenue was €${value} million in ${latestRevenue.label}, ${latestGrowth.pct >= 0 ? "up" : "down"} ${yoy}% year-over-year.`
+        : `Majutussektori käive oli ${value} miljonit eurot (${latestRevenue.label}), ${latestGrowth.pct >= 0 ? "kasvades" : "vähenedes"} aastaga ${yoy}%.`,
+    );
+  }
+
+  if (latestCount && split && splitTotal > 0) {
+    const count = formatNumber(latestCount.count, locale);
+    const hotelsPct = formatNumber(Math.round((split.hotels / splitTotal) * 100), locale);
+    sentences.push(
+      locale === "en"
+        ? `Estonia had ${count} accommodation businesses in ${latestCount.year}, ${hotelsPct}% of them hotels.`
+        : `Eestis tegutses ${latestCount.year}. aastal ${count} majutusettevõtet, millest ${hotelsPct}% olid hotellid.`,
+    );
+  }
+
+  if (latestWage) {
+    const accommodation = formatNumber(latestWage.accommodation, locale, { maximumFractionDigits: 0 });
+    const allActivities = formatNumber(latestWage.allActivities, locale, { maximumFractionDigits: 0 });
+    sentences.push(
+      locale === "en"
+        ? `The sector's average gross wage was €${accommodation} in ${latestWage.label}, compared with Estonia's €${allActivities} average.`
+        : `Keskmine brutopalk majutussektoris oli ${accommodation} eurot (${latestWage.label}), Eesti keskmine oli ${allActivities} eurot.`,
+    );
+  }
+
+  if (costStructure && costStructure.total) {
+    const largestKey = NAMEABLE_COST_CATEGORY_KEYS.reduce((best, key) =>
+      costStructure[key] > costStructure[best] ? key : best,
+    );
+    const label = COST_CATEGORY_LABELS[largestKey][locale === "en" ? "en" : "et"];
+    const pct = formatNumber(Math.round((costStructure[largestKey] / costStructure.total) * 100), locale);
+    sentences.push(
+      locale === "en"
+        ? `The largest cost category was ${label}, accounting for ${pct}% of total costs.`
+        : `Suurim kulukategooria oli ${label}, mis moodustas ${pct}% kogukuludest.`,
+    );
+  }
+
+  if (!sentences.length) return null;
+  return sentences.join(" ");
 }

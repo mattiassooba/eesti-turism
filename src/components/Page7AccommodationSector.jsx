@@ -289,7 +289,17 @@ function Page7AccommodationSector() {
   // Section-level overview, shown right under the subheading — just the 4
   // module insights above joined into one short paragraph, so it can never
   // say something different from what each module shows below it.
-  const sectionOverview = buildSectionOverview({ revenueInsight, growthInsight, wageInsight, costInsight });
+  const sectionOverview = buildSectionOverview(
+    {
+      latestRevenue: data.latestRevenue,
+      growthHighlights: data.growthHighlights,
+      enterpriseCounts: data.enterpriseCounts,
+      hotelsVsOther: data.hotelsVsOther,
+      wageComparison: data.wageComparison,
+      costStructure,
+    },
+    locale,
+  );
   const costChartData = costStructure
     ? COST_KEYS.map((key) => ({ key, name: t(`accommodationSector.costCategories.${key}`), value: costStructure[key] / 1000 }))
     : [];
@@ -323,8 +333,14 @@ function Page7AccommodationSector() {
   return (
     <div className={"dashboard" + (state.loading ? " refetching" : "")}>
       <p className="operator-intro">{t("accommodationSector.subheading")}</p>
-      {sectionOverview && <p className="operator-intro">{sectionOverview}</p>}
-      <p className="operator-footnote">{t("accommodationSector.nationalOnlyNote")}</p>
+      {sectionOverview ? (
+        <div className="narrative-card">
+          <p className="narrative-text">{sectionOverview}</p>
+          <div className="narrative-caption">{t("accommodationSector.nationalOnlyNote")}</div>
+        </div>
+      ) : (
+        <p className="operator-footnote">{t("accommodationSector.nationalOnlyNote")}</p>
+      )}
 
       <div className="tile-row">
         <div className="stat-tile">

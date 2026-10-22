@@ -223,12 +223,14 @@ function buildRegionDashboardPrompt(region, m, divergenceFinding) {
   }`;
 }
 
-// A compact ~10-year national residents-vs-foreign-visitors series, used
-// to draw a small native stacked-bar chart on page 1 of the PDF newsletter
-// (see NewsletterPdfButton.jsx) — independent of any specific page's DOM,
-// so it's always available regardless of which tab the reader has open
-// when they generate the PDF.
-async function computeNationalYearlyTrend() {
+// A 36-month national residents-vs-foreign-visitors series, used to draw
+// a small native line chart on page 1 of the PDF newsletter (see
+// NewsletterPdfButton.jsx) — independent of any specific page's DOM, so
+// it's always available regardless of which tab the reader has open when
+// they generate the PDF. Unlike the old annual version, a monthly series
+// has no "partial period" case to flag — every returned point is a
+// complete calendar month.
+async function computeNationalMonthlyTrend() {
   const data = await fetchTableData(
     MAJUTUS_PATH,
     "TU131.PX",
@@ -236,42 +238,23 @@ async function computeNationalYearlyTrend() {
       { code: "Näitaja", selection: { filter: "item", values: ["OCC_ARR"] } },
       { code: "Maakond", selection: { filter: "item", values: ["EE"] } },
       { code: "Elukohariik", selection: { filter: "item", values: ["EE", "FOR"] } },
-      // 132 months (11 years) of headroom so the oldest calendar year in
-      // the window is very likely complete once we take the last 10.
-      { code: "Vaatlusperiood", selection: { filter: "top", values: ["132"] } },
+      { code: "Vaatlusperiood", selection: { filter: "top", values: ["36"] } },
     ],
     { locale: "et" }
   );
 
-  const byYear = new Map();
-  const monthsPerYear = new Map();
+  const byPeriod = new Map();
   for (const row of flattenToRows(data)) {
     if (row.value === null) continue;
-    const year = row.Vaatlusperiood.split("M")[0];
-    if (!byYear.has(year)) byYear.set(year, { domestic: 0, foreign: 0 });
-    const bucket = byYear.get(year);
+    if (!byPeriod.has(row.Vaatlusperiood)) {
+      byPeriod.set(row.Vaatlusperiood, { period: row.Vaatlusperiood, label: row.Vaatlusperiood_label, domestic: 0, foreign: 0 });
+    }
+    const bucket = byPeriod.get(row.Vaatlusperiood);
     if (row.Elukohariik === "EE") bucket.domestic += row.value;
     else if (row.Elukohariik === "FOR") bucket.foreign += row.value;
-    monthsPerYear.set(year, (monthsPerYear.get(year) ?? 0) + 1);
   }
 
-  const years = Array.from(byYear.keys()).sort();
-  // Drop a leading partial year (fewer than 12 months in the fetch window,
-  // counting distinct months across both residency series) rather than
-  // showing it as a misleadingly short bar.
-  if (years.length && monthsPerYear.get(years[0]) < 24) years.shift();
-
-  // The trailing (current) year is very often partial too — e.g. a report
-  // generated in August only has Jan-Aug for this year, but a full 12
-  // months for every prior year. Unlike the leading year, this one isn't
-  // dropped (its guests-so-far figure is useful context), but it's flagged
-  // so the PDF chart can mark it visually instead of silently drawing a
-  // short bar next to full-year bars.
-  return years.slice(-10).map((year) => ({
-    year,
-    ...byYear.get(year),
-    partial: (monthsPerYear.get(year) ?? 0) < 24,
-  }));
+  return Array.from(byPeriod.values()).sort((a, b) => a.period.localeCompare(b.period));
 }
 
 // ---- Map (Kaart ja hooajalisus) ----------------------------------------
@@ -1039,12 +1022,12 @@ async function main() {
     return;
   }
 
-  const [map, purpose, capacity, expenses, nationalYearlyResidency, regionalOccPrice] = await Promise.all([
+  const [map, purpose, capacity, expenses, nationalMonthlyTrend, regionalOccPrice] = await Promise.all([
     computeMapMetrics(dashboard),
     computePurposeMetrics(),
     computeCapacityMetrics(),
     computeExpensesMetrics(),
-    computeNationalYearlyTrend(),
+    computeNationalMonthlyTrend(),
     computeRegionalOccupancyPrice(),
   ]);
 
@@ -1065,7 +1048,7 @@ async function main() {
   ).filter(Boolean);
 
   if (process.argv.includes("--debug-metrics")) {
-    console.log(JSON.stringify({ dashboard, map, purpose, capacity, expenses, nationalYearlyResidency }, null, 2));
+    console.log(JSON.stringify({ dashboard, map, purpose, capacity, expenses, nationalMonthlyTrend }, null, 2));
     console.log("--- findings (all, unranked) ---");
     console.log(JSON.stringify(allFindings, null, 2));
     console.log("--- findings (ranked, sent to Claude) ---");
@@ -1108,7 +1091,7 @@ async function main() {
 
   console.log(`Calling Claude to generate ${ALL_REGIONS.length} region-specific dashboard blurbs…`);
   sections.dashboardByRegion = await callClaudeRegions(anthropic, model, ALL_REGIONS, regionPromptBlocks);
-  sections.dashboard.nationalYearlyResidency = nationalYearlyResidency;
+  sections.dashboard.nationalMonthlyTrend = nationalMonthlyTrend;
 
   const output = {
     generatedAt: new Date().toISOString(),

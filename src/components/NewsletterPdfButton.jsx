@@ -8,8 +8,8 @@ const MARGIN = 48;
 const LINE_HEIGHT = 14;
 // Match DOMESTIC_COLOR / FOREIGN_COLOR from src/theme.js, used everywhere
 // else in the app for this exact residents-vs-foreign-visitors split.
-const DOMESTIC_LINE_COLOR = [91, 107, 122];
-const FOREIGN_LINE_COLOR = [217, 142, 43];
+const DOMESTIC_BAR_COLOR = [91, 107, 122];
+const FOREIGN_BAR_COLOR = [217, 142, 43];
 // Match --ink / --positive / --alert / --sea from src/styles/tokens.css —
 // jsPDF has no access to CSS custom properties, so these are kept in sync
 // by hand the same way the chart colors above already are.
@@ -17,6 +17,13 @@ const INK_COLOR = [16, 27, 38];
 const POSITIVE_COLOR = [31, 122, 82];
 const NEGATIVE_COLOR = [156, 59, 38];
 const SEA_COLOR = [43, 108, 163];
+
+// Blends an [r,g,b] toward white — used to mute a partial (still
+// in-progress) year's bar so it doesn't read as a like-for-like comparison
+// against full prior years.
+function lighten([r, g, b], amount) {
+  return [r, g, b].map((c) => Math.round(c + (255 - c) * amount));
+}
 
 // Only enabled once narrative.json is confirmed present — same
 // graceful-degradation stance as NarrativeBlock (no error UI, just no
@@ -91,67 +98,22 @@ export default function NewsletterPdfButton() {
         y += 5;
       }
 
-      // Small uppercase tracked label ("EESTI TURISM • AUGUST 2026") above
-      // the headline — jsPDF's `charSpace` text option gives the letter-
-      // spacing a plain doc.text() can't.
-      function eyebrow(text) {
-        ensureSpace(LINE_HEIGHT);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(9);
-        doc.setTextColor(...SEA_COLOR);
-        doc.text(text.toUpperCase(), MARGIN, y, { charSpace: 1.1 });
-        doc.setTextColor(0);
-        y += 18;
-      }
-
       // Bold headline restating the single most-important ranked finding
-      // (Task 3.1) — now the dominant element on the page (Task 3.1's
-      // revised layout puts the brand/period line above it as a small
-      // eyebrow instead of the page's main title).
+      // (Task 3.1) — the first thing a reader sees after the brand line,
+      // instead of a generic "here's your report" intro.
       function headline(text) {
         if (!text) return;
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(19);
+        doc.setFontSize(15);
         const lines = doc.splitTextToSize(text, maxWidth);
         for (const line of lines) {
-          ensureSpace(LINE_HEIGHT + 6);
+          ensureSpace(LINE_HEIGHT + 4);
           doc.setTextColor(...INK_COLOR);
           doc.text(line, MARGIN, y);
-          y += LINE_HEIGHT + 6;
+          y += LINE_HEIGHT + 4;
         }
         doc.setTextColor(0);
-        y += 4;
-      }
-
-      // Secondary, deterministic (non-AI) line under the headline — the
-      // nights YoY figure plus the stay-length implication, built straight
-      // from `facts`, the same way KPI cards are, not from Claude. Mirrors
-      // the headline's own "restate the #1 finding" role for the #2 story
-      // (nights/stay-length) without needing another Claude field.
-      function subheadline(n, loc) {
-        if (!n || n.totalNightsYoyPct == null) return;
-        const nightsPct = n.totalNightsYoyPct;
-        const stayPct = n.avgNightsPerGuestYoyPct;
-        const nightsLabel = loc === "en" ? "Nights" : "Ööbimiste arv";
-        const nightsVerb = loc === "en" ? (nightsPct >= 0 ? "grew" : "fell") : nightsPct >= 0 ? "kasvas" : "vähenes";
-        const pctText = `${Math.abs(nightsPct).toFixed(1)}%`;
-        let stayClause = "";
-        if (stayPct != null) {
-          const intense = Math.abs(stayPct) >= 5;
-          if (loc === "en") {
-            const verb = stayPct >= 0 ? "lengthened" : "shortened";
-            stayClause = ` — stays ${verb} ${intense ? "notably" : "slightly"}`;
-          } else {
-            const verb = stayPct >= 0 ? "pikenesid" : "lühenesid";
-            stayClause = ` — külastused ${verb} ${intense ? "märgatavalt" : "veidi"}`;
-          }
-        }
-        paragraph(`${nightsLabel} ${nightsVerb} ${pctText}${stayClause}.`, {
-          font: "normal",
-          size: 11.5,
-          color: 75,
-          gap: 16,
-        });
+        y += 6;
       }
 
       // A short bulleted list (Task 3.1's "key insights") — a sea-colored
@@ -191,26 +153,20 @@ export default function NewsletterPdfButton() {
         doc.setFontSize(16);
         doc.setTextColor(...INK_COLOR);
         doc.text(value, x + pad, y + 33);
-        // `delta` omitted entirely (not just null) skips this row, for a
-        // shorter card showing just a label and a value — used for the
-        // page-1 snapshot cards, where the headline/subheadline above
-        // already carry the period's two most important YoY deltas.
-        if (delta !== undefined) {
-          const deltaY = Math.min(y + 49, y + cardHeight - 8);
-          if (delta != null) {
-            const positive = delta >= 0;
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(9.5);
-            doc.setTextColor(...(positive ? POSITIVE_COLOR : NEGATIVE_COLOR));
-            const sign = positive ? "+" : "";
-            const deltaText = `${sign}${delta.toFixed(1)}${deltaIsPoints ? " p" : "%"} YoY`;
-            doc.text(deltaText, x + pad, deltaY);
-          } else {
-            doc.setFont("helvetica", "italic");
-            doc.setFontSize(8.5);
-            doc.setTextColor(150);
-            doc.text("n/a", x + pad, deltaY);
-          }
+        const deltaY = Math.min(y + 49, y + cardHeight - 8);
+        if (delta != null) {
+          const positive = delta >= 0;
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9.5);
+          doc.setTextColor(...(positive ? POSITIVE_COLOR : NEGATIVE_COLOR));
+          const sign = positive ? "+" : "";
+          const deltaText = `${sign}${delta.toFixed(1)}${deltaIsPoints ? " p" : "%"} YoY`;
+          doc.text(deltaText, x + pad, deltaY);
+        } else {
+          doc.setFont("helvetica", "italic");
+          doc.setFontSize(8.5);
+          doc.setTextColor(150);
+          doc.text("n/a", x + pad, deltaY);
         }
         doc.setTextColor(0);
       }
@@ -292,99 +248,92 @@ export default function NewsletterPdfButton() {
         return String(Math.round(n));
       }
 
-      // A 36-month domestic-vs-foreign line chart — replaces the old
-      // annual stacked-bar chart so the trend reads as a continuous,
-      // seasonal line (matching the reference layout) instead of yearly
-      // totals. Unlike the old annual series, every monthly point is a
-      // complete calendar month, so there's no "partial period" to flag.
-      function monthlyTrendChart(series, { height = 100, gap = 14 } = {}) {
-        if (!Array.isArray(series) || series.length < 2) return;
-        const topPadding = 10;
-        const labelGutter = 40; // room for the two end-of-line value labels
-        const chartWidth = maxWidth - labelGutter;
-        ensureSpace(height + topPadding + 32);
+      // Stacked bars: domestic (bottom) + foreign (top) per year, same
+      // residents-vs-visitors split and colors used everywhere else in the
+      // app (see DOMESTIC_COLOR/FOREIGN_COLOR in src/theme.js). Each bar is
+      // labeled with its total, and each segment with its own value where
+      // there's room — otherwise the chart only shows relative shape, not
+      // the actual scale of guests involved.
+      function nationalResidencyChart(series, { height = 110, gap = 12 } = {}) {
+        if (!Array.isArray(series) || !series.length) return;
+        const topPadding = 11;
+        ensureSpace(height + topPadding + 34);
         const top = y + topPadding;
+        const max = Math.max(...series.map((d) => d.domestic + d.foreign), 1);
+        const barGap = 6;
+        const barWidth = (maxWidth - barGap * (series.length - 1)) / series.length;
         const axisY = top + height;
-        const maxVal = Math.max(...series.flatMap((d) => [d.domestic, d.foreign]), 1);
-        const valueToY = (v) => axisY - (v / maxVal) * height;
-        const stepX = chartWidth / (series.length - 1);
-        const xAt = (i) => MARGIN + i * stepX;
 
-        // Dashed horizontal gridlines, matching the reference's light,
-        // recessive grid — drawn before the lines so the lines sit on top.
-        doc.setDrawColor(226, 228, 226);
+        doc.setDrawColor(210);
         doc.setLineWidth(0.5);
-        doc.setLineDashPattern([2, 2], 0);
-        const gridBands = 3;
-        for (let g = 1; g <= gridBands; g++) {
-          const gy = top + (height / gridBands) * (g - 1);
-          doc.line(MARGIN, gy, MARGIN + chartWidth, gy);
-        }
-        doc.setLineDashPattern([], 0);
-        doc.setDrawColor(200);
-        doc.line(MARGIN, axisY, MARGIN + chartWidth, axisY);
+        doc.line(MARGIN, axisY, MARGIN + maxWidth, axisY);
 
-        function drawLine(values, color) {
-          doc.setDrawColor(...color);
-          doc.setLineWidth(1.6);
-          for (let i = 0; i < values.length - 1; i++) {
-            doc.line(xAt(i), valueToY(values[i]), xAt(i + 1), valueToY(values[i + 1]));
-          }
-        }
-        drawLine(
-          series.map((d) => d.domestic),
-          DOMESTIC_LINE_COLOR
-        );
-        drawLine(
-          series.map((d) => d.foreign),
-          FOREIGN_LINE_COLOR
-        );
-
-        // End-of-line value labels — nudged apart if the two lines finish
-        // close together, so neither label sits on top of the other.
-        const last = series[series.length - 1];
-        const domesticY = valueToY(last.domestic);
-        const foreignY = valueToY(last.foreign);
-        const tooClose = Math.abs(domesticY - foreignY) < 9;
-        const domesticLabelY = tooClose && domesticY > foreignY ? domesticY + 5 : domesticY + 3;
-        const foreignLabelY = tooClose && foreignY >= domesticY ? foreignY + 5 : foreignY + 3;
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(7.5);
-        doc.setTextColor(...DOMESTIC_LINE_COLOR);
-        doc.text(abbrevShort(last.domestic), MARGIN + chartWidth + 4, domesticLabelY);
-        doc.setTextColor(...FOREIGN_LINE_COLOR);
-        doc.text(abbrevShort(last.foreign), MARGIN + chartWidth + 4, foreignLabelY);
-        doc.setTextColor(0);
-
-        // X-axis: one label per calendar year, placed at that year's first
-        // point in the window — only at an actual January, never guessed
-        // at the window's own start (which usually isn't January), so
-        // every label means the same thing.
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7.5);
-        doc.setTextColor(110);
-        let lastYearLabeled = null;
         series.forEach((d, i) => {
-          const year = d.period.slice(0, 4);
-          const month = d.period.slice(5, 7);
-          if (year !== lastYearLabeled && month === "01") {
-            doc.text(year, xAt(i), axisY + 12, { align: "center" });
-            lastYearLabeled = year;
+          const domesticHeight = (d.domestic / max) * (height - 4);
+          const foreignHeight = (d.foreign / max) * (height - 4);
+          const barX = MARGIN + i * (barWidth + barGap);
+          const barCenterX = barX + barWidth / 2;
+
+          // A partial (still in-progress) year's bar is muted — otherwise a
+          // January-through-August bar sits next to full-year bars with no
+          // visual sign it isn't a like-for-like comparison.
+          const domesticColor = d.partial ? lighten(DOMESTIC_BAR_COLOR, 0.45) : DOMESTIC_BAR_COLOR;
+          const foreignColor = d.partial ? lighten(FOREIGN_BAR_COLOR, 0.45) : FOREIGN_BAR_COLOR;
+
+          doc.setFillColor(...domesticColor);
+          doc.rect(barX, axisY - domesticHeight, barWidth, domesticHeight, "F");
+          doc.setFillColor(...foreignColor);
+          doc.rect(barX, axisY - domesticHeight - foreignHeight, barWidth, foreignHeight, "F");
+
+          // Segment value labels, white-on-color, only where the segment is
+          // tall enough to hold a legible line of text without overflowing.
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(6.5);
+          doc.setTextColor(255);
+          if (domesticHeight >= 12) {
+            doc.text(abbrevShort(d.domestic), barCenterX, axisY - domesticHeight / 2 + 2, { align: "center" });
           }
+          if (foreignHeight >= 12) {
+            doc.text(abbrevShort(d.foreign), barCenterX, axisY - domesticHeight - foreignHeight / 2 + 2, {
+              align: "center",
+            });
+          }
+
+          // Total, above the bar.
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(7);
+          doc.setTextColor(60);
+          doc.text(abbrevShort(d.domestic + d.foreign), barCenterX, axisY - domesticHeight - foreignHeight - 3, {
+            align: "center",
+          });
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(110);
+          doc.text(d.partial ? `${d.year} *` : String(d.year), barCenterX, axisY + 10, { align: "center" });
         });
         doc.setTextColor(0);
 
-        const legendY = axisY + 28;
-        doc.setFillColor(...DOMESTIC_LINE_COLOR);
+        const legendY = axisY + 26;
+        doc.setFillColor(...DOMESTIC_BAR_COLOR);
         doc.rect(MARGIN, legendY - 7, 8, 8, "F");
         doc.setFontSize(8.5);
         doc.text(t("common.domestic"), MARGIN + 12, legendY);
         const legendGap = MARGIN + 12 + doc.getTextWidth(t("common.domestic")) + 16;
-        doc.setFillColor(...FOREIGN_LINE_COLOR);
+        doc.setFillColor(...FOREIGN_BAR_COLOR);
         doc.rect(legendGap, legendY - 7, 8, 8, "F");
         doc.text(t("common.foreign"), legendGap + 12, legendY);
 
         y = legendY + gap;
+
+        if (series.some((d) => d.partial)) {
+          doc.setFont("helvetica", "italic");
+          doc.setFontSize(7);
+          doc.setTextColor(140);
+          doc.text(t("newsletterPdf.partialYearNote"), MARGIN, legendY + 14);
+          doc.setTextColor(0);
+          y += 12;
+        }
       }
 
       const periodLabel = narrative.periodLabel?.[locale] ?? narrative.periodLabel?.et;
@@ -418,38 +367,48 @@ export default function NewsletterPdfButton() {
       const footerNotes = [];
 
       // ---- Page 1: Estonia in general ---------------------------------
-      eyebrow(`${t("app.brand")} • ${periodLabel}`);
+      paragraph(`${t("app.brand")} — ${periodLabel}`, { font: "bold", size: 20, gap: 4 });
       headline(headlineText);
-      if (facts) subheadline(facts.national, locale);
+      paragraph(t("newsletterPdf.intro"), { font: "italic", size: 8.5, color: 120, gap: 10 });
 
       if (facts) {
-        const foreignSharePct =
-          facts.national.totalGuests ? (facts.national.foreignGuests / facts.national.totalGuests) * 100 : null;
-        kpiCardRow(
-          [
-            { label: t("newsletterPdf.kpi.guests"), value: abbrevShort(facts.national.totalGuests) },
-            { label: t("newsletterPdf.kpi.nights"), value: abbrevShort(facts.national.totalNights) },
-            {
-              label: t("newsletterPdf.kpi.foreignShare"),
-              value: foreignSharePct != null ? `${foreignSharePct.toFixed(0)}%` : "n/a",
-            },
-          ],
-          { height: 46 }
-        );
+        kpiCardRow([
+          {
+            label: t("newsletterPdf.kpi.guests"),
+            value: abbrevShort(facts.national.totalGuests),
+            delta: facts.national.totalGuestsYoyPct,
+          },
+          {
+            label: t("newsletterPdf.kpi.nights"),
+            value: abbrevShort(facts.national.totalNights),
+            delta: facts.national.totalNightsYoyPct,
+          },
+          {
+            label: t("newsletterPdf.kpi.occupancy"),
+            value: facts.national.occupancyPct != null ? `${facts.national.occupancyPct.toFixed(0)}%` : "n/a",
+            delta: facts.national.occupancyPctYoy,
+            deltaIsPoints: true,
+          },
+          {
+            label: t("newsletterPdf.kpi.avgCost"),
+            value: facts.national.avgNightCost != null ? `€${facts.national.avgNightCost.toFixed(0)}` : "n/a",
+            delta: facts.national.avgNightCostYoyPct,
+          },
+        ]);
       }
-
-      paragraph(t("newsletterPdf.trendChartTitle"), { font: "bold", size: 12, gap: 6 });
-      monthlyTrendChart(dashboard?.nationalMonthlyTrend, { height: 95, gap: 18 });
 
       if (keyInsights.length) {
         paragraph(t("newsletterPdf.keyInsightsHeading"), { font: "bold", size: 12, gap: 4 });
         for (const insight of keyInsights) bulletLine(insight);
-        y += 4;
       }
 
-      if (nationalTableCanvas) image(nationalTableCanvas, { maxHeight: 135, gap: 10 });
+      paragraph(t("newsletterPdf.estoniaHeading"), { font: "bold", size: 13, gap: 5 });
+      if (dashboard) paragraph(dashboard[locale] ?? dashboard.et, { size: 9.5, gap: 8 });
 
-      paragraph(t("newsletterPdf.intro"), { font: "italic", size: 8, color: 130, gap: 4 });
+      paragraph(t("newsletterPdf.nationalChartTitle"), { font: "bold", size: 10.5, gap: 3 });
+      nationalResidencyChart(dashboard?.nationalYearlyResidency, { height: 95, gap: 14 });
+
+      if (nationalTableCanvas) image(nationalTableCanvas, { maxHeight: 135, gap: 10 });
 
       const generatedDate = new Date(narrative.generatedAt).toLocaleDateString(
         locale === "en" ? "en-US" : "et-EE"

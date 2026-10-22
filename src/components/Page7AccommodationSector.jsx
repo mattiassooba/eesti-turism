@@ -73,10 +73,16 @@ const EM001_QUERY = [
 ];
 
 const TU410_QUERY = [
-  { code: "Näitaja", selection: { filter: "item", values: ["CUB_SERV", "CUB_SM"] } },
+  // CUB_SM (TU410's own pre-computed YoY change) is a services *volume*
+  // index at constant prices, not nominal revenue growth — materially
+  // different from actual € turnover change. computeRevenueGrowth derives
+  // YoY growth directly from CUB_SERV instead, so CUB_SM is never fetched.
+  { code: "Näitaja", selection: { filter: "item", values: ["CUB_SERV"] } },
   { code: "Teenuse liik", selection: { filter: "item", values: ["I55"] } },
-  // Last 16 quarters (~4 years) — enough for Task 6's growth chart plus the latest KPI.
-  { code: "Vaatlusperiood", selection: { filter: "top", values: ["16"] } },
+  // Last 24 quarters: a full 16-quarter growth series (Task 6's chart plus
+  // the latest KPI) needs each period compared against its t-4 quarter, so
+  // 4 extra quarters of lookback are reserved purely as comparison points.
+  { code: "Vaatlusperiood", selection: { filter: "top", values: ["24"] } },
 ];
 
 const PA113_QUERY = [
@@ -242,6 +248,14 @@ function Page7AccommodationSector() {
   // Module 3: Growth.
   const { latest: latestGrowth, strongestIncrease, strongestDecline } = data.growthHighlights ?? {};
   const growthInsight = buildGrowthInsight(data.growthHighlights, locale);
+  // Expandable table of the full growth series — built from the
+  // already-computed series (no new fetch/state needed), using the same
+  // Vaatlusperiood-label/value shape DataGrid already renders for the raw
+  // tables above.
+  const growthTableRows = data.growthSeries.map((p) => ({
+    Vaatlusperiood_label: p.label,
+    value: p.pct,
+  }));
 
   // Module 4: Wages. Which series (accommodation vs. the Estonia-wide
   // average) is ahead varies by period — no guaranteed ordering — so the
@@ -249,6 +263,21 @@ function Page7AccommodationSector() {
   // same endLabelOffsets convention Page4Residents.jsx/Page2Map.jsx use.
   const wageInsight = buildWageInsight(data.wageComparison, locale);
   const wageEndDy = endLabelOffsets(latestWage?.accommodation, latestWage?.allActivities);
+  // Expandable table: melt the two-series comparison into one row per
+  // period per series, so both values are exposed via the same
+  // label-columns-plus-value shape as the other modules' tables.
+  const wageTableRows = data.wageComparison.flatMap((p) => [
+    {
+      Vaatlusperiood_label: p.label,
+      Tegevusala_label: t("accommodationSector.wagesAccommodation"),
+      value: p.accommodation,
+    },
+    {
+      Vaatlusperiood_label: p.label,
+      Tegevusala_label: t("accommodationSector.wagesAllActivities"),
+      value: p.allActivities,
+    },
+  ]);
 
   // Module 5: Cost structure. EM001's cost-breakdown indicators are fetched
   // for every year revenueSeries covers, so the latest revenueSeries year
@@ -258,6 +287,18 @@ function Page7AccommodationSector() {
   const costInsight = buildCostInsight(costStructure, locale);
   const costChartData = costStructure
     ? COST_KEYS.map((key) => ({ key, name: t(`accommodationSector.costCategories.${key}`), value: costStructure[key] / 1000 }))
+    : [];
+  // Expandable table: the 6 category amounts plus the verified total for
+  // the latest year, in EM001's own native (thousand-€) units — one row
+  // per category, same label-plus-value shape as the other tables.
+  const costTableRows = costStructure
+    ? [
+        ...COST_KEYS.map((key) => ({
+          Näitaja_label: t(`accommodationSector.costCategories.${key}`),
+          value: costStructure[key],
+        })),
+        { Näitaja_label: t("accommodationSector.costTotal"), value: costStructure.total },
+      ]
     : [];
   // Optional stacked-over-time view (expandable, not a second always-visible
   // chart) — reuses computeCostStructure per revenueSeries year instead of
@@ -507,6 +548,7 @@ function Page7AccommodationSector() {
           </BarChart>
         </ResponsiveContainer>
         <TableSource path={TU410_PATH} ids={[TU410_ID]} />
+        <ExpandableTable rows={growthTableRows} label={t("accommodationSector.showDataTable")} />
       </div>
 
       {/* Module 4: Wages */}
@@ -571,6 +613,7 @@ function Page7AccommodationSector() {
           </LineChart>
         </ResponsiveContainer>
         <TableSource path={PA113_PATH} ids={[PA113_ID]} />
+        <ExpandableTable rows={wageTableRows} label={t("accommodationSector.showDataTable")} />
       </div>
 
       {/* Module 5: Cost structure */}
@@ -601,6 +644,7 @@ function Page7AccommodationSector() {
           </PieChart>
         </ResponsiveContainer>
         <TableSource path={EM001_PATH} ids={[EM001_ID]} />
+        <ExpandableTable rows={costTableRows} label={t("accommodationSector.showDataTable")} />
 
         {costHistoryChart.length > 1 && (
           <div>

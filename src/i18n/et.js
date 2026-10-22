@@ -363,7 +363,6 @@ export default {
   },
 
   accommodationSector: {
-    heading: "Majutussektor",
     subheading: "Majutussektori käive, ettevõtted, palgad ja kulud Eestis.",
     nationalOnlyNote: "Sektoriandmed on Statistikaametilt saadaval ainult Eesti kohta.",
     kpi: {
@@ -394,6 +393,7 @@ export default {
       other: "Muud tegevuskulud",
     },
     costHistoryToggle: "Vaata kulude struktuuri ajas",
+    costTotal: "Kokku",
     showDataTable: "Vaata andmetabelit",
   },
 };

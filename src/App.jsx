@@ -101,10 +101,11 @@ export default function App() {
     [t]
   );
 
-  // Ülevaade, Kaart ja hooajalisus, Eesmärk ja kestus, Mahutavus, and
-  // Reisikulutused scroll past one another on one continuous page (by
-  // request, Reisikulutused sits here despite being about residents' own
-  // spending rather than visitors to Estonia, unlike Residentide reisid).
+  // Ülevaade, Kaart ja hooajalisus, Eesmärk ja kestus, Mahutavus,
+  // Majutussektor, and Reisikulutused scroll past one another on one
+  // continuous page (by request, Reisikulutused sits here despite being
+  // about residents' own spending rather than visitors to Estonia, unlike
+  // Residentide reisid).
   // Residentide reisid and Kõik tabelid are each their own destination
   // instead — Residents because it's a different subject from the rest of
   // the scroll and shouldn't load by default when the site opens; Browse

@@ -363,7 +363,6 @@ export default {
   },
 
   accommodationSector: {
-    heading: "Accommodation Sector",
     subheading: "Revenue, businesses, wages and costs in Estonia's accommodation sector.",
     nationalOnlyNote: "Sector data is only available nationally.",
     kpi: {
@@ -394,6 +393,7 @@ export default {
       other: "Other operating costs",
     },
     costHistoryToggle: "View cost structure over time",
+    costTotal: "Total",
     showDataTable: "View data table",
   },
 };

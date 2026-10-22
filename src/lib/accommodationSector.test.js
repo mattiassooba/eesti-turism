@@ -128,12 +128,35 @@ describe("computeLatestRevenue", () => {
 });
 
 describe("computeRevenueGrowth", () => {
-  it("filters to CUB_SM and sorts ascending by period", () => {
-    const rows = [tu410Row("CUB_SM", "2026Q2", 6.8), tu410Row("CUB_SM", "2025Q4", -2.1), tu410Row("CUB_SERV", "2026Q2", 48.1)];
-    expect(computeRevenueGrowth(rows)).toEqual([
-      { period: "2025Q4", label: "2025Q4", pct: -2.1 },
-      { period: "2026Q2", label: "2026Q2", pct: 6.8 },
-    ]);
+  it("computes YoY %% directly from CUB_SERV, comparing each period against its t-4 quarter", () => {
+    const rows = [
+      tu410Row("CUB_SERV", "2025Q2", 100, "2025 II kvartal"),
+      tu410Row("CUB_SERV", "2025Q3", 105, "2025 III kvartal"),
+      tu410Row("CUB_SERV", "2025Q4", 110, "2025 IV kvartal"),
+      tu410Row("CUB_SERV", "2026Q1", 115, "2026 I kvartal"),
+      tu410Row("CUB_SERV", "2026Q2", 120, "2026 II kvartal"),
+    ];
+    // Only 2026Q2 has a t-4 comparison point (2025Q2) within this 5-period
+    // fixture; (120-100)/100*100 = 20%.
+    expect(computeRevenueGrowth(rows)).toEqual([{ period: "2026Q2", label: "2026 II kvartal", pct: 20 }]);
+  });
+
+  it("sorts input by period ascending before comparing, regardless of input order", () => {
+    const rows = [
+      tu410Row("CUB_SERV", "2026Q2", 120),
+      tu410Row("CUB_SERV", "2025Q4", 110),
+      tu410Row("CUB_SERV", "2025Q3", 105),
+      tu410Row("CUB_SERV", "2025Q2", 100),
+      tu410Row("CUB_SERV", "2026Q1", 115),
+    ];
+    const result = computeRevenueGrowth(rows);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({ period: "2026Q2", label: "2026Q2", pct: 20 });
+  });
+
+  it("returns an empty array when there are fewer than 5 periods (no t-4 comparison possible)", () => {
+    const rows = [tu410Row("CUB_SERV", "2026Q1", 100), tu410Row("CUB_SERV", "2026Q2", 110)];
+    expect(computeRevenueGrowth(rows)).toEqual([]);
   });
 });
 
@@ -245,6 +268,16 @@ describe("insight builders", () => {
     const insight = buildCostInsight(cost, "en");
     expect(insight).toContain("personnel costs");
     expect(insight).toContain("38%"); // 100/260
+  });
+
+  it("buildCostInsight excludes 'other' from the largest-category comparison even when it's numerically the biggest of the 6", () => {
+    // other (120) is the single biggest of the 6 fields, but it's a
+    // computed remainder, not a real spending category — personnel (90) is
+    // the largest of the 5 *named* categories and must be the one named.
+    const cost = { personnel: 90, resale: 50, materials: 30, energy: 20, rent: 10, other: 120, total: 320 };
+    const insight = buildCostInsight(cost, "en");
+    expect(insight).toContain("personnel costs");
+    expect(insight).not.toContain("other operating costs");
   });
 
   it("buildGrowthInsight returns null without a latest point, and phrases a fall in English", () => {

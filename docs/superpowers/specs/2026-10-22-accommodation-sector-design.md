@@ -88,7 +88,8 @@ spending. New nav i18n key `nav.accommodationSector`.
 New file `src/components/Page7AccommodationSector.jsx`, following the exact pattern every
 existing page component uses: `fetchTableData` from `src/api/pxweb.js` inside
 `useAbortableEffect`, `flattenToRows` from `src/api/jsonStat.js`, Recharts for charts,
-`TableSource` for the "Allikas: Statistikaamet, tabel X" citation + expandable raw-data table,
+`TableSource` for the "Allikas: Statistikaamet, tabel X" citation link (the expandable
+raw-data table itself is a separate `ExpandableTable` component, used by every module),
 `ChartTooltip` for hover tooltips. No backend/pipeline changes — this is a pure frontend
 addition, fetched live client-side exactly like Page6Capacity.jsx already does, so it needs no
 new generate-narrative.mjs wiring and works immediately (no dependency on the next scheduled AI
@@ -152,9 +153,10 @@ for resale (`CUB_C_100_110_120`), Materials and supplies (`CUB_C_210`), Purchase
 — "Energy" (`CUB_C_400_410_420`), Rental and leasing (`V13411`), and Other operating costs (the
 verified remainder against `CUB_C_705`, see "Cost-structure math" above). Colors from the
 existing `CHART_COLORS` palette (6 colors defined, exact fit for 6 categories, fixed hue order
-per the `dataviz` skill's categorical-color rule). The over-time stacked view is available via
-the module's expandable detail/table, not as a second always-visible chart, per the spec's own
-"avoid displaying both charts by default" guidance.
+per the `dataviz` skill's categorical-color rule). The over-time view is a secondary stacked
+bar chart (not a table) behind its own expandable toggle, not displayed by default alongside
+the donut, per the spec's own "avoid displaying both charts by default" guidance; like every
+other module, this one also has its own expandable raw-data table (via `ExpandableTable`).
 
 ## i18n
 

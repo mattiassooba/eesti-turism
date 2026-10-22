@@ -89,7 +89,6 @@ export function computeCostStructure(em001Rows, year) {
 
 // TU410 (quarterly services turnover and growth) and PA113 (quarterly wages).
 const SERVICES_REVENUE = "CUB_SERV";
-const SERVICES_GROWTH = "CUB_SM";
 const WAGE_AVG = "GR_W_AVG";
 const ALL_ACTIVITIES = "TOTAL";
 
@@ -109,11 +108,28 @@ export function computeLatestRevenue(tu410Rows) {
   return points.length ? points[points.length - 1] : null;
 }
 
+// Computed directly from CUB_SERV (actual nominal revenue, million €) rather
+// than read from TU410's own CUB_SM indicator — CUB_SM is a volume-index
+// change at constant prices (deflated), not nominal YoY revenue growth, and
+// the two numbers materially diverge (e.g. 2026Q2 was ~22% by CUB_SM vs.
+// ~12% actual nominal YoY growth). Each period is compared against the
+// point 4 quarters earlier (t-4), so the first 4 periods of the sorted
+// series have no comparison and are dropped.
 export function computeRevenueGrowth(tu410Rows) {
-  return tu410Rows
-    .filter((r) => r.Näitaja === SERVICES_GROWTH)
-    .map((r) => ({ period: r.Vaatlusperiood, label: r.Vaatlusperiood_label, pct: r.value }))
+  const points = tu410Rows
+    .filter((r) => r.Näitaja === SERVICES_REVENUE)
+    .map((r) => ({ period: r.Vaatlusperiood, label: r.Vaatlusperiood_label, value: r.value }))
     .sort(byPeriodAscending);
+
+  const growth = [];
+  for (let i = 4; i < points.length; i++) {
+    const current = points[i];
+    const prior = points[i - 4];
+    if (!prior.value) continue; // avoid divide-by-zero on a missing/zero t-4 value
+    const pct = ((current.value - prior.value) / prior.value) * 100;
+    growth.push({ period: current.period, label: current.label, pct });
+  }
+  return growth;
 }
 
 export function computeGrowthHighlights(growthSeries, { windowSize = 16, minSignificantPct = 2 } = {}) {
@@ -157,6 +173,12 @@ export const COST_CATEGORY_LABELS = {
 };
 
 const COST_CATEGORY_KEYS = Object.keys(COST_CATEGORY_LABELS);
+// "other" is a computed remainder (total minus the 5 named categories —
+// covers depreciation, taxes, travel costs, and other unrelated line
+// items), not a real spending category, so it's never named as "the
+// largest category" in the insight sentence even when it's numerically
+// the biggest of the 6 values. It can still appear as a chart/table slice.
+const NAMEABLE_COST_CATEGORY_KEYS = COST_CATEGORY_KEYS.filter((key) => key !== "other");
 
 function lastOf(entries) {
   return entries?.length ? entries[entries.length - 1] : null;
@@ -228,7 +250,7 @@ export function buildWageInsight(wageComparison, locale) {
 export function buildCostInsight(costStructure, locale) {
   if (!costStructure || !costStructure.total) return null;
   const { total } = costStructure;
-  const largestKey = COST_CATEGORY_KEYS.reduce((best, key) =>
+  const largestKey = NAMEABLE_COST_CATEGORY_KEYS.reduce((best, key) =>
     costStructure[key] > costStructure[best] ? key : best,
   );
   const label = COST_CATEGORY_LABELS[largestKey][locale === "en" ? "en" : "et"];

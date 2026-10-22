@@ -378,6 +378,9 @@ export default {
     hotels: "Hotels",
     otherAccommodation: "Other accommodation",
     growthHeading: "Revenue Growth",
+    growthLatest: "Latest change",
+    growthStrongestIncrease: "Strongest increase",
+    growthStrongestDecline: "Strongest decline",
     wagesHeading: "Accommodation Sector Wages",
     wagesAccommodation: "Accommodation sector",
     wagesAllActivities: "Estonia average",
@@ -390,6 +393,7 @@ export default {
       rent: "Rent and leasing",
       other: "Other operating costs",
     },
+    costHistoryToggle: "View cost structure over time",
     showDataTable: "View data table",
   },
 };

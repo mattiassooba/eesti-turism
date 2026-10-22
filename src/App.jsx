@@ -8,6 +8,7 @@ import Page3Purpose from "./components/Page3Purpose";
 import Page4Residents from "./components/Page4Residents";
 import Page5Expenses from "./components/Page5Expenses";
 import Page6Capacity from "./components/Page6Capacity";
+import Page7AccommodationSector from "./components/Page7AccommodationSector";
 import LazyMount from "./components/LazyMount";
 import NewsletterSignup from "./components/NewsletterSignup";
 import SourceFooter from "./components/SourceFooter";
@@ -94,6 +95,7 @@ export default function App() {
       { key: "map", label: t("nav.map") },
       { key: "purpose", label: t("nav.purpose") },
       { key: "capacity", label: t("nav.capacity") },
+      { key: "accommodationSector", label: t("nav.accommodationSector") },
       { key: "expenses", label: t("nav.expenses") },
     ],
     [t]
@@ -258,7 +260,14 @@ export default function App() {
                       <Page6Capacity />
                     </LazyMount>
                   </section>
-    
+
+                  <section id="accommodationSector" className="scroll-section">
+                    <h2 className="scroll-section-title">{t("nav.accommodationSector")}</h2>
+                    <LazyMount containerRef={mainPanelRef}>
+                      <Page7AccommodationSector />
+                    </LazyMount>
+                  </section>
+
                   <section id="expenses" className="scroll-section">
                     <h2 className="scroll-section-title">{t("nav.expenses")}</h2>
                     <LazyMount containerRef={mainPanelRef}>

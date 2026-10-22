@@ -6,8 +6,11 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  Cell,
   LineChart,
   Line,
+  PieChart,
+  Pie,
   LabelList,
   Legend,
   XAxis,
@@ -18,15 +21,16 @@ import {
 import ChartTooltip from "./ChartTooltip";
 import TableSource from "./TableSource";
 import DataGrid from "./DataGrid";
-import { LineEndLabel, lastPointDot } from "./ChartLabels";
+import { LineEndLabel, lastPointDot, endLabelOffsets } from "./ChartLabels";
 import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { formatNumber } from "../i18n/format";
-import { CHART_COLORS, CHART_GRID_COLOR, CHART_AXIS_COLOR } from "../theme";
+import { CHART_COLORS, CHART_GRID_COLOR, CHART_AXIS_COLOR, ALERT_COLOR, POSITIVE_COLOR } from "../theme";
 import {
   computeRevenueSeries,
   computeIndexedSeries,
   computeEnterpriseCounts,
   computeHotelsVsOther,
+  computeCostStructure,
   computeLatestRevenue,
   computeRevenueGrowth,
   computeGrowthHighlights,
@@ -34,7 +38,15 @@ import {
   computeLatestKpis,
   buildRevenueInsight,
   buildBusinessInsight,
+  buildGrowthInsight,
+  buildWageInsight,
+  buildCostInsight,
 } from "../lib/accommodationSector.js";
+
+// Fixed display order for EM001's 6 cost categories, paired 1:1 with
+// CHART_COLORS[0..5] — matches computeCostStructure's own field order and
+// the costCategories i18n labels.
+const COST_KEYS = ["personnel", "resale", "materials", "energy", "rent", "other"];
 
 const EM001_PATH = ["majandus", "ettevetete-majandusnaitajad", "ettevetete-tulud-kulud-kasum", "aastastatistika"];
 const TU410_PATH = ["majandus", "turism-ja-majutus", "turismi-ja-majutuse-majandusnaitajad"];
@@ -115,6 +127,7 @@ function Page7AccommodationSector() {
   const { t, locale } = useTranslation();
   const [state, setState] = useState({ data: null, loading: true, error: null });
   const [indexed, setIndexed] = useState(false);
+  const [costHistoryExpanded, setCostHistoryExpanded] = useState(false);
 
   useAbortableEffect(
     async (signal, isActive) => {
@@ -137,7 +150,10 @@ function Page7AccommodationSector() {
         const hotelsVsOther = computeHotelsVsOther(em001Rows);
 
         const latestRevenue = computeLatestRevenue(tu410Rows);
-        const growthHighlights = computeGrowthHighlights(computeRevenueGrowth(tu410Rows));
+        // Stored separately from growthHighlights — Module 3's bar chart
+        // needs the full series, while the highlights only summarize it.
+        const growthSeries = computeRevenueGrowth(tu410Rows);
+        const growthHighlights = computeGrowthHighlights(growthSeries);
         const wageComparison = computeWageComparison(pa113Rows);
 
         const kpis = computeLatestKpis({ latestRevenue, growthHighlights, enterpriseCounts, wageComparison });
@@ -150,6 +166,7 @@ function Page7AccommodationSector() {
               enterpriseCounts,
               hotelsVsOther,
               latestRevenue,
+              growthSeries,
               growthHighlights,
               wageComparison,
               kpis,
@@ -221,6 +238,41 @@ function Page7AccommodationSector() {
 
   const activeRevenueChartData = indexed ? indexedChartData : revenueChartData;
   const activeRevenueDataKey = indexed ? "index" : "value";
+
+  // Module 3: Growth.
+  const { latest: latestGrowth, strongestIncrease, strongestDecline } = data.growthHighlights ?? {};
+  const growthInsight = buildGrowthInsight(data.growthHighlights, locale);
+
+  // Module 4: Wages. Which series (accommodation vs. the Estonia-wide
+  // average) is ahead varies by period — no guaranteed ordering — so the
+  // two end labels' placement is decided from the actual last values, the
+  // same endLabelOffsets convention Page4Residents.jsx/Page2Map.jsx use.
+  const wageInsight = buildWageInsight(data.wageComparison, locale);
+  const wageEndDy = endLabelOffsets(latestWage?.accommodation, latestWage?.allActivities);
+
+  // Module 5: Cost structure. EM001's cost-breakdown indicators are fetched
+  // for every year revenueSeries covers, so the latest revenueSeries year
+  // is also the latest year with a full cost breakdown.
+  const latestEM001Year = lastOf(data.revenueSeries)?.year ?? null;
+  const costStructure = latestEM001Year ? computeCostStructure(data.em001Rows, latestEM001Year) : null;
+  const costInsight = buildCostInsight(costStructure, locale);
+  const costChartData = costStructure
+    ? COST_KEYS.map((key) => ({ key, name: t(`accommodationSector.costCategories.${key}`), value: costStructure[key] / 1000 }))
+    : [];
+  // Optional stacked-over-time view (expandable, not a second always-visible
+  // chart) — reuses computeCostStructure per revenueSeries year instead of
+  // re-deriving which years have cost data from scratch.
+  const costHistoryChart = data.revenueSeries
+    .map((p) => {
+      const cs = computeCostStructure(data.em001Rows, p.year);
+      if (!cs) return null;
+      const row = { year: p.year };
+      COST_KEYS.forEach((key) => {
+        row[key] = cs[key] / 1000;
+      });
+      return row;
+    })
+    .filter(Boolean);
 
   return (
     <div className={"dashboard" + (state.loading ? " refetching" : "")}>
@@ -393,6 +445,195 @@ function Page7AccommodationSector() {
 
         <TableSource path={EM001_PATH} ids={[EM001_ID]} />
         <ExpandableTable rows={combinedRawRows} label={t("accommodationSector.showDataTable")} />
+      </div>
+
+      {/* Module 3: Growth */}
+      <div className="data-card">
+        <h3>{t("accommodationSector.growthHeading")}</h3>
+        <InsightNote text={growthInsight} />
+
+        <div className="tile-row">
+          <div>
+            <div className="tile-label">
+              {t("accommodationSector.growthLatest")}
+              {latestGrowth?.label ? ` — ${latestGrowth.label}` : ""}
+            </div>
+            <div className={"tile-delta " + (latestGrowth ? (latestGrowth.pct >= 0 ? "delta-up-text" : "delta-down-text") : "")}>
+              {latestGrowth
+                ? `${latestGrowth.pct >= 0 ? "▲" : "▼"} ${formatNumber(Math.abs(latestGrowth.pct), locale, { maximumFractionDigits: 1 })}%`
+                : "—"}
+            </div>
+          </div>
+          <div>
+            <div className="tile-label">
+              {t("accommodationSector.growthStrongestIncrease")}
+              {strongestIncrease?.label ? ` — ${strongestIncrease.label}` : ""}
+            </div>
+            <div className={"tile-delta " + (strongestIncrease ? "delta-up-text" : "")}>
+              {strongestIncrease ? `▲ ${formatNumber(strongestIncrease.pct, locale, { maximumFractionDigits: 1 })}%` : "—"}
+            </div>
+          </div>
+          <div>
+            <div className="tile-label">
+              {t("accommodationSector.growthStrongestDecline")}
+              {strongestDecline?.label ? ` — ${strongestDecline.label}` : ""}
+            </div>
+            <div className={"tile-delta " + (strongestDecline ? "delta-down-text" : "")}>
+              {strongestDecline
+                ? `▼ ${formatNumber(Math.abs(strongestDecline.pct), locale, { maximumFractionDigits: 1 })}%`
+                : "—"}
+            </div>
+          </div>
+        </div>
+
+        <ResponsiveContainer width="100%" height={260}>
+          <BarChart data={data.growthSeries} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 10, fill: CHART_AXIS_COLOR }}
+              axisLine={axisLine}
+              tickLine={axisLine}
+              interval="preserveStartEnd"
+              minTickGap={30}
+            />
+            <YAxis tick={axisTick} axisLine={axisLine} tickLine={axisLine} unit="%" />
+            <Tooltip content={<ChartTooltip locale={locale} unit="%" />} />
+            <Bar dataKey="pct" radius={[4, 4, 0, 0]} isAnimationActive={false}>
+              {data.growthSeries.map((p) => (
+                <Cell key={p.period} fill={p.pct >= 0 ? POSITIVE_COLOR : ALERT_COLOR} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+        <TableSource path={TU410_PATH} ids={[TU410_ID]} />
+      </div>
+
+      {/* Module 4: Wages */}
+      <div className="data-card">
+        <h3>{t("accommodationSector.wagesHeading")}</h3>
+        <InsightNote text={wageInsight} />
+
+        <ResponsiveContainer width="100%" height={280}>
+          <LineChart data={data.wageComparison} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 10, fill: CHART_AXIS_COLOR }}
+              axisLine={axisLine}
+              tickLine={axisLine}
+              interval="preserveStartEnd"
+              minTickGap={30}
+            />
+            <YAxis tick={axisTick} axisLine={axisLine} tickLine={axisLine} unit="€" />
+            <Tooltip content={<ChartTooltip locale={locale} unit="€" />} />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="accommodation"
+              name={t("accommodationSector.wagesAccommodation")}
+              stroke={CHART_COLORS[0]}
+              dot={lastPointDot(CHART_COLORS[0], data.wageComparison.length)}
+              isAnimationActive={false}
+            >
+              <LabelList
+                dataKey="accommodation"
+                content={(props) => (
+                  <LineEndLabel
+                    {...props}
+                    dataLength={data.wageComparison.length}
+                    formatter={(v) => `${formatNumber(v, locale, { maximumFractionDigits: 0 })} €`}
+                    dy={wageEndDy[0]}
+                  />
+                )}
+              />
+            </Line>
+            <Line
+              type="monotone"
+              dataKey="allActivities"
+              name={t("accommodationSector.wagesAllActivities")}
+              stroke={CHART_COLORS[2]}
+              dot={lastPointDot(CHART_COLORS[2], data.wageComparison.length)}
+              isAnimationActive={false}
+            >
+              <LabelList
+                dataKey="allActivities"
+                content={(props) => (
+                  <LineEndLabel
+                    {...props}
+                    dataLength={data.wageComparison.length}
+                    formatter={(v) => `${formatNumber(v, locale, { maximumFractionDigits: 0 })} €`}
+                    dy={wageEndDy[1]}
+                  />
+                )}
+              />
+            </Line>
+          </LineChart>
+        </ResponsiveContainer>
+        <TableSource path={PA113_PATH} ids={[PA113_ID]} />
+      </div>
+
+      {/* Module 5: Cost structure */}
+      <div className="data-card">
+        <h3>
+          {t("accommodationSector.costHeading")}
+          {latestEM001Year ? ` — ${latestEM001Year}` : ""}
+        </h3>
+        <InsightNote text={costInsight} />
+
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Tooltip content={<ChartTooltip locale={locale} unit="mln €" />} />
+            <Legend />
+            <Pie
+              data={costChartData}
+              dataKey="value"
+              nameKey="name"
+              innerRadius={60}
+              outerRadius={110}
+              paddingAngle={2}
+              isAnimationActive={false}
+            >
+              {costChartData.map((entry, i) => (
+                <Cell key={entry.key} fill={CHART_COLORS[i]} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+        <TableSource path={EM001_PATH} ids={[EM001_ID]} />
+
+        {costHistoryChart.length > 1 && (
+          <div>
+            <button
+              type="button"
+              className="table-toggle"
+              onClick={() => setCostHistoryExpanded((e) => !e)}
+            >
+              {costHistoryExpanded ? "▾" : "▸"} {t("accommodationSector.costHistoryToggle")}
+            </button>
+            {costHistoryExpanded && (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={costHistoryChart} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+                  <XAxis dataKey="year" tick={{ fontSize: 10, fill: CHART_AXIS_COLOR }} axisLine={axisLine} tickLine={axisLine} />
+                  <YAxis tick={axisTick} axisLine={axisLine} tickLine={axisLine} />
+                  <Tooltip content={<ChartTooltip locale={locale} unit="mln €" />} />
+                  <Legend />
+                  {COST_KEYS.map((key, i) => (
+                    <Bar
+                      key={key}
+                      dataKey={key}
+                      name={t(`accommodationSector.costCategories.${key}`)}
+                      stackId="cost"
+                      fill={CHART_COLORS[i]}
+                      isAnimationActive={false}
+                    />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

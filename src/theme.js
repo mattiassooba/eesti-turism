@@ -17,6 +17,11 @@ export const CHART_COLORS = ["#2b6ca3", "#d98e2b", "#5b6b7a", "#0f3a57", "#9c3b2
 // 2020-2021 pandemic dip) without introducing a separate legend entry.
 export const ALERT_COLOR = "#9c3b26";
 
+// Matches --positive in tokens.css — the positive-sign counterpart to
+// ALERT_COLOR above, for charts that color a bar/slice by sign (e.g. the
+// accommodation-sector revenue-growth chart).
+export const POSITIVE_COLOR = "#1f7a52";
+
 // 2020-2021: the two years COVID-19 collapsed international travel. Any
 // yearly bar chart spanning this range highlights those two bars in
 // ALERT_COLOR instead of a separate background band — shared here so every

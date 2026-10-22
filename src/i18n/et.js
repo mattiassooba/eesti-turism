@@ -378,6 +378,9 @@ export default {
     hotels: "Hotellid",
     otherAccommodation: "Muu majutus",
     growthHeading: "Majutussektori käibe kasv",
+    growthLatest: "Viimane muutus",
+    growthStrongestIncrease: "Suurim kasv",
+    growthStrongestDecline: "Suurim langus",
     wagesHeading: "Majutussektori palgad",
     wagesAccommodation: "Majutussektor",
     wagesAllActivities: "Eesti keskmine",
@@ -390,6 +393,7 @@ export default {
       rent: "Rent ja liising",
       other: "Muud tegevuskulud",
     },
+    costHistoryToggle: "Vaata kulude struktuuri ajas",
     showDataTable: "Vaata andmetabelit",
   },
 };

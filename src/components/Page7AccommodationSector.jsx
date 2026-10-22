@@ -180,10 +180,19 @@ function Page7AccommodationSector() {
     () => (state.data ? computeIndexedSeries(state.data.revenueSeries, "2011") : []),
     [state.data]
   );
-  // The exact EM001 rows Module 1's chart is built from, for its expandable
-  // raw-data table.
-  const revenueRawRows = useMemo(
-    () => (state.data ? state.data.em001Rows.filter((r) => r.Näitaja === "V12110" && r.Tegevusala === "I55") : []),
+  // The EM001 rows both Module 1 and Module 2's charts are built from
+  // (revenue series, enterprise counts, hotels-vs-other split) — one
+  // combined expandable table covers all three instead of a separate table
+  // per module, since they're all slices of the same source table.
+  const combinedRawRows = useMemo(
+    () =>
+      state.data
+        ? state.data.em001Rows.filter(
+            (r) =>
+              (r.Näitaja === "V12110" || r.Näitaja === "V11110") &&
+              ["I55", "I551", "I552", "I553", "I559"].includes(r.Tegevusala)
+          )
+        : [],
     [state.data]
   );
 
@@ -215,7 +224,6 @@ function Page7AccommodationSector() {
 
   return (
     <div className={"dashboard" + (state.loading ? " refetching" : "")}>
-      <h2>{t("accommodationSector.heading")}</h2>
       <p className="operator-intro">{t("accommodationSector.subheading")}</p>
       <p className="operator-footnote">{t("accommodationSector.nationalOnlyNote")}</p>
 
@@ -316,7 +324,6 @@ function Page7AccommodationSector() {
           </LineChart>
         </ResponsiveContainer>
         <TableSource path={EM001_PATH} ids={[EM001_ID]} />
-        <ExpandableTable rows={revenueRawRows} label={t("accommodationSector.showDataTable")} />
       </div>
 
       {/* Module 2: Businesses and turnover */}
@@ -385,6 +392,7 @@ function Page7AccommodationSector() {
         </ResponsiveContainer>
 
         <TableSource path={EM001_PATH} ids={[EM001_ID]} />
+        <ExpandableTable rows={combinedRawRows} label={t("accommodationSector.showDataTable")} />
       </div>
     </div>
   );

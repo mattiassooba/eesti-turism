@@ -2,6 +2,8 @@
 // Each row: { Näitaja, Tegevusala, Vaatlusperiood, value, ... }.
 // No React or DOM dependencies.
 
+import { formatNumber } from "../i18n/format.js";
+
 const REVENUE = "V12110";
 const ENTERPRISES = "V11110";
 const PERSONNEL = "V13310";
@@ -142,4 +144,97 @@ export function computeWageComparison(pa113Rows) {
       allActivities: allByPeriod.get(r.Vaatlusperiood),
     }))
     .sort(byPeriodAscending);
+}
+
+// Shared by the cost-structure chart legend and the cost insight sentence.
+export const COST_CATEGORY_LABELS = {
+  personnel: { et: "personalikulud", en: "personnel costs" },
+  resale: { et: "edasimüügiks ostetud kaubad", en: "goods purchased for resale" },
+  materials: { et: "materjalid", en: "materials" },
+  energy: { et: "energia", en: "energy" },
+  rent: { et: "rent ja liisingud", en: "rent and leasing" },
+  other: { et: "muud tegevuskulud", en: "other operating costs" },
+};
+
+const COST_CATEGORY_KEYS = Object.keys(COST_CATEGORY_LABELS);
+
+function lastOf(entries) {
+  return entries?.length ? entries[entries.length - 1] : null;
+}
+
+function formatPct1(n, locale) {
+  return formatNumber(n, locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+export function computeLatestKpis({ latestRevenue, growthHighlights, enterpriseCounts, wageComparison }) {
+  const latestGrowth = growthHighlights?.latest ?? null;
+  const latestCount = lastOf(enterpriseCounts);
+  const latestWage = lastOf(wageComparison);
+  return {
+    revenue: latestRevenue ? { value: latestRevenue.valueMillionEur, period: latestRevenue.period } : null,
+    revenueYoy: latestGrowth ? { value: latestGrowth.pct, period: latestGrowth.period } : null,
+    businessCount: latestCount ? { value: latestCount.count, period: latestCount.year } : null,
+    avgWage: latestWage ? { value: latestWage.accommodation, period: latestWage.period } : null,
+  };
+}
+
+export function buildRevenueInsight(latestRevenue, growthHighlights, locale) {
+  const latestGrowth = growthHighlights?.latest ?? null;
+  if (!latestRevenue || !latestGrowth) return null;
+  const value = formatPct1(latestRevenue.valueMillionEur, locale);
+  const yoy = formatPct1(Math.abs(latestGrowth.pct), locale);
+  const period = latestRevenue.period;
+  if (locale === "en") {
+    return `Accommodation-sector revenue was €${value} million in ${period}, ${latestGrowth.pct >= 0 ? "up" : "down"} ${yoy}% year-over-year.`;
+  }
+  return `Majutussektori käive oli ${period} ${value} miljonit eurot, ${latestGrowth.pct >= 0 ? "kasvades" : "vähenedes"} aastaga ${yoy}%.`;
+}
+
+export function buildGrowthInsight(growthHighlights, locale) {
+  const latest = growthHighlights?.latest ?? null;
+  if (!latest) return null;
+  const pct = formatPct1(Math.abs(latest.pct), locale);
+  if (locale === "en") {
+    return `Accommodation-sector revenue ${latest.pct >= 0 ? "grew" : "fell"} ${pct}% in ${latest.period}.`;
+  }
+  return `Majutussektori käive ${latest.pct >= 0 ? "kasvas" : "vähenes"} ${latest.period}. kvartalis ${pct}%.`;
+}
+
+export function buildBusinessInsight(enterpriseCounts, hotelsVsOther, locale) {
+  const latest = lastOf(enterpriseCounts);
+  if (!latest) return null;
+  const split = hotelsVsOther?.find((p) => p.year === latest.year);
+  const total = split ? split.hotels + split.other : 0;
+  if (!split || total === 0) return null;
+  const count = formatNumber(latest.count, locale);
+  const hotelsPct = formatNumber(Math.round((split.hotels / total) * 100), locale);
+  if (locale === "en") {
+    return `Estonia had ${count} accommodation businesses in ${latest.year}, ${hotelsPct}% of them hotels.`;
+  }
+  return `Eestis tegutses ${latest.year} aastal ${count} majutusettevõtet, neist ${hotelsPct}% hotellid.`;
+}
+
+export function buildWageInsight(wageComparison, locale) {
+  const latest = lastOf(wageComparison);
+  if (!latest) return null;
+  const accommodation = formatNumber(latest.accommodation, locale, { maximumFractionDigits: 0 });
+  const allActivities = formatNumber(latest.allActivities, locale, { maximumFractionDigits: 0 });
+  if (locale === "en") {
+    return `Accommodation-sector average gross wage was €${accommodation} in ${latest.period}, versus Estonia's €${allActivities} average.`;
+  }
+  return `Majutussektori keskmine brutopalk oli ${latest.period} ${accommodation} eurot, Eesti keskmine oli ${allActivities} eurot.`;
+}
+
+export function buildCostInsight(costStructure, locale) {
+  if (!costStructure || !costStructure.total) return null;
+  const { total } = costStructure;
+  const largestKey = COST_CATEGORY_KEYS.reduce((best, key) =>
+    costStructure[key] > costStructure[best] ? key : best,
+  );
+  const label = COST_CATEGORY_LABELS[largestKey][locale === "en" ? "en" : "et"];
+  const pct = formatNumber(Math.round((costStructure[largestKey] / total) * 100), locale);
+  if (locale === "en") {
+    return `The largest cost category was ${label} (${pct}% of total costs).`;
+  }
+  return `Suurim kulukategooria oli ${label} (${pct}% kogukuludest).`;
 }

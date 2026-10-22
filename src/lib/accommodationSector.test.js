@@ -10,6 +10,12 @@ import {
   computeRevenueGrowth,
   computeGrowthHighlights,
   computeWageComparison,
+  computeLatestKpis,
+  buildRevenueInsight,
+  buildGrowthInsight,
+  buildBusinessInsight,
+  buildWageInsight,
+  buildCostInsight,
 } from "./accommodationSector.js";
 
 const EMP_TOTAL = "Tööga hõivatud isikute arv";
@@ -190,5 +196,80 @@ describe("computeWageComparison", () => {
       pa113Row("GR_W_AVG", "I55", "2026Q2", 1500), // TOTAL for 2026Q2 not yet published
     ];
     expect(computeWageComparison(rows)).toEqual([{ period: "2026Q1", label: "2026Q1", accommodation: 1450, allActivities: 2100 }]);
+  });
+});
+
+describe("computeLatestKpis", () => {
+  it("assembles all 4 KPIs from their own source's latest entry", () => {
+    const latestRevenue = { period: "2026Q2", label: "2026Q2", valueMillionEur: 48.1 };
+    const growthHighlights = { latest: { period: "2026Q2", label: "2026Q2", pct: 6.8 }, strongestIncrease: null, strongestDecline: null };
+    const enterpriseCounts = [{ year: "2023", count: 900 }, { year: "2024", count: 937 }];
+    const wageComparison = [{ period: "2026Q1", label: "2026Q1", accommodation: 1450, allActivities: 2100 }, { period: "2026Q2", label: "2026Q2", accommodation: 1500, allActivities: 2150 }];
+    expect(computeLatestKpis({ latestRevenue, growthHighlights, enterpriseCounts, wageComparison })).toEqual({
+      revenue: { value: 48.1, period: "2026Q2" },
+      revenueYoy: { value: 6.8, period: "2026Q2" },
+      businessCount: { value: 937, period: "2024" },
+      avgWage: { value: 1500, period: "2026Q2" },
+    });
+  });
+
+  it("returns null for a KPI whose own source is empty, without affecting the others", () => {
+    const result = computeLatestKpis({ latestRevenue: null, growthHighlights: { latest: null, strongestIncrease: null, strongestDecline: null }, enterpriseCounts: [{ year: "2024", count: 937 }], wageComparison: [] });
+    expect(result.revenue).toBeNull();
+    expect(result.revenueYoy).toBeNull();
+    expect(result.businessCount).toEqual({ value: 937, period: "2024" });
+    expect(result.avgWage).toBeNull();
+  });
+});
+
+describe("insight builders", () => {
+  it("buildRevenueInsight phrases an increase in Estonian and English", () => {
+    const latestRevenue = { period: "2026Q2", label: "2026Q2", valueMillionEur: 48.1 };
+    const growthHighlights = { latest: { period: "2026Q2", label: "2026Q2", pct: 6.8 }, strongestIncrease: null, strongestDecline: null };
+    expect(buildRevenueInsight(latestRevenue, growthHighlights, "et")).toContain("kasvades");
+    expect(buildRevenueInsight(latestRevenue, growthHighlights, "en")).toContain("up");
+  });
+
+  it("buildRevenueInsight returns null when either input is null", () => {
+    expect(buildRevenueInsight(null, { latest: null }, "et")).toBeNull();
+  });
+
+  it("buildCostInsight names the actual largest category", () => {
+    const cost = { personnel: 100, resale: 50, materials: 30, energy: 20, rent: 10, other: 50, total: 260 };
+    const insight = buildCostInsight(cost, "en");
+    expect(insight).toContain("personnel costs");
+    expect(insight).toContain("38%"); // 100/260
+  });
+
+  it("buildGrowthInsight returns null without a latest point, and phrases a fall in English", () => {
+    expect(buildGrowthInsight({ latest: null }, "en")).toBeNull();
+    expect(buildGrowthInsight({ latest: { period: "2026Q2", label: "2026Q2", pct: -1.5 } }, "en")).toBe(
+      "Accommodation-sector revenue fell 1.5% in 2026Q2.",
+    );
+  });
+
+  it("buildBusinessInsight rounds the hotel share from the matching year", () => {
+    const counts = [{ year: "2023", count: 900 }, { year: "2024", count: 937 }];
+    const hotelsVsOther = [{ year: "2023", hotels: 300, other: 600 }, { year: "2024", hotels: 300, other: 637 }];
+    expect(buildBusinessInsight(counts, hotelsVsOther, "en")).toBe(
+      "Estonia had 937 accommodation businesses in 2024, 32% of them hotels.",
+    );
+  });
+
+  it("buildBusinessInsight returns null when the count or the matching hotel split is missing", () => {
+    expect(buildBusinessInsight([], [], "en")).toBeNull();
+    expect(buildBusinessInsight([{ year: "2024", count: 937 }], [{ year: "2023", hotels: 1, other: 1 }], "en")).toBeNull();
+  });
+
+  it("buildWageInsight compares the latest accommodation wage against the all-activities average", () => {
+    const wages = [{ period: "2026Q2", label: "2026Q2", accommodation: 1500, allActivities: 2150 }];
+    expect(buildWageInsight(wages, "en")).toBe(
+      "Accommodation-sector average gross wage was €1,500 in 2026Q2, versus Estonia's €2,150 average.",
+    );
+    expect(buildWageInsight([], "en")).toBeNull();
+  });
+
+  it("buildCostInsight returns null when there is no cost structure", () => {
+    expect(buildCostInsight(null, "en")).toBeNull();
   });
 });

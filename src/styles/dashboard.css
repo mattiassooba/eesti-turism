@@ -256,6 +256,25 @@
   color: var(--sea);
 }
 
+/* Toggle button for an expandable raw-values table under a chart (e.g.
+   Page7AccommodationSector.jsx) — same disclosure-triangle convention as
+   Sidebar.jsx's .folder-toggle, but styled for this light-card context
+   instead of the sidebar's dark background. */
+.table-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--sea);
+}
+
+.table-toggle:hover {
+  color: var(--sea-deep);
+}
+
 .quick-links-label {
   font-family: var(--font-display);
   font-size: 13px;

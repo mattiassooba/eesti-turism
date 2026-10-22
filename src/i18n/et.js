@@ -390,5 +390,6 @@ export default {
       rent: "Rent ja liising",
       other: "Muud tegevuskulud",
     },
+    showDataTable: "Vaata andmetabelit",
   },
 };

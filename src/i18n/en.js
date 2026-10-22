@@ -390,5 +390,6 @@ export default {
       rent: "Rent and leasing",
       other: "Other operating costs",
     },
+    showDataTable: "View data table",
   },
 };

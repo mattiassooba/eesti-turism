@@ -84,3 +84,62 @@ export function computeCostStructure(em001Rows, year) {
 
   return { personnel, resale, materials, energy, rent, other, total };
 }
+
+// TU410 (quarterly services turnover and growth) and PA113 (quarterly wages).
+const SERVICES_REVENUE = "CUB_SERV";
+const SERVICES_GROWTH = "CUB_SM";
+const WAGE_AVG = "GR_W_AVG";
+const ALL_ACTIVITIES = "TOTAL";
+
+function byPeriodAscending(a, b) {
+  return a.period.localeCompare(b.period, undefined, { numeric: true });
+}
+
+function extremeBy(entries, pick) {
+  return entries.reduce((best, p) => (best === null || pick(p, best) ? p : best), null);
+}
+
+export function computeLatestRevenue(tu410Rows) {
+  const points = tu410Rows
+    .filter((r) => r.Näitaja === SERVICES_REVENUE)
+    .map((r) => ({ period: r.Vaatlusperiood, label: r.Vaatlusperiood_label, valueMillionEur: r.value }))
+    .sort(byPeriodAscending);
+  return points.length ? points[points.length - 1] : null;
+}
+
+export function computeRevenueGrowth(tu410Rows) {
+  return tu410Rows
+    .filter((r) => r.Näitaja === SERVICES_GROWTH)
+    .map((r) => ({ period: r.Vaatlusperiood, label: r.Vaatlusperiood_label, pct: r.value }))
+    .sort(byPeriodAscending);
+}
+
+export function computeGrowthHighlights(growthSeries, { windowSize = 16, minSignificantPct = 2 } = {}) {
+  const window = growthSeries.slice(Math.max(0, growthSeries.length - windowSize));
+  const latest = window.length ? window[window.length - 1] : null;
+  const increases = window.filter((p) => p.pct >= minSignificantPct);
+  const declines = window.filter((p) => p.pct <= -minSignificantPct);
+  return {
+    latest,
+    strongestIncrease: extremeBy(increases, (p, best) => p.pct > best.pct),
+    strongestDecline: extremeBy(declines, (p, best) => p.pct < best.pct),
+  };
+}
+
+export function computeWageComparison(pa113Rows) {
+  const allByPeriod = new Map();
+  for (const r of pa113Rows) {
+    if (r.Näitaja === WAGE_AVG && r.Tegevusala === ALL_ACTIVITIES) {
+      allByPeriod.set(r.Vaatlusperiood, r.value);
+    }
+  }
+  return pa113Rows
+    .filter((r) => r.Näitaja === WAGE_AVG && r.Tegevusala === ACCOMMODATION && allByPeriod.has(r.Vaatlusperiood))
+    .map((r) => ({
+      period: r.Vaatlusperiood,
+      label: r.Vaatlusperiood_label,
+      accommodation: r.value,
+      allActivities: allByPeriod.get(r.Vaatlusperiood),
+    }))
+    .sort(byPeriodAscending);
+}

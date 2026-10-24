@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { COUNTIES, CITIES } from "../src/data/counties.js";
+import { ROUTES } from "../prototype/src/lib/routes.js";
 
 // Turns the JS-only SPA build into 38 real static pages: for every
 // /maakond/:slug and /en/county/:slug (region x language), a headless
@@ -59,10 +60,20 @@ async function serveStatic(req, res) {
 }
 
 function buildRoutes() {
-  const routes = [
-    { url: "/", outDir: "", priority: "1.0" },
-    { url: "/en", outDir: "en", priority: "1.0" },
-  ];
+  const routes = [];
+  for (const [key, paths] of Object.entries(ROUTES)) {
+    const priority = key === "home" ? "1.0" : "0.7";
+    routes.push({
+      url: paths.et,
+      outDir: paths.et === "/" ? "" : paths.et.slice(1),
+      priority,
+    });
+    routes.push({
+      url: paths.en,
+      outDir: paths.en.slice(1),
+      priority,
+    });
+  }
   for (const c of [...COUNTIES, ...CITIES]) {
     routes.push({ url: `/maakond/${c.slugEt}`, outDir: `maakond/${c.slugEt}`, priority: "0.8" });
     routes.push({ url: `/en/county/${c.slugEn}`, outDir: `en/county/${c.slugEn}`, priority: "0.8" });
@@ -104,11 +115,10 @@ async function main() {
       const errors = [];
       page.on("pageerror", (e) => errors.push(String(e)));
       await page.goto(`${BASE_URL}${route.url}`, { waitUntil: "networkidle" });
-      await page
-        .waitForSelector(".narrative-card .narrative-text", { timeout: 10000 })
-        .catch(() => {
-          console.warn(`  (no narrative text found for ${route.url} — saving anyway)`);
-        });
+      await page.waitForSelector("main h1", { timeout: 15000 }).catch(() => {
+        console.warn(`  (no h1 found for ${route.url} — saving anyway)`);
+      });
+      await page.waitForSelector(".ai-summary-text, .kpi-value, .data-table", { timeout: 8000 }).catch(() => {});
       const html = await page.content();
       await page.close();
 

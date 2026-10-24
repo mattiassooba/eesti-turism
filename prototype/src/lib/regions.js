@@ -91,6 +91,11 @@ export function regionByLegacySlug(slug, locale) {
   return REGIONS.find((r) => (locale === "en" ? r.legacySlugEn : r.legacySlugEt) === slug) ?? null;
 }
 
+export function regionPath(region, locale) {
+  if (!region || region.kind === "country") return locale === "en" ? "/en/regions" : "/piirkonnad";
+  return locale === "en" ? `/en/county/${region.legacySlugEn}` : `/maakond/${region.legacySlugEt}`;
+}
+
 export function regionName(region, locale, { short = false } = {}) {
   if (!region) return "";
   if (short) return locale === "en" ? region.shortEn : region.shortEt;

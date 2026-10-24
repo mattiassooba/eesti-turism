@@ -102,7 +102,7 @@ const DEVICES = [
   { key: "tablet", w: 820, h: 1180, scale: 0.44 },
   { key: "laptop", w: 1280, h: 800, scale: 0.48 },
 ];
-const PAGES = ["home", "regions", "visitors", "accommodation", "sector", "residents", "data", "reports"];
+const PAGES = ["home", "regions", "visitors", "accommodation", "operator", "sector", "residents", "data", "reports"];
 
 export function Responsive() {
   const { t, locale } = useApp();

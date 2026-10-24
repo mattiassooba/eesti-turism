@@ -1,12 +1,19 @@
 import { useEffect } from "react";
-import { useApp } from "../../state/AppState.jsx";
 import { faviconDataUri } from "./Marks.jsx";
 
 export default function FaviconSync() {
-  const { brand } = useApp();
   useEffect(() => {
-    const link = document.getElementById("proto-favicon");
-    if (link) link.href = faviconDataUri(brand);
-  }, [brand]);
+    const href = faviconDataUri("a");
+    const existing = document.getElementById("proto-favicon") || document.querySelector('link[rel="icon"]');
+    if (existing) {
+      existing.href = href;
+      return;
+    }
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.type = "image/svg+xml";
+    link.href = href;
+    document.head.appendChild(link);
+  }, []);
   return null;
 }

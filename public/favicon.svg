@@ -1,22 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- Hiiumaa -->
-  <path d="M22,46 L31,44 L35,52 L28,58 L20,52 Z" fill="#0f3a57" />
-  <!-- small islet -->
-  <circle cx="38" cy="50" r="2.6" fill="#0f3a57" />
-  <!-- Saaremaa -->
-  <path d="M16,64 L26,60 L34,66 L36,74 L28,82 L18,78 L13,70 Z" fill="#0f3a57" />
-  <!-- Mainland (simplified for legibility at small sizes) -->
-  <path
-    d="M60,18 L74,16 L90,18 L106,24 L117,36 L117,46 L110,54 L114,66 L104,78 L90,90 L76,94 L62,88
-       L46,78 L40,62 L46,46 L54,28 Z"
-    fill="#0f3a57"
-  />
-  <!-- map pin -->
-  <path
-    d="M88,56 C76,56 67,65 67,77 C67,92 88,117 88,117 C88,117 109,92 109,77 C109,65 100,56 88,56 Z"
-    fill="#d98e2b"
-    stroke="#eef0ee"
-    stroke-width="4"
-  />
-  <circle cx="88" cy="77" r="7" fill="#eef0ee" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#14283d"/>
+  <path d="M4 24V19.5H8V13H9.2L11 3.5L12.8 13H14V17.5H15.6V11.5L16.6 7L17.6 11.5V17.5H20.5V12H21.5V11H22.5V12H24.5V11H25.5V12H27V24Z" fill="#eef4f8"/>
+  <rect x="23.7" y="5.2" width="0.6" height="6" fill="#eef4f8"/>
+  <rect x="24.3" y="5.2" width="3.4" height="2.1" fill="#9ac6dc"/>
+  <rect x="3.5" y="26" width="25" height="1.4" rx="0.7" fill="#9ac6dc"/>
 </svg>

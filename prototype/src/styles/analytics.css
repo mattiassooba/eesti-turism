@@ -414,3 +414,43 @@ th[aria-sort="descending"] .sort-glyph {
   display: block;
   margin-bottom: 6px;
 }
+
+.op-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s-4) var(--s-6);
+  margin-bottom: var(--s-5);
+}
+.years-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: min(260px, 100%);
+  flex: 1 1 180px;
+}
+.years-slider .control-label {
+  display: block;
+}
+.years-slider input[type="range"] {
+  width: 100%;
+  max-width: 280px;
+  accent-color: var(--baltic);
+}
+.op-sentence {
+  margin-bottom: var(--s-5);
+}
+.op-subvalue {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+.data-table tr.is-sub th {
+  color: var(--ink-2);
+  font-weight: 400;
+}
+.data-table tr.is-origin td {
+  white-space: nowrap;
+}
+.op-more {
+  margin-top: var(--s-4);
+}

@@ -18,6 +18,7 @@ function useNav() {
       label: t("nav.accommodation"),
       children: [
         { key: "accommodation", label: t("nav.accommodationPerf"), desc: t("nav.accommodationPerfDesc") },
+        { key: "operator", label: t("nav.operator"), desc: t("nav.operatorDesc") },
         { key: "sector", label: t("nav.sector"), desc: t("nav.sectorDesc") },
       ],
     },
@@ -81,7 +82,7 @@ function NavMenu({ item, active }) {
 }
 
 export default function Header({ transparent }) {
-  const { t, href, routeKey, brand } = useApp();
+  const { t, href, routeKey } = useApp();
   const nav = useNav();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -112,7 +113,7 @@ export default function Header({ transparent }) {
     >
       <div className="site-header-inner">
         <Link to={href("home")} className="site-logo" aria-label={t("brand.homeLabel")}>
-          <Logo concept={brand} tone={dark ? "dark" : "light"} />
+          <Logo concept="a" tone={dark ? "dark" : "light"} />
         </Link>
 
         <nav className="primary-nav" aria-label={t("nav.label")}>
@@ -162,9 +163,6 @@ export default function Header({ transparent }) {
         </nav>
         <div className="mobile-menu-foot">
           <LangSwitch />
-          <Link to={href("studio", { keepRegion: false })} className="mobile-studio-link">
-            {t("proto.studio")} →
-          </Link>
         </div>
       </div>
     </header>

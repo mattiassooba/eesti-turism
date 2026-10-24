@@ -1,18 +1,18 @@
 import { Link } from "react-router-dom";
 import { useApp } from "../../state/AppState.jsx";
 import { Logo } from "../brand/Marks.jsx";
-import { COUNTY_LIST, CITY_LIST, regionName } from "../../lib/regions.js";
-import { pathFor } from "../../lib/routes.js";
+import { COUNTY_LIST, CITY_LIST, regionName, regionPath } from "../../lib/regions.js";
 import { HERO_OUTLINE, HERO_VIEWBOX } from "../../geo/generated.js";
 
 export default function Footer() {
-  const { t, locale, href, brand } = useApp();
+  const { t, locale, href } = useApp();
   const license = `https://creativecommons.org/licenses/by-sa/4.0/deed.${locale === "en" ? "en" : "et"}`;
   const sections = [
     ["home", "nav.overview"],
     ["regions", "nav.regions"],
     ["visitors", "nav.visitors"],
     ["accommodation", "nav.accommodationPerf"],
+    ["operator", "nav.operator"],
     ["sector", "nav.sector"],
     ["residents", "nav.residents"],
     ["data", "nav.tables"],
@@ -26,7 +26,7 @@ export default function Footer() {
       <div className="container">
         <div className="footer-top">
           <div className="footer-brand">
-            <Logo concept={brand} tone="dark" sub={t("brand.descriptor")} />
+            <Logo concept="a" tone="dark" sub={t("brand.descriptor")} />
             <p className="footer-tagline">{t("footer.tagline")}</p>
           </div>
           <nav className="footer-col" aria-label={t("footer.statistics")}>
@@ -44,7 +44,7 @@ export default function Footer() {
             <ul>
               {[...COUNTY_LIST, ...CITY_LIST].map((r) => (
                 <li key={r.code}>
-                  <Link to={`${pathFor("regions", locale)}?r=${r.id}`}>{regionName(r, locale, { short: r.kind === "county" })}</Link>
+                  <Link to={regionPath(r, locale)}>{regionName(r, locale, { short: r.kind === "county" })}</Link>
                 </li>
               ))}
             </ul>
@@ -70,7 +70,6 @@ export default function Footer() {
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} Eesti Turism · turismistatistika.ee</span>
           <span>{t("footer.privacy")}</span>
-          <Link to={href("studio", { keepRegion: false })}>{t("proto.studio")}</Link>
         </div>
       </div>
     </footer>

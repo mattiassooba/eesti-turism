@@ -4,7 +4,7 @@ import PageHeader from "../components/layout/PageHeader.jsx";
 import { Section, Button } from "../components/ui/Primitives.jsx";
 import Icon from "../components/ui/Icon.jsx";
 
-const LINKS = ["regions", "visitors", "accommodation", "sector", "residents", "data"];
+const LINKS = ["regions", "visitors", "accommodation", "operator", "sector", "residents", "data"];
 
 export default function NotFound() {
   const { t, href } = useApp();

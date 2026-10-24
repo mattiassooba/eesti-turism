@@ -9,6 +9,7 @@
 .section {
   padding-block: var(--section-y);
   position: relative;
+  overflow-x: clip;
 }
 .section--paper {
   background: var(--paper);

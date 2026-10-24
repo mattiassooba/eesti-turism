@@ -1,9 +1,9 @@
-import { lazy, Suspense, useEffect, useRef } from "react";
-import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
-import { ROUTES } from "./lib/routes.js";
-import { regionByLegacySlug, regionName } from "./lib/regions.js";
+import { lazy, Suspense, useEffect, useMemo, useRef } from "react";
+import { Route, Routes, useLocation, useParams } from "react-router-dom";
+import { ROUTES, countyFromPath, localeFromPath } from "./lib/routes.js";
+import { regionByLegacySlug, regionName, regionPath } from "./lib/regions.js";
 import { useApp } from "./state/AppState.jsx";
-import PrototypeRibbon from "./components/layout/PrototypeRibbon.jsx";
+import { useDocumentMeta } from "@prod/hooks/useDocumentMeta.js";
 import Header from "./components/layout/Header.jsx";
 import Footer from "./components/layout/Footer.jsx";
 import FaviconSync from "./components/brand/FaviconSync.jsx";
@@ -13,11 +13,11 @@ import Home from "./pages/Home.jsx";
 const Regions = lazy(() => import("./pages/Regions.jsx"));
 const Visitors = lazy(() => import("./pages/Visitors.jsx"));
 const Accommodation = lazy(() => import("./pages/Accommodation.jsx"));
+const Operator = lazy(() => import("./pages/Operator.jsx"));
 const Sector = lazy(() => import("./pages/Sector.jsx"));
 const Residents = lazy(() => import("./pages/Residents.jsx"));
 const DataTables = lazy(() => import("./pages/DataTables.jsx"));
 const Reports = lazy(() => import("./pages/Reports.jsx"));
-const Studio = lazy(() => import("./pages/Studio.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
 const PAGES = {
@@ -25,43 +25,80 @@ const PAGES = {
   regions: Regions,
   visitors: Visitors,
   accommodation: Accommodation,
+  operator: Operator,
   sector: Sector,
   residents: Residents,
   data: DataTables,
   reports: Reports,
-  studio: Studio,
 };
 
-// Production's per-region URLs (/maakond/:slug, /en/county/:slug) resolve to
-// the new regional explorer with that region preselected — the redirect
-// strategy proposed for a future migration, demonstrated here.
-function LegacyRegion({ locale }) {
+function CountyPage() {
   const { slug } = useParams();
+  const locale = localeFromPath(useLocation().pathname);
   const region = regionByLegacySlug(slug, locale);
-  const base = ROUTES.regions[locale];
-  return <Navigate replace to={region ? `${base}?r=${region.id}` : base} />;
+  if (!region) return <NotFound />;
+  return <Regions />;
 }
 
 const TITLE_KEYS = {
   regions: "nav.regions",
   visitors: "nav.visitors",
   accommodation: "nav.accommodationPerf",
+  operator: "nav.operator",
   sector: "nav.sector",
   residents: "nav.residents",
   data: "nav.tables",
   reports: "nav.reports",
-  studio: "proto.studio",
 };
-const REGIONAL_PAGES = new Set(["home", "regions", "visitors", "accommodation", "reports"]);
+const REGIONAL_PAGES = new Set(["home", "regions", "visitors", "accommodation", "operator", "reports"]);
 
-function DocumentTitle() {
+function DocumentMeta() {
   const { routeKey, region, locale, t } = useApp();
-  useEffect(() => {
-    const suffix = locale === "et" ? "Eesti Turism (prototüüp)" : "Eesti Turism (prototype)";
-    const page = TITLE_KEYS[routeKey] ? t(TITLE_KEYS[routeKey]) : routeKey === "home" ? null : "404";
-    const where = region.kind !== "country" && REGIONAL_PAGES.has(routeKey) ? regionName(region, locale) : null;
-    document.title = [page, where, suffix].filter(Boolean).join(" · ");
-  }, [routeKey, region, locale, t]);
+  const location = useLocation();
+  const county = countyFromPath(location.pathname);
+
+  const meta = useMemo(() => {
+    const namedRegion = region.kind !== "country";
+    const where = namedRegion && REGIONAL_PAGES.has(routeKey) ? regionName(region, locale) : null;
+
+    if (county || (routeKey === "regions" && namedRegion)) {
+      const path = namedRegion ? regionPath(region, locale) : location.pathname;
+      return locale === "en"
+        ? {
+            title: `${regionName(region, locale)} tourism statistics — Eesti Turism`,
+            description: `Tourism statistics for ${regionName(region, locale)}: visitor numbers, nights stayed, accommodation capacity, and a monthly AI-written summary, based on Statistikaamet data.`,
+            path,
+          }
+        : {
+            title: `${regionName(region, locale)} turismistatistika — Eesti Turism`,
+            description: `${regionName(region, locale)} turismistatistika: külastajate arv, ööbimised, majutuskohtade mahutavus ning igakuine AI-kokkuvõte Statistikaameti andmete põhjal.`,
+            path,
+          };
+    }
+
+    if (routeKey === "home") {
+      return locale === "en"
+        ? {
+            title: "Eesti Turism — Estonian tourism statistics",
+            description:
+              "Estonian tourism statistics overview based on Statistikaamet data: visitor numbers, nights stayed, county and seasonality comparisons, accommodation capacity, and a monthly AI summary.",
+            path: "/en",
+          }
+        : {
+            title: "Eesti Turism — turismistatistika ja majutusandmed",
+            description:
+              "Eesti turismistatistika ülevaade Statistikaameti andmete põhjal: külastajate arv, ööbimised, maakondade ja hooajalisuse võrdlus, majutuskohtade mahutavus ning igakuine AI-kokkuvõte.",
+            path: "/",
+          };
+    }
+
+    const page = TITLE_KEYS[routeKey] ? t(TITLE_KEYS[routeKey]) : routeKey ? "404" : "404";
+    const title = [page, where, "Eesti Turism"].filter(Boolean).join(" · ");
+    const description = TITLE_KEYS[routeKey] ? t(`meta.${routeKey}`) : t("meta.notFound");
+    return { title, description, path: location.pathname };
+  }, [routeKey, region, locale, t, location.pathname, county]);
+
+  useDocumentMeta(meta);
   return null;
 }
 
@@ -88,12 +125,11 @@ export default function App() {
   return (
     <>
       <FaviconSync />
-      <DocumentTitle />
+      <DocumentMeta />
       <ScrollManager />
       <a className="skip-link" href="#main">
         {t("a11y.skip")}
       </a>
-      <PrototypeRibbon />
       <Header transparent={routeKey === "home"} />
       <main id="main" tabIndex={-1}>
         <Suspense fallback={<PageSkeleton />}>
@@ -105,8 +141,8 @@ export default function App() {
                 <Route key={`${key}-en`} path={paths.en} element={<Page />} />,
               ];
             })}
-            <Route path="/maakond/:slug" element={<LegacyRegion locale="et" />} />
-            <Route path="/en/county/:slug" element={<LegacyRegion locale="en" />} />
+            <Route path="/maakond/:slug" element={<CountyPage />} />
+            <Route path="/en/county/:slug" element={<CountyPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

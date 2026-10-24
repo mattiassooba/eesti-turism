@@ -12,7 +12,6 @@ import "./styles/charts.css";
 import "./styles/pages.css";
 import "./styles/analytics.css";
 import "./styles/embed.css";
-import "./styles/studio.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

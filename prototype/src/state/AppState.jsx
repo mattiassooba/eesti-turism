@@ -1,41 +1,28 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { localeFromPath, routeKeyFromPath, pathFor } from "../lib/routes.js";
-import { regionById, ESTONIA } from "../lib/regions.js";
+import { countyFromPath, localeFromPath, routeKeyFromPath, pathFor } from "../lib/routes.js";
+import { regionById, regionByLegacySlug, regionPath, ESTONIA } from "../lib/regions.js";
 import { STRINGS } from "../i18n/strings.js";
 
 const Ctx = createContext(null);
-const BRAND_KEY = "proto-brand-concept";
 
 function lookup(dict, key) {
   return key.split(".").reduce((node, k) => (node == null ? undefined : node[k]), dict);
 }
 
-// One provider for the three pieces of global UI state:
-//   locale  — from the path (/en prefix), same rule as production
-//   region  — ?r=<id>, compare region ?vs=<id>; URL is the source of truth
-//             so selections are shareable and survive language switches
-//   brand   — which of the two logo concepts the prototype header shows
 export function AppStateProvider({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const locale = localeFromPath(location.pathname);
   const routeKey = routeKeyFromPath(location.pathname);
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const county = countyFromPath(location.pathname);
 
-  const region = regionById(params.get("r")) ?? ESTONIA;
+  const region = county
+    ? (regionByLegacySlug(county.slug, county.locale) ?? ESTONIA)
+    : (regionById(params.get("r")) ?? ESTONIA);
   const compareParam = params.get("vs");
   const compare = compareParam ? regionById(compareParam) : null;
-
-  const [brand, setBrandState] = useState(() => {
-    const fromUrl = new URLSearchParams(window.location.search).get("brand");
-    if (fromUrl === "a" || fromUrl === "b") return fromUrl;
-    return localStorage.getItem(BRAND_KEY) ?? "a";
-  });
-  const setBrand = useCallback((b) => {
-    setBrandState(b);
-    localStorage.setItem(BRAND_KEY, b);
-  }, []);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -68,35 +55,66 @@ export function AppStateProvider({ children }) {
     [location.pathname, location.search, location.hash, navigate]
   );
 
-  const setRegion = useCallback((id) => updateParams({ r: id }), [updateParams]);
+  const setRegion = useCallback(
+    (id) => {
+      const next = regionById(id) ?? ESTONIA;
+      if (routeKey === "regions") {
+        navigate(regionPath(next, locale));
+        return;
+      }
+      updateParams({ r: next.id });
+    },
+    [routeKey, locale, navigate, updateParams]
+  );
   const setCompare = useCallback((id) => updateParams({ vs: id }), [updateParams]);
 
-  // Links between pages carry the region selection along.
   const href = useCallback(
     (key, { hash, keepRegion = true } = {}) => {
+      const selected = region.kind !== "country" ? region : regionById(params.get("r"));
+      if (key === "regions" && keepRegion && selected && selected.kind !== "country") {
+        return `${regionPath(selected, locale)}${hash ? `#${hash}` : ""}`;
+      }
       const keep = new URLSearchParams();
       if (keepRegion) {
-        if (params.get("r")) keep.set("r", params.get("r"));
+        const rid = params.get("r") ?? (region.kind !== "country" ? region.id : null);
+        if (rid) keep.set("r", rid);
         if (params.get("vs")) keep.set("vs", params.get("vs"));
       }
       const s = keep.toString();
       return `${pathFor(key, locale)}${s ? `?${s}` : ""}${hash ? `#${hash}` : ""}`;
     },
-    [locale, params]
+    [locale, params, region]
   );
 
   const switchLocale = useCallback(
     (next) => {
       if (next === locale) return;
+      if (county && region.kind !== "country") {
+        navigate(regionPath(region, next));
+        return;
+      }
       const key = routeKey ?? "home";
       navigate(`${pathFor(key, next)}${location.search}${location.hash}`);
     },
-    [locale, routeKey, location.search, location.hash, navigate]
+    [locale, routeKey, county, region, location.search, location.hash, navigate]
   );
 
   const value = useMemo(
-    () => ({ locale, t, routeKey, region, compare, setRegion, setCompare, updateParams, params, href, switchLocale, brand, setBrand }),
-    [locale, t, routeKey, region, compare, setRegion, setCompare, updateParams, params, href, switchLocale, brand, setBrand]
+    () => ({
+      locale,
+      t,
+      routeKey,
+      region,
+      compare,
+      setRegion,
+      setCompare,
+      updateParams,
+      params,
+      href,
+      switchLocale,
+      brand: "a",
+    }),
+    [locale, t, routeKey, region, compare, setRegion, setCompare, updateParams, params, href, switchLocale]
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

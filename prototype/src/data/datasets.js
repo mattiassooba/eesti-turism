@@ -82,6 +82,20 @@ async function loadOrigins(region) {
 }
 export const useOrigins = (region) => useData(`origins:${region}`, () => loadOrigins(region));
 
+// Full history of nights by origin country, for yearly top-5 rankings.
+async function loadOriginHistory(region) {
+  const { rows } = await query(PATHS.majutus, "TU131.PX", {
+    Näitaja: ["OCC_NI"],
+    Maakond: [region],
+    Elukohariik: ORIGIN_CODES,
+    Vaatlusperiood: { top: 256 },
+  });
+  const { periods, series } = index(rows, (r) => r.Elukohariik);
+  const get = (country) => series.get(country) ?? empty(periods.length);
+  return { periods, get, tables: ["TU131"] };
+}
+export const useOriginHistory = (region) => useData(`originHistory:${region}`, () => loadOriginHistory(region));
+
 // ── TU133: nights by purpose of trip, for one region (2019→) ───────────
 export const PURPOSES = ["HOL", "BSNS_CONF", "BSNS_O", "_O"];
 async function loadPurpose(region) {

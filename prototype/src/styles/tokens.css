@@ -104,7 +104,7 @@
   --section-y: clamp(72px, 9vw, 136px);
   --head-gap: clamp(32px, 4vw, 56px);
   --header-h: 68px;
-  --ribbon-h: 34px;
+  --ribbon-h: 0px;
 
   --radius-s: 6px;
   --radius-m: 10px;

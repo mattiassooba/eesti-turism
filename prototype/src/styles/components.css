@@ -935,6 +935,7 @@
 /* ── Data table ─────────────────────────────────────────────────────── */
 .data-table-wrap {
   overflow: auto;
+  max-width: 100%;
   border: 1px solid var(--line);
   border-radius: var(--radius-m);
   background: var(--surface);

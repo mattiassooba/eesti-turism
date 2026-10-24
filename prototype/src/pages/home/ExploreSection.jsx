@@ -7,6 +7,7 @@ const TILES = [
   { key: "regions", icon: "layers" },
   { key: "visitors", icon: "globe" },
   { key: "accommodation", icon: "chart" },
+  { key: "operator", icon: "layers" },
   { key: "sector", icon: "chart", national: true },
   { key: "residents", icon: "compare", national: true },
   { key: "data", icon: "table" },

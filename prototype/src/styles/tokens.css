@@ -1,0 +1,122 @@
+/* ─────────────────────────────────────────────────────────────────────
+   Design tokens — "Läänemeri" (Baltic Sea) system
+   Cool, low-chroma blues drawn from Baltic water at different depths,
+   one warm "majakas" (lighthouse) amber reserved for selection and
+   annotation. Neutrals are blue-tinted, never pure grey.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  /* Depth — dark surfaces */
+  --abyss: #08141f;
+  --deep: #0b1a29;
+  --navy-900: #0f2133;
+  --navy-800: #14283d;
+  --navy-700: #1c3550;
+  --navy-600: #284763;
+
+  /* Shore — light surfaces */
+  --paper: #f5f7f9;
+  --mist: #ecf1f5;
+  --frost: #e3eaf0;
+  --surface: #ffffff;
+
+  /* Text */
+  --ink: #132a3e;
+  --ink-2: #4b6074;
+  --ink-3: #576b7e;
+  --on-dark: #eef4f8;
+  --on-dark-2: #a9bccb;
+  --on-dark-3: #7d96ab;
+
+  /* Accents */
+  --baltic: #3b80ab;
+  --baltic-ink: #2b6890;
+  --baltic-strong: #22587c;
+  --sea: #9ac6dc;
+  --sea-200: #c6dfeb;
+  --sea-100: #e2eff5;
+  --teal: #2f8a86;
+  --amber: #e0a252;
+  --amber-ink: #9b6418;
+
+  /* Status (AA on white for text use) */
+  --pos: #2b7a55;
+  --pos-bg: #e5f2ea;
+  --neg: #b0453a;
+  --neg-bg: #f8e7e4;
+  --pos-on-dark: #7fcca3;
+  --neg-on-dark: #f0998d;
+
+  /* Lines */
+  --line: #dde5eb;
+  --line-2: #c9d5de;
+  --line-dark: rgba(154, 198, 220, 0.16);
+  --line-dark-2: rgba(154, 198, 220, 0.28);
+
+  /* Data palette — ordered for categorical use; series 1 and 2 differ in
+     lightness, not just hue, so they stay distinct in greyscale. */
+  --c-domestic: #1f3d5a;
+  --c-foreign: #6eaed0;
+  --c-1: #3b80ab;
+  --c-2: #1f3d5a;
+  --c-3: #7fb9d6;
+  --c-4: #2f8a86;
+  --c-5: #c9a46a;
+  --c-6: #8c99a8;
+  --c-muted: #b7c4cf;
+  --c-highlight: #e0a252;
+  /* Primary vs comparison region; compare uses the amber family but dark
+     enough for 3:1 against white as a graphical object. */
+  --c-region: #3b80ab;
+  --c-compare: #a8681c;
+
+  /* Type */
+  --font-display: "Schibsted Grotesk", "Inter", system-ui, sans-serif;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  --fs-hero: clamp(3.1rem, 1.2rem + 7.6vw, 8.6rem);
+  --fs-h1: clamp(2.5rem, 1.6rem + 3.6vw, 4.6rem);
+  --fs-h2: clamp(1.85rem, 1.3rem + 2.1vw, 3.05rem);
+  --fs-h3: clamp(1.2rem, 1.05rem + 0.5vw, 1.45rem);
+  --fs-kpi-xl: clamp(2.5rem, 1.6rem + 3vw, 4.4rem);
+  --fs-kpi-l: clamp(2rem, 1.5rem + 1.6vw, 3rem);
+  --fs-kpi-m: clamp(1.55rem, 1.3rem + 0.8vw, 2rem);
+  --fs-lead: clamp(1.075rem, 1rem + 0.35vw, 1.3rem);
+  --fs-body: 1rem;
+  --fs-sm: 0.875rem;
+  --fs-xs: 0.8125rem;
+  --fs-meta: 0.75rem;
+
+  /* Space — 4px base */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+  --s-10: 128px;
+
+  --gutter: clamp(20px, 4.2vw, 56px);
+  --maxw: 1360px;
+  --section-y: clamp(72px, 9vw, 136px);
+  --head-gap: clamp(32px, 4vw, 56px);
+  --header-h: 68px;
+  --ribbon-h: 34px;
+
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 16px;
+  --radius-pill: 999px;
+
+  --shadow-pop: 0 1px 2px rgba(11, 26, 41, 0.06), 0 12px 32px -8px rgba(11, 26, 41, 0.18);
+  --shadow-float: 0 24px 64px -24px rgba(8, 20, 31, 0.45);
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 140ms;
+  --t-med: 240ms;
+  --t-slow: 520ms;
+}

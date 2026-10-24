@@ -8,7 +8,11 @@
     "build": "vite build",
     "postbuild": "node scripts/copy-404.mjs",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "proto": "vite --config prototype/vite.config.js",
+    "proto:build": "vite build --config prototype/vite.config.js",
+    "proto:preview": "vite preview --config prototype/vite.config.js",
+    "proto:geo": "node prototype/scripts/build-geo.mjs"
   },
   "dependencies": {
     "@tanstack/react-table": "^8.20.5",

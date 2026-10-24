@@ -212,8 +212,9 @@ function Wages({ s }) {
   const w = s.wageComparison;
   const periods = w.map((x) => x.period);
   const series = [
-    { key: "all", label: t("sectorPage.wageAll"), short: t("sectorPage.wageAllShort"), values: w.map((x) => x.allActivities), color: "var(--c-muted)", width: 1.8, dash: "4 4" },
+    { key: "all", label: t("sectorPage.wageAll"), short: t("sectorPage.wageAllShort"), values: w.map((x) => x.allActivities), color: "var(--c-muted)", width: 1.8 },
     { key: "acc", label: t("sectorPage.wageAcc"), short: t("sectorPage.wageAccShort"), values: w.map((x) => x.accommodation), color: "var(--c-1)", width: 2.4 },
+    { key: "share", label: t("sectorPage.wageShare"), short: t("sectorPage.wageShareShort"), values: w.map((x) => x.share), color: "var(--c-2)", width: 1.8, dash: "4 4", axis: "right" },
   ];
   const qTick = (p) => (p.endsWith("Q1") ? p.slice(0, 4) : "");
   return (
@@ -223,8 +224,8 @@ function Wages({ s }) {
       tables={["PA113"]}
       table={{
         caption: t("sectorPage.wageTitle"),
-        columns: [{ key: "p", label: t("table.period") }, ...series.map((x) => ({ key: x.key, label: x.label, numeric: true })), { key: "r", label: t("sectorPage.ratio"), numeric: true }],
-        rows: w.map((x) => ({ key: x.period, p: fmtPeriod(x.period, locale), all: fmtEur(x.allActivities, locale, 0), acc: fmtEur(x.accommodation, locale, 0), r: fmtPct((x.accommodation / x.allActivities) * 100, locale, 0) })).reverse(),
+        columns: [{ key: "p", label: t("table.period") }, ...series.map((x) => ({ key: x.key, label: x.label, numeric: true }))],
+        rows: w.map((x) => ({ key: x.period, p: fmtPeriod(x.period, locale), all: fmtEur(x.allActivities, locale, 0), acc: fmtEur(x.accommodation, locale, 0), share: fmtPct(x.share, locale, 0) })).reverse(),
       }}
     >
       <LineChart
@@ -232,7 +233,11 @@ function Wages({ s }) {
         series={series}
         height={300}
         zero={false}
+        y2Zero
+        y2Min={0}
+        y2Max={100}
         yFormat={(v) => `${fmtInt(v, locale)} €`}
+        y2Format={(v) => `${fmtInt(v, locale)}%`}
         valueFormat={(v) => fmtEur(v, locale, 0)}
         xTick={qTick}
         tooltipTitle={(p) => fmtPeriod(p, locale)}

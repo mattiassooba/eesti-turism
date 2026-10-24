@@ -8,20 +8,43 @@ import { parsePeriod } from "../../lib/format.js";
 // - series are labelled directly at their last value instead of a legend
 // - shaded annotation bands mark context periods (e.g. COVID-19 years)
 // - pointer and arrow keys move a crosshair; the readout lists all series
+function scaleValues(values, { zero, yMin, yMax, tickCount, innerH, padT }) {
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const v of values) {
+    if (v == null) continue;
+    lo = Math.min(lo, v);
+    hi = Math.max(hi, v);
+  }
+  if (!Number.isFinite(lo)) {
+    lo = 0;
+    hi = 1;
+  }
+  if (zero) lo = Math.min(0, lo);
+  if (yMax != null) hi = Math.max(hi, yMax);
+  if (yMin != null) lo = Math.min(lo, yMin);
+  const ticks = niceTicks(lo, hi, tickCount);
+  return { y: linear([ticks[0], ticks[ticks.length - 1]], [padT + innerH, padT]), ticks };
+}
+
 export default function LineChart({
   periods,
   series,
   height = 340,
   yFormat = (v) => String(v),
+  y2Format,
   valueFormat,
   xTick = (p) => p,
   tooltipTitle = (p) => p,
   zero = true,
+  y2Zero = false,
   bands = [],
   endLabels = true,
   ariaLabel,
   yMax,
   yMin,
+  y2Max,
+  y2Min,
   compactTicks,
   focusIndex,
 }) {
@@ -29,34 +52,29 @@ export default function LineChart({
   const [hover, setHover] = useState(null);
   const id = useId();
   const fmtValue = valueFormat ?? yFormat;
+  const fmtRight = y2Format ?? yFormat;
   const narrow = width < 560;
+  const hasRight = series.some((s) => s.axis === "right");
   const padL = 0;
-  const padR = endLabels ? (narrow ? 64 : 92) : 8;
+  const padR = endLabels ? (narrow ? 64 : 92) : hasRight ? 36 : 8;
   const padT = 22;
   const padB = 30;
   const innerW = Math.max(10, width - padL - padR);
   const innerH = height - padT - padB;
+  const rightGutter = hasRight ? (narrow ? 28 : 36) : 0;
+  const { y, ticks, y2, ticks2 } = useMemo(() => {
+    const left = series.filter((s) => s.axis !== "right").flatMap((s) => s.values);
+    const right = series.filter((s) => s.axis === "right").flatMap((s) => s.values);
+    const primary = scaleValues(left, { zero, yMin, yMax, tickCount: narrow ? 4 : 5, innerH, padT });
+    const secondary = scaleValues(right, { zero: y2Zero, yMin: y2Min, yMax: y2Max, tickCount: 2, innerH, padT });
+    return { y: primary.y, ticks: primary.ticks, y2: secondary.y, ticks2: secondary.ticks };
+  }, [series, zero, y2Zero, innerH, narrow, yMax, yMin, y2Max, y2Min]);
 
-  const { y, ticks } = useMemo(() => {
-    let lo = Infinity;
-    let hi = -Infinity;
-    for (const s of series) for (const v of s.values) if (v != null) {
-      lo = Math.min(lo, v);
-      hi = Math.max(hi, v);
-    }
-    if (!Number.isFinite(lo)) {
-      lo = 0;
-      hi = 1;
-    }
-    if (zero) lo = Math.min(0, lo);
-    if (yMax != null) hi = Math.max(hi, yMax);
-    if (yMin != null) lo = Math.min(lo, yMin);
-    const tk = niceTicks(lo, hi, narrow ? 4 : 5);
-    return { y: linear([tk[0], tk[tk.length - 1]], [padT + innerH, padT]), ticks: tk };
-  }, [series, zero, innerH, narrow, yMax, yMin]);
+  const plotY = (s) => (s.axis === "right" ? y2 : y);
+  const plotFormat = (s) => s.format ?? (s.axis === "right" ? fmtRight : fmtValue);
 
   const n = periods.length;
-  const x = linear([0, Math.max(1, n - 1)], [padL, padL + innerW]);
+  const x = linear([0, Math.max(1, n - 1)], [padL, padL + Math.max(10, innerW - rightGutter)]);
 
   const xTicks = useMemo(() => {
     if (!n) return [];
@@ -93,8 +111,9 @@ export default function LineChart({
   }, [periods, n, narrow, compactTicks]);
 
   const paths = series.map((s) => {
-    const pts = s.values.map((v, i) => (v == null ? null : [x(i), y(v)]));
-    return { ...s, d: linePath(pts), area: s.area ? areaPath(pts, y(Math.max(ticks[0], 0))) : null, pts };
+    const sy = plotY(s);
+    const pts = s.values.map((v, i) => (v == null ? null : [x(i), sy(v)]));
+    return { ...s, d: linePath(pts), area: s.area ? areaPath(pts, sy(Math.max((s.axis === "right" ? ticks2 : ticks)[0], 0))) : null, pts };
   });
 
   const labels = endLabels
@@ -104,7 +123,7 @@ export default function LineChart({
           .map((s) => {
             let i = s.values.length - 1;
             while (i >= 0 && s.values[i] == null) i--;
-            return i < 0 ? null : { key: s.key, y: y(s.values[i]), x: x(i), value: s.values[i], label: s.short ?? s.label, color: s.color, i };
+            return i < 0 ? null : { key: s.key, y: plotY(s)(s.values[i]), x: x(i), value: s.values[i], label: s.short ?? s.label, color: s.color, format: plotFormat(s), i };
           })
           .filter(Boolean),
         28,
@@ -184,6 +203,12 @@ export default function LineChart({
               </text>
             </g>
           ))}
+          {hasRight &&
+            ticks2.map((tk) => (
+              <text key={`r-${tk}`} x={padL + innerW} y={y2(tk) - 6} textAnchor="end" className="chart-ylabel">
+                {fmtRight(tk)}
+              </text>
+            ))}
           {xTicks.map((i) => (
             <g key={i} className="chart-xtick">
               <line x1={x(i)} x2={x(i)} y1={padT + innerH} y2={padT + innerH + 5} />
@@ -212,7 +237,7 @@ export default function LineChart({
             <g key={l.key} className="chart-endlabel">
               <circle cx={l.x} cy={paths.find((p) => p.key === l.key).pts[l.i][1]} r="3.5" fill={l.color} />
               <text x={padL + innerW + 10} y={l.y - 3} fill={l.color} className="chart-endlabel-value">
-                {fmtValue(l.value)}
+                {(l.format ?? fmtValue)(l.value)}
               </text>
               <text x={padL + innerW + 10} y={l.y + 11} className="chart-endlabel-name">
                 {l.label}
@@ -223,7 +248,7 @@ export default function LineChart({
             <g className="chart-cursor" aria-hidden="true">
               <line x1={x(active)} x2={x(active)} y1={padT} y2={padT + innerH} />
               {paths.map((s) =>
-                s.values[active] != null ? <circle key={s.key} cx={x(active)} cy={y(s.values[active])} r="4.5" stroke={s.color} /> : null
+                s.values[active] != null ? <circle key={s.key} cx={x(active)} cy={plotY(s)(s.values[active])} r="4.5" stroke={s.color} /> : null
               )}
             </g>
           )}
@@ -242,7 +267,7 @@ export default function LineChart({
               <li key={s.key}>
                 <span className="chart-tip-swatch" style={{ background: s.color, opacity: s.muted ? 0.6 : 1 }} />
                 <span className="chart-tip-label">{s.label}</span>
-                <span className="chart-tip-value num">{s.values[active] == null ? "—" : fmtValue(s.values[active])}</span>
+                <span className="chart-tip-value num">{s.values[active] == null ? "—" : plotFormat(s)(s.values[active])}</span>
               </li>
             ))}
           </ul>

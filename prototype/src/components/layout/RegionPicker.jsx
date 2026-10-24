@@ -117,7 +117,7 @@ export default function RegionPicker({ variant = "header" }) {
   }
 
   return (
-    <div className={`region-picker region-picker--${variant}`} ref={wrapRef}>
+    <div className={`region-picker region-picker--${variant}` + (open ? " is-open" : "")} ref={wrapRef}>
       <button
         ref={btnRef}
         type="button"

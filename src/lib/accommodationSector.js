@@ -153,12 +153,16 @@ export function computeWageComparison(pa113Rows) {
   }
   return pa113Rows
     .filter((r) => r.Näitaja === WAGE_AVG && r.Tegevusala === ACCOMMODATION && allByPeriod.has(r.Vaatlusperiood))
-    .map((r) => ({
-      period: r.Vaatlusperiood,
-      label: r.Vaatlusperiood_label,
-      accommodation: r.value,
-      allActivities: allByPeriod.get(r.Vaatlusperiood),
-    }))
+    .map((r) => {
+      const allActivities = allByPeriod.get(r.Vaatlusperiood);
+      return {
+        period: r.Vaatlusperiood,
+        label: r.Vaatlusperiood_label,
+        accommodation: r.value,
+        allActivities,
+        share: allActivities > 0 ? (r.value / allActivities) * 100 : null,
+      };
+    })
     .sort(byPeriodAscending);
 }
 

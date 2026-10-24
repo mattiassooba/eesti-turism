@@ -208,8 +208,8 @@ describe("computeWageComparison", () => {
       pa113Row("GR_W_AVG_SM", "I55", "2026Q2", 5.1), // wrong Näitaja, excluded
     ];
     expect(computeWageComparison(rows)).toEqual([
-      { period: "2026Q1", label: "2026Q1", accommodation: 1450, allActivities: 2100 },
-      { period: "2026Q2", label: "2026Q2", accommodation: 1500, allActivities: 2150 },
+      { period: "2026Q1", label: "2026Q1", accommodation: 1450, allActivities: 2100, share: (1450 / 2100) * 100 },
+      { period: "2026Q2", label: "2026Q2", accommodation: 1500, allActivities: 2150, share: (1500 / 2150) * 100 },
     ]);
   });
 
@@ -219,7 +219,17 @@ describe("computeWageComparison", () => {
       pa113Row("GR_W_AVG", "TOTAL", "2026Q1", 2100),
       pa113Row("GR_W_AVG", "I55", "2026Q2", 1500), // TOTAL for 2026Q2 not yet published
     ];
-    expect(computeWageComparison(rows)).toEqual([{ period: "2026Q1", label: "2026Q1", accommodation: 1450, allActivities: 2100 }]);
+    expect(computeWageComparison(rows)).toEqual([
+      { period: "2026Q1", label: "2026Q1", accommodation: 1450, allActivities: 2100, share: (1450 / 2100) * 100 },
+    ]);
+  });
+
+  it("records accommodation as a percent of the national average each quarter", () => {
+    const rows = [
+      pa113Row("GR_W_AVG", "I55", "2026Q2", 1554),
+      pa113Row("GR_W_AVG", "TOTAL", "2026Q2", 2243),
+    ];
+    expect(computeWageComparison(rows)[0].share).toBeCloseTo((1554 / 2243) * 100, 5);
   });
 });
 
@@ -316,6 +326,7 @@ describe("insight builders", () => {
     const et = buildWageInsight([{ period: "2026Q2", label: "2026 II kvartal", accommodation: 1500, allActivities: 2150 }], "et");
     expect(et).toContain("(2026 II kvartal)");
     expect(et).not.toContain("2026Q2");
+    expect(et).not.toContain("%");
     expect(buildWageInsight([], "en")).toBeNull();
   });
 

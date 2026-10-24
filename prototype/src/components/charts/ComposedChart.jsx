@@ -2,12 +2,13 @@ import { useId, useMemo, useState } from "react";
 import { useSize, linear, linePath } from "./core.js";
 import { niceTicks } from "../../data/derive.js";
 
-// Columns on the left axis and one line on the right — the operator charts
-// that pair a volume or rate with a share or a price.
+// Columns on the left axis and one or more lines on the right — the operator
+// charts that pair a volume or rate with a share, a price, or RevPAR.
 export default function ComposedChart({
   categories,
   bars,
   line,
+  lines,
   height = 280,
   yFormat = (v) => String(v),
   y2Format = (v) => String(v),
@@ -22,8 +23,10 @@ export default function ComposedChart({
   const hatchId = `hatch-c-${useId().replace(/:/g, "")}`;
   const fmtBar = valueFormat ?? yFormat;
   const fmtLine = value2Format ?? y2Format;
+  const allLines = [...(line ? [line] : []), ...(lines ?? [])];
   const narrow = width < 560;
-  const padT = 24;
+  const showAnyLineValues = !narrow && allLines.some((ln) => ln.showValues);
+  const padT = showAnyLineValues ? 32 : 24;
   const padB = 30;
   const padR = narrow ? 36 : 44;
   const innerH = height - padT - padB;
@@ -40,15 +43,17 @@ export default function ComposedChart({
     }
     const tk = niceTicks(lo, hi || 1, narrow ? 4 : 5);
     return { y: linear([tk[0], tk[tk.length - 1]], [padT + innerH, padT]), ticks: tk };
-  }, [bars, innerH, narrow]);
+  }, [bars, innerH, narrow, padT]);
 
   const { y2, ticks2 } = useMemo(() => {
     let lo = Infinity;
     let hi = -Infinity;
-    for (const v of line.values) {
-      if (v == null) continue;
-      lo = Math.min(lo, v);
-      hi = Math.max(hi, v);
+    for (const ln of allLines) {
+      for (const v of ln.values) {
+        if (v == null) continue;
+        lo = Math.min(lo, v);
+        hi = Math.max(hi, v);
+      }
     }
     if (!Number.isFinite(lo)) {
       lo = 0;
@@ -57,12 +62,16 @@ export default function ComposedChart({
     lo = Math.min(0, lo);
     const tk = niceTicks(lo, hi, narrow ? 3 : 4);
     return { y2: linear([tk[0], tk[tk.length - 1]], [padT + innerH, padT]), ticks2: tk };
-  }, [line, innerH, narrow]);
+  }, [allLines, innerH, narrow, padT]);
 
   const band = n ? innerW / n : 0;
   const barW = Math.min(band * 0.62, 48);
   const step = Math.max(1, Math.ceil(n / (narrow ? 6 : 12)));
-  const pts = categories.map((_, i) => (line.values[i] == null ? null : [band * i + band / 2, y2(line.values[i])]));
+  const linePts = allLines.map((ln) => ({
+    ...ln,
+    format: ln.format ?? fmtLine,
+    pts: categories.map((_, i) => (ln.values[i] == null ? null : [band * i + band / 2, y2(ln.values[i])])),
+  }));
 
   return (
     <div className="chart chart--columns" ref={ref} style={{ height }}>
@@ -107,10 +116,32 @@ export default function ComposedChart({
               </g>
             );
           })}
-          <path d={linePath(pts)} fill="none" stroke={line.color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" className="chart-line" />
-          {pts.map((p, i) =>
-            p ? <circle key={categories[i].key} cx={p[0]} cy={p[1]} r="3.5" fill={line.color} /> : null
-          )}
+          {linePts.map((ln) => (
+            <g key={ln.key}>
+              <path
+                d={linePath(ln.pts)}
+                fill="none"
+                stroke={ln.color}
+                strokeWidth={ln.width ?? 2}
+                strokeDasharray={ln.dash}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                className="chart-line"
+              />
+              {ln.pts.map((p, i) =>
+                p ? (
+                  <g key={categories[i].key}>
+                    <circle cx={p[0]} cy={p[1]} r={ln.showValues ? 3.8 : 3.5} fill={ln.color} />
+                    {ln.showValues && !narrow && (
+                      <text x={p[0]} y={p[1] - 9} textAnchor="middle" fill={ln.color} className="chart-line-value">
+                        {ln.format(ln.values[i])}
+                      </text>
+                    )}
+                  </g>
+                ) : null
+              )}
+            </g>
+          ))}
           <g aria-hidden="true" pointerEvents="none">
             {ticks.map((tk) => (
               <text key={tk} x={0} y={y(tk) - 6} className="chart-ylabel">
@@ -137,11 +168,13 @@ export default function ComposedChart({
               <span className="chart-tip-label">{bars.label}</span>
               <span className="chart-tip-value num">{bars.values[hover] == null ? "—" : fmtBar(bars.values[hover])}</span>
             </li>
-            <li>
-              <span className="chart-tip-swatch" style={{ background: line.color }} />
-              <span className="chart-tip-label">{line.label}</span>
-              <span className="chart-tip-value num">{line.values[hover] == null ? "—" : fmtLine(line.values[hover])}</span>
-            </li>
+            {allLines.map((ln) => (
+              <li key={ln.key}>
+                <span className="chart-tip-swatch" style={{ background: ln.color }} />
+                <span className="chart-tip-label">{ln.label}</span>
+                <span className="chart-tip-value num">{ln.values[hover] == null ? "—" : (ln.format ?? fmtLine)(ln.values[hover])}</span>
+              </li>
+            ))}
           </ul>
         </div>
       )}

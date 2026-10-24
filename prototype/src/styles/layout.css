@@ -580,10 +580,11 @@
 /* ── Page header (dedicated pages) ──────────────────────────────────── */
 .page-head {
   position: relative;
+  z-index: 50;
   background: var(--navy-900);
   color: var(--on-dark);
   padding: clamp(48px, 7vw, 96px) 0 clamp(40px, 5vw, 72px);
-  overflow: hidden;
+  overflow: visible;
 }
 .page-head-grid {
   display: grid;

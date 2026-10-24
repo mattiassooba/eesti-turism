@@ -147,6 +147,7 @@ function buildColumns({ tourism, capacity, code, res, latest, locale }) {
     const tot = sumYear(world, tourism.periods, year);
     const arr = meanInYear(cost, capacity.periods, year);
     const prevArr = meanInYear(cost, capacity.periods, year - 1);
+    const occVal = meanInYear(occ, capacity.periods, year);
     return {
       key: String(year),
       label: String(year),
@@ -161,9 +162,10 @@ function buildColumns({ tourism, capacity, code, res, latest, locale }) {
       domesticShare: dom != null && tot ? (dom / tot) * 100 : null,
       esta: lastInYear(esta, capacity.periods, year),
       rooms: lastInYear(rooms, capacity.periods, year),
-      occ: meanInYear(occ, capacity.periods, year),
+      occ: occVal,
       arr,
       arrYoy: pctChange(arr, prevArr),
+      revpar: occVal != null && arr != null ? (occVal / 100) * arr : null,
     };
   }
 
@@ -179,6 +181,7 @@ function buildColumns({ tourism, capacity, code, res, latest, locale }) {
     const dom = at(domestic, i);
     const tot = at(world, i);
     const arr = at(cost, ci);
+    const occVal = at(occ, ci);
     const ytdCur = ytdThrough(guests, tourism.periods, p.year, p.month);
     const ytdPrev = ytdThrough(guests, tourism.periods, p.year - 1, p.month);
     return {
@@ -195,9 +198,10 @@ function buildColumns({ tourism, capacity, code, res, latest, locale }) {
       domesticShare: dom != null && tot ? (dom / tot) * 100 : null,
       esta: at(esta, ci),
       rooms: at(rooms, ci),
-      occ: at(occ, ci),
+      occ: occVal,
       arr,
       arrYoy: pctChange(arr, at(cost, cpi)),
+      revpar: occVal != null && arr != null ? (occVal / 100) * arr : null,
     };
   }
 
@@ -244,6 +248,7 @@ function YearlyTable({ columns, accommodatedLabel, shareLabel, originsByKey, loc
       indicator: t("operatorPage.yoyChange"),
       ...cell("arrYoy", (c) => <Delta value={c.arrYoy} size="s" />),
     },
+    { key: "revpar", indicator: t("operatorPage.revpar"), ...cell("revpar", (c) => fmtEur(c.revpar, locale, 2)) },
     ...[0, 1, 2, 3, 4].map((rank) => ({
       key: `o${rank}`,
       className: rank === 0 ? "is-origin" : "is-sub is-origin",
@@ -260,7 +265,7 @@ function YearlyTable({ columns, accommodatedLabel, shareLabel, originsByKey, loc
       }),
     })),
   ];
-  const shown = originsByKey ? rows : rows.filter((r) => !String(r.key).startsWith("o"));
+  const shown = originsByKey ? rows : rows.filter((r) => !r.className?.includes("is-origin"));
   return <DataTable caption={accommodatedLabel} maxHeight={720} columns={colDefs} rows={shown} />;
 }
 
@@ -328,6 +333,7 @@ function RegionBlock({ tourism, capacity, origins, region, residency, yearsToSho
   const share = years.map((_, i) => (regionGuests[i] != null && eeGuests[i] ? (regionGuests[i] / eeGuests[i]) * 100 : null));
   const occ = years.map((y) => meanInYear(capacity.get("OCC_OR_BEDR", region.code), capacity.periods, y));
   const cost = years.map((y) => meanInYear(capacity.get("OCC_NI_COST", region.code), capacity.periods, y));
+  const revpar = years.map((_, i) => (occ[i] != null && cost[i] != null ? (occ[i] / 100) * cost[i] : null));
 
   const originsByKey = useMemo(() => {
     if (!origins) return null;
@@ -385,6 +391,7 @@ function RegionBlock({ tourism, capacity, origins, region, residency, yearsToSho
           subtitle={t("operatorPage.kpiSub")}
           legend={[
             { label: t("operatorPage.occupancyPct"), color: "var(--c-3)", type: "bar" },
+            { label: t("operatorPage.revparShort"), color: "var(--c-1)", type: "line" },
             { label: t("operatorPage.avgNightRate"), color: "var(--c-2)", type: "line" },
           ]}
           tables={["TU122"]}
@@ -394,19 +401,30 @@ function RegionBlock({ tourism, capacity, origins, region, residency, yearsToSho
               { key: "y", label: t("table.year") },
               { key: "o", label: t("operatorPage.occupancy"), numeric: true },
               { key: "c", label: t("operatorPage.arr"), numeric: true },
+              { key: "r", label: t("operatorPage.revparShort"), numeric: true },
             ],
-            rows: years.map((y, i) => ({ key: y, y: cats[i].title, o: fmtPct(occ[i], locale), c: fmtEur(cost[i], locale) })).reverse(),
+            rows: years.map((y, i) => ({ key: y, y: cats[i].title, o: fmtPct(occ[i], locale), c: fmtEur(cost[i], locale), r: fmtEur(revpar[i], locale, 2) })).reverse(),
           }}
         >
           <ComposedChart
             categories={cats}
             bars={{ key: "o", label: t("operatorPage.occupancyPct"), color: "var(--c-3)", values: occ, alertColor: "var(--neg)" }}
             line={{ key: "c", label: t("operatorPage.avgNightRate"), color: "var(--c-2)", values: cost }}
+            lines={[
+              {
+                key: "revpar",
+                label: t("operatorPage.revparShort"),
+                color: "var(--c-1)",
+                width: 2.4,
+                values: revpar,
+                showValues: true,
+                format: (v) => fmtEur(v, locale, 0),
+              },
+            ]}
             yFormat={(v) => `${fmtInt(v, locale)}%`}
             y2Format={(v) => `${fmtInt(v, locale)} €`}
             valueFormat={(v) => fmtPct(v, locale)}
             value2Format={(v) => fmtEur(v, locale)}
-            showBarValues
             partialLabel={t("chart.partialYear")}
             ariaLabel={t("operatorPage.kpiTitle", name)}
           />
@@ -481,8 +499,9 @@ function WageBlock({ s }) {
   const w = s.wageComparison;
   const sentence = buildWageInsight(w, locale);
   const series = [
-    { key: "all", label: t("sectorPage.wageAll"), short: t("sectorPage.wageAllShort"), values: w.map((x) => x.allActivities), color: "var(--c-muted)", width: 1.8, dash: "4 4" },
+    { key: "all", label: t("sectorPage.wageAll"), short: t("sectorPage.wageAllShort"), values: w.map((x) => x.allActivities), color: "var(--c-muted)", width: 1.8 },
     { key: "acc", label: t("sectorPage.wageAcc"), short: t("sectorPage.wageAccShort"), values: w.map((x) => x.accommodation), color: "var(--c-1)", width: 2.4 },
+    { key: "share", label: t("sectorPage.wageShare"), short: t("sectorPage.wageShareShort"), values: w.map((x) => x.share), color: "var(--c-2)", width: 1.8, dash: "4 4", axis: "right" },
   ];
   return (
     <>
@@ -496,7 +515,6 @@ function WageBlock({ s }) {
           columns: [
             { key: "p", label: t("table.period") },
             ...series.map((x) => ({ key: x.key, label: x.label, numeric: true })),
-            { key: "r", label: t("sectorPage.ratio"), numeric: true },
           ],
           rows: w
             .map((x) => ({
@@ -504,7 +522,7 @@ function WageBlock({ s }) {
               p: fmtPeriod(x.period, locale),
               all: fmtEur(x.allActivities, locale, 0),
               acc: fmtEur(x.accommodation, locale, 0),
-              r: fmtPct((x.accommodation / x.allActivities) * 100, locale, 0),
+              share: fmtPct(x.share, locale, 0),
             }))
             .reverse(),
         }}
@@ -514,7 +532,11 @@ function WageBlock({ s }) {
           series={series}
           height={300}
           zero={false}
+          y2Zero
+          y2Min={0}
+          y2Max={100}
           yFormat={(v) => `${fmtInt(v, locale)} €`}
+          y2Format={(v) => `${fmtInt(v, locale)}%`}
           valueFormat={(v) => fmtEur(v, locale, 0)}
           xTick={(p) => (p.endsWith("Q1") ? p.slice(0, 4) : "")}
           tooltipTitle={(p) => fmtPeriod(p, locale)}

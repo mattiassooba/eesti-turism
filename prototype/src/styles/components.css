@@ -288,6 +288,9 @@
 .region-picker {
   position: relative;
 }
+.region-picker.is-open {
+  z-index: 80;
+}
 .region-trigger {
   display: inline-flex;
   align-items: center;

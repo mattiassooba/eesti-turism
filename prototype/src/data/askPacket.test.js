@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { detectYears, buildPacket } from "./askPacket.js";
 import { REGIONS } from "../lib/regions.js";
 import { REGION_IDS, RANGE_COLUMNS, YEAR_COLUMNS, MAX_BODY_BYTES } from "@prod/lib/askShape.js";
+import { validateRequest } from "../../../worker/src/validate.js";
 
 const HIIU = "EE00390000000000";
 const HARJU = "EE00370000000000";
@@ -166,6 +167,13 @@ describe("buildPacket", () => {
     expect(p.rankings.year).toBe(2025);
     expect(p.rankings.byGuests[0]).toEqual(["harju", 1_200_000]);
     expect(p.rankings.byGuests.map(([id]) => id)).not.toContain("ee");
+  });
+
+  test("built packets pass the Worker's validator", () => {
+    for (const question of ["Milline on Hiiumaa trend 2015-2024?", "1995-2030 kokku", "Võrdle Harjumaad ja Tartumaad"]) {
+      const packet = buildPacket({ ...full, locale: "et", question });
+      expect(validateRequest({ question, locale: "et", selected: { region: "hiiu", compare: null }, packet })).toMatchObject({ ok: true });
+    }
   });
 
   test("packet never contains average cost and stays under the size limit", () => {

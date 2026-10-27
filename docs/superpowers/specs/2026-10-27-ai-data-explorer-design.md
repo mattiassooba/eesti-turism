@@ -122,8 +122,9 @@ line names both tables.
 
 Region names are given in the visitor's language. Each region is identified
 by its short id (`hiiu`, `harju`, …) so the model can match names in
-either language. Size target: well under 30 KB of JSON (so the request is a
-few thousand tokens).
+either language. Size target: under ~60 KB of JSON (all 19 regions × ~22
+years, in compact column arrays). That is roughly 15k input tokens, about 0.15
+cents per question on Haiku.
 
 `selected` carries the currently selected region (and comparison region, if
 any) so the model can resolve "here", "this county", or a question naming no
@@ -143,7 +144,7 @@ One file of logic, plain JavaScript, using the official
    - `selected`: known region ids only
    - `packet`: must match the exact expected shape: known region ids, known
      keys, numbers or null, and short label strings only
-   - total body under ~40 KB
+   - total body at most 64 KB
 
    Free text from the browser goes only into `question`.
 3. **Rate limits:**
@@ -227,8 +228,10 @@ limit, allowed origins. The secret is `ANTHROPIC_API_KEY`.
 - **Strings:** all strings go in the prototype's i18n
   (`prototype/src/i18n/core.js` or `pages.js`, both `et` and `en`), and
   `node prototype/scripts/check-i18n.mjs` must pass.
-- **Language change:** if the language changes while the panel is open, keep
-  the panel open; new answers come in the new language.
+- **Language change:** switching language moves to the other locale's route,
+  which remounts the page, so the panel closes. Reopening it gives answers in
+  the new language. (Claude's call; keeping it open would need state lifted
+  above the router for little gain.)
 
 ### 4. Configuration and deployment
 
@@ -252,8 +255,12 @@ Owner-approved estimate with Claude Haiku 5.5 ($0.10 / $0.50 per million
 input/output tokens):
 
 - at most 1,500 questions a month
-- about 0.05–0.1 cents each (the packet makes the input a few thousand tokens)
-- under about $2 a month even if every daily slot is used
+- about 0.2 cents each (the full packet is ~15k input tokens, plus ~1k output
+  tokens including thinking)
+- under about $3 a month even if every daily slot is used
+
+The earlier "under $1" figure assumed a smaller packet. Corrected during
+planning.
 
 ## Testing
 

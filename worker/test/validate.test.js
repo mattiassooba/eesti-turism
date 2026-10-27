@@ -60,7 +60,7 @@ describe("validateRequest", () => {
     expect(rejects((b) => b.packet.regions.hiiu.latest.pop())).toBe(true);
     expect(rejects((b) => b.packet.regions.hiiu.months.pop())).toBe(true);
     expect(rejects((b) => b.packet.range.rows.hiiu.pop())).toBe(true);
-    expect(YEAR_COLUMNS.length).toBe(9);
+    expect(YEAR_COLUMNS.length).toBe(10);
     expect(LATEST_COLUMNS.length).toBe(7);
   });
 

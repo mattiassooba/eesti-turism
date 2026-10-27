@@ -153,6 +153,14 @@ describe("buildPacket", () => {
     expect(buildPacket({ ...small, locale: "et", question: "Kuidas läks 2019?" }).range).toBeNull();
   });
 
+  test("year rows carry the foreign guests' change from the previous year", () => {
+    const p = buildPacket({ ...small, locale: "et", question: "" });
+    const y18 = row(YEAR_COLUMNS, p.regions.hiiu.years.find((r) => r[0] === 2018));
+    const y19 = row(YEAR_COLUMNS, p.regions.hiiu.years.find((r) => r[0] === 2019));
+    expect(y19.foreignYoyPct).toBe(Math.round(((y19.foreign - y18.foreign) / y18.foreign) * 1000) / 10);
+    expect(y19.foreignYoyPct).toBeGreaterThan(30);
+  });
+
   test("suppressed annual values stay null, not zero", () => {
     const p = buildPacket({ ...small, locale: "et", question: "" });
     const y2018 = row(YEAR_COLUMNS, p.regions.harju.years.find((r) => r[0] === 2018));

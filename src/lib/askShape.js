@@ -26,7 +26,7 @@ export const REGION_IDS = [
   "tartu-linn",
 ];
 
-export const YEAR_COLUMNS = ["year", "guests", "nights", "domestic", "foreign", "guestsYoyPct", "nightsYoyPct", "roomOccPct", "bedOccPct"];
+export const YEAR_COLUMNS = ["year", "guests", "nights", "domestic", "foreign", "guestsYoyPct", "nightsYoyPct", "foreignYoyPct", "roomOccPct", "bedOccPct"];
 export const LATEST_COLUMNS = ["guests", "guestsYoyPct", "nights", "nightsYoyPct", "domestic", "foreign", "foreignYoyPct"];
 export const RANGE_COLUMNS = [
   "guestsFrom",

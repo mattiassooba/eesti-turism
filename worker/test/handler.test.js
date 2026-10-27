@@ -65,6 +65,14 @@ describe("handleRequest", () => {
     expect(deps.kv.store.get("day:2026-10-27").value).toBe("1");
   });
 
+  test("a different MODEL does not reuse another model's cached answer", async () => {
+    const { deps, calls } = setup();
+    await handleRequest(post(validBody()), env, deps);
+    const res = await handleRequest(post(validBody()), { ...env, MODEL: "claude-sonnet-5-5" }, deps);
+    expect((await json(res)).body.cached).toBe(false);
+    expect(calls).toHaveLength(2);
+  });
+
   test("questions differing only in case and spacing share a cache entry", async () => {
     const { deps, calls } = setup();
     await handleRequest(post(validBody()), env, deps);
@@ -125,8 +133,10 @@ describe("handleRequest", () => {
     }
   });
 
-  test("an unavailable answer may have no evidence", () => {
+  test("an unavailable answer may have no evidence and an empty period", () => {
     expect(validateAnswer({ ...ANSWER, unavailable: true, evidence: [] })).toBe(true);
+    expect(validateAnswer({ ...ANSWER, unavailable: true, evidence: [], period: "" })).toBe(true);
+    expect(validateAnswer({ ...ANSWER, period: "" })).toBe(false);
   });
 
   test("more than 4 evidence lines are trimmed to 4", async () => {

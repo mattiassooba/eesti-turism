@@ -46,7 +46,9 @@ export async function handleRequest(request, env, deps) {
     if (!checked.ok) return reply(400, { error: "invalid" }, cors);
     const { question, locale, selected, packet } = checked.value;
 
-    const cacheKey = await hashKey(JSON.stringify({ q: question.toLowerCase(), locale, selected, packet }));
+    // Model and instructions are part of the key, so changing either one
+    // never serves answers written under the old setup.
+    const cacheKey = await hashKey(JSON.stringify({ model: env.MODEL, prompt: SYSTEM_PROMPT, q: question.toLowerCase(), locale, selected, packet }));
     const cached = await getCached(deps.kv, cacheKey);
     if (cached) return reply(200, { ...cached, source: SOURCE, cached: true }, cors);
 

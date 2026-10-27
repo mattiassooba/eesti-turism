@@ -76,6 +76,7 @@ function yearRows(s, tourism, partialYear) {
       roundInt(val(s.F, y)),
       round1(yoy(s.G, s.g, y)),
       round1(yoy(s.N, s.n, y)),
+      round1(yoy(s.F, s.gFOR, y)),
       round1(s.room.get(y)?.value),
       round1(s.bed.get(y)?.value),
     ]);

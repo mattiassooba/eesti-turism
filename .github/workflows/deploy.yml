@@ -33,7 +33,11 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
+      # The AI explorer's Worker address (public, not a secret). Unset or
+      # empty = the "Küsi AI-lt" button stays hidden. See worker/README.md.
       - run: npm run build
+        env:
+          VITE_ASK_AI_URL: ${{ vars.ASK_AI_URL }}
       - run: npx playwright install --with-deps chromium
       - run: node scripts/prerender.mjs
       - uses: actions/configure-pages@v5

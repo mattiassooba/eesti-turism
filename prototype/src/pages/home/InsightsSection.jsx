@@ -31,7 +31,7 @@ export function AiSummary({ code, compact }) {
     <article className={"ai-summary" + (compact ? " ai-summary--compact" : "")}>
       <header className="ai-summary-head">
         <span className="ai-badge">
-          <Icon name="sparkle" size={14} />
+          <Icon name="ai" size={18} />
           {t("insight.ai")}
         </span>
         <span className="t-meta">{t("ai.period", n.periodLabel?.[locale] ?? fmtPeriod(n.period, locale))}</span>

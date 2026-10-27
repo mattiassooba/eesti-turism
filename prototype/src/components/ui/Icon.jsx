@@ -19,9 +19,13 @@ const PATHS = {
   mail: "M3 5h14v10H3zM3 5.5l7 5.5 7-5.5",
   file: "M5 2.5h6.5L15 6v11.5H5zM11 2.5V6h4",
   sparkle: "M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z",
+  // Marks AI-written text: a large and a small four-point star.
+  ai: "M8.5 4.5Q9 10.5 15 11Q9 11.5 8.5 17.5Q8 11.5 2 11Q8 10.5 8.5 4.5zM15 1Q15.35 4.15 18.5 4.5Q15.35 4.85 15 8Q14.65 4.85 11.5 4.5Q14.65 4.15 15 1z",
   globe: "M10 17.5a7.5 7.5 0 100-15 7.5 7.5 0 000 15zM2.5 10h15M10 2.5c2 2.2 3 4.7 3 7.5s-1 5.3-3 7.5c-2-2.2-3-4.7-3-7.5s1-5.3 3-7.5z",
   layers: "M10 3l7.5 4-7.5 4-7.5-4zM2.5 11l7.5 4 7.5-4",
 };
+// Solid glyphs: the outline style reads too faint at badge sizes.
+const FILLED = new Set(["ai"]);
 
 export default function Icon({ name, size = 18, className, title, strokeWidth = 1.5 }) {
   return (
@@ -29,8 +33,8 @@ export default function Icon({ name, size = 18, className, title, strokeWidth = 
       width={size}
       height={size}
       viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
+      fill={FILLED.has(name) ? "currentColor" : "none"}
+      stroke={FILLED.has(name) ? "none" : "currentColor"}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"

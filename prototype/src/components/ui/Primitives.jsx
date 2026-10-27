@@ -260,7 +260,7 @@ export function Insight({ kind = "computed", children, meta, to, toLabel }) {
   return (
     <article className={`insight insight--${kind}`}>
       <p className="insight-kind">
-        <Icon name={kind === "ai" ? "sparkle" : "chart"} size={14} />
+        <Icon name={kind === "ai" ? "ai" : "chart"} size={14} />
         {kind === "ai" ? t("insight.ai") : t("insight.computed")}
       </p>
       <p className="insight-text">{children}</p>

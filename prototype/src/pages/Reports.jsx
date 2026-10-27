@@ -42,7 +42,7 @@ function ThemeHighlights() {
         ))}
       </ul>
       <p className="report-themes-foot t-meta">
-        <Icon name="sparkle" size={13} /> {t("reportsPage.themesFoot")}
+        <Icon name="ai" size={14} /> {t("reportsPage.themesFoot")}
       </p>
     </div>
   );

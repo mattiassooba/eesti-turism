@@ -8,6 +8,7 @@ import { Skeleton } from "../../components/ui/States.jsx";
 import { useMarketRanking } from "./VisitorsSection.jsx";
 import { etLocative } from "./headlines.js";
 import Icon from "../../components/ui/Icon.jsx";
+import AskAi from "../../components/ai/AskAi.jsx";
 
 const MIN_MARKET = 5000; // ignore tiny markets whose % swings are noise
 const capFirst = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -34,7 +35,10 @@ export function AiSummary({ code, compact }) {
           <Icon name="ai" size={18} />
           {t("insight.ai")}
         </span>
-        <span className="t-meta">{t("ai.period", n.periodLabel?.[locale] ?? fmtPeriod(n.period, locale))}</span>
+        <span className="ai-summary-tools">
+          <span className="t-meta">{t("ai.period", n.periodLabel?.[locale] ?? fmtPeriod(n.period, locale))}</span>
+          <AskAi />
+        </span>
       </header>
       <p className="ai-summary-text">{text}</p>
       <p className="ai-summary-foot t-meta">{t("ai.disclaimer", generated)}</p>

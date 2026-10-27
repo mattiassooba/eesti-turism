@@ -1,0 +1,20 @@
+# Cloudflare Worker behind "Küsi andmete kohta" (the AI data explorer).
+# Setup steps: see README.md in this folder.
+name = "turismistatistika-ask"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# One KV namespace holds the rate-limit counters and the answer cache.
+# Create it with `npx wrangler kv namespace create ASK_KV` and paste the id.
+[[kv_namespaces]]
+binding = "ASK_KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[vars]
+MODEL = "claude-haiku-5-5"
+DAILY_LIMIT = "50"
+VISITOR_HOURLY_LIMIT = "5"
+ALLOWED_ORIGINS = "https://turismistatistika.ee,https://www.turismistatistika.ee"
+
+# ANTHROPIC_API_KEY is a secret: `npx wrangler secret put ANTHROPIC_API_KEY`
+# (production) or worker/.dev.vars (local, never committed).

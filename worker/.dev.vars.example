@@ -1,0 +1,3 @@
+# Copy to .dev.vars (gitignored) for `npm run dev`. Use the dedicated key
+# made for this feature, never a personal or shared one.
+ANTHROPIC_API_KEY=

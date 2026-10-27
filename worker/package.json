@@ -1,0 +1,15 @@
+{
+  "name": "turismistatistika-ask",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

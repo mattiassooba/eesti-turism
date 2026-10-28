@@ -1,7 +1,17 @@
 import { useMemo, useState } from "react";
 import { useApp } from "../state/AppState.jsx";
-import { useTourism, useCapacity, useSector, useOriginHistory, ORIGIN_CODES } from "../data/datasets.js";
-import { pctChange, sumRange, at } from "../data/derive.js";
+import { useTourism, useCapacity, useSector, useOriginHistory } from "../data/datasets.js";
+import {
+  MIN_TABLE_YEAR,
+  buildColumns,
+  chartYears,
+  yearIndexes,
+  yearsIn,
+  monthColLabel,
+  shareChartSeries,
+  occupancyChartSeries,
+  originsByColumn,
+} from "../data/operatorTable.js";
 import { ESTONIA, COUNTY_LIST, CITY_LIST, regionName } from "../lib/regions.js";
 import {
   fmtInt,
@@ -14,7 +24,6 @@ import {
   fmtYtdRange,
   monthName,
   parsePeriod,
-  countryName,
 } from "../lib/format.js";
 import { buildGrowthInsight, buildWageInsight } from "@prod/lib/accommodationSector.js";
 import PageHeader from "../components/layout/PageHeader.jsx";
@@ -27,7 +36,6 @@ import ColumnChart from "../components/charts/ColumnChart.jsx";
 import LineChart from "../components/charts/LineChart.jsx";
 import ComposedChart from "../components/charts/ComposedChart.jsx";
 
-const MIN_TABLE_YEAR = 2020;
 const COVID_YEARS = new Set([2020, 2021]);
 const RESIDENCY = [
   { value: "WORLD", labelKey: "operatorPage.guestsAll" },
@@ -41,176 +49,6 @@ function fmtTableNum(n, locale) {
   if (abs >= 1e6) return `${fmtDec(n / 1e6, locale, 1)}${locale === "et" ? " milj." : "M"}`;
   if (abs >= 1e3) return `${fmtDec(n / 1e3, locale, 1)}${locale === "et" ? " tuh." : "k"}`;
   return fmtInt(n, locale);
-}
-
-function monthColLabel(period, locale) {
-  const p = parsePeriod(period);
-  if (!p) return period;
-  const name = monthName(p.month - 1, locale).toUpperCase();
-  return locale === "et" ? `${p.year} ${name}` : `${name} ${p.year}`;
-}
-
-function yearIndexes(periods, year) {
-  const out = [];
-  periods.forEach((code, i) => {
-    if (parsePeriod(code)?.year === year) out.push(i);
-  });
-  return out;
-}
-
-function yearsIn(periods) {
-  return [...new Set(periods.map((c) => parsePeriod(c)?.year).filter(Boolean))].sort((a, b) => a - b);
-}
-
-function sumYear(arr, periods, year) {
-  const ix = yearIndexes(periods, year);
-  if (!ix.length) return null;
-  return sumRange(arr, ix[0], ix[ix.length - 1]);
-}
-
-function likeForLike(arr, periods, year) {
-  const ix = yearIndexes(periods, year);
-  if (!ix.length) return { value: null, change: null, partial: false, months: 0 };
-  const months = ix.length;
-  const value = sumRange(arr, ix[0], ix[ix.length - 1]);
-  const prevIx = yearIndexes(periods, year - 1);
-  const prev = prevIx.length >= months ? sumRange(arr, prevIx[0], prevIx[0] + months - 1) : null;
-  return { value, change: pctChange(value, prev), partial: months < 12, months };
-}
-
-function lastInYear(arr, periods, year) {
-  let last = null;
-  periods.forEach((code, i) => {
-    if (parsePeriod(code)?.year === year && arr[i] != null) last = arr[i];
-  });
-  return last;
-}
-
-function meanInYear(arr, periods, year) {
-  let s = 0;
-  let n = 0;
-  periods.forEach((code, i) => {
-    if (parsePeriod(code)?.year === year && arr[i] != null) {
-      s += arr[i];
-      n += 1;
-    }
-  });
-  return n ? s / n : null;
-}
-
-function ytdThrough(arr, periods, year, month) {
-  const start = periods.indexOf(`${year}M01`);
-  if (start < 0) return null;
-  const end = periods.indexOf(`${year}M${String(month).padStart(2, "0")}`);
-  if (end < 0) return null;
-  return sumRange(arr, start, end);
-}
-
-function rankOrigins(origins, periodCodes, locale, limit = 5) {
-  if (!origins) return [];
-  const idx = new Map(origins.periods.map((p, i) => [p, i]));
-  return ORIGIN_CODES.map((code) => {
-    const arr = origins.get(code);
-    let value = 0;
-    let any = false;
-    for (const p of periodCodes) {
-      const i = idx.get(p);
-      if (i == null || arr[i] == null) continue;
-      value += arr[i];
-      any = true;
-    }
-    return { code, label: countryName(code, locale), value: any ? value : null };
-  })
-    .filter((x) => x.value != null)
-    .sort((a, b) => b.value - a.value)
-    .slice(0, limit);
-}
-
-function buildColumns({ tourism, capacity, code, res, latest, locale }) {
-  const guests = tourism.get("OCC_ARR", code, res);
-  const domestic = tourism.get("OCC_ARR", code, "EE");
-  const world = tourism.get("OCC_ARR", code, "WORLD");
-  const national = tourism.get("OCC_ARR", "EE", res);
-  const esta = capacity.get("CAP_ESTA", code);
-  const rooms = capacity.get("CAP_BEDR", code);
-  const occ = capacity.get("OCC_OR_BEDR", code);
-  const cost = capacity.get("OCC_NI_COST", code);
-  const latestP = parsePeriod(latest);
-  const cutoff = latestP.year - 1;
-  const annualYears = yearsIn(tourism.periods).filter((y) => y >= MIN_TABLE_YEAR && y <= cutoff);
-  const monthCodes = [2, 1, 0].map((back) => `${latestP.year - back}M${String(latestP.month).padStart(2, "0")}`);
-
-  function annualCol(year) {
-    const acc = likeForLike(guests, tourism.periods, year);
-    const nat = sumYear(national, tourism.periods, year);
-    const dom = sumYear(domestic, tourism.periods, year);
-    const tot = sumYear(world, tourism.periods, year);
-    const arr = meanInYear(cost, capacity.periods, year);
-    const prevArr = meanInYear(cost, capacity.periods, year - 1);
-    const occVal = meanInYear(occ, capacity.periods, year);
-    return {
-      key: String(year),
-      label: String(year),
-      partial: false,
-      kind: "year",
-      year,
-      accommodated: acc.value,
-      accommodatedYoy: acc.change,
-      cumulative: null,
-      cumulativeYoy: null,
-      share: acc.value != null && nat ? (acc.value / nat) * 100 : null,
-      domesticShare: dom != null && tot ? (dom / tot) * 100 : null,
-      esta: lastInYear(esta, capacity.periods, year),
-      rooms: lastInYear(rooms, capacity.periods, year),
-      occ: occVal,
-      arr,
-      arrYoy: pctChange(arr, prevArr),
-      revpar: occVal != null && arr != null ? (occVal / 100) * arr : null,
-    };
-  }
-
-  function monthCol(period) {
-    const p = parsePeriod(period);
-    const i = tourism.periods.indexOf(period);
-    const ci = capacity.periods.indexOf(period);
-    const prev = `${p.year - 1}M${String(p.month).padStart(2, "0")}`;
-    const pi = tourism.periods.indexOf(prev);
-    const cpi = capacity.periods.indexOf(prev);
-    const cur = at(guests, i);
-    const nat = at(national, i);
-    const dom = at(domestic, i);
-    const tot = at(world, i);
-    const arr = at(cost, ci);
-    const occVal = at(occ, ci);
-    const ytdCur = ytdThrough(guests, tourism.periods, p.year, p.month);
-    const ytdPrev = ytdThrough(guests, tourism.periods, p.year - 1, p.month);
-    return {
-      key: period,
-      label: monthColLabel(period, locale),
-      partial: false,
-      kind: "month",
-      year: p.year,
-      accommodated: cur,
-      accommodatedYoy: pctChange(cur, at(guests, pi)),
-      cumulative: ytdCur,
-      cumulativeYoy: pctChange(ytdCur, ytdPrev),
-      share: cur != null && nat ? (cur / nat) * 100 : null,
-      domesticShare: dom != null && tot ? (dom / tot) * 100 : null,
-      esta: at(esta, ci),
-      rooms: at(rooms, ci),
-      occ: occVal,
-      arr,
-      arrYoy: pctChange(arr, at(cost, cpi)),
-      revpar: occVal != null && arr != null ? (occVal / 100) * arr : null,
-    };
-  }
-
-  return [...annualYears.map(annualCol), ...monthCodes.map(monthCol)];
-}
-
-function chartYears(tourism, yearsToShow) {
-  const years = yearsIn(tourism.periods);
-  return years.slice(-Math.min(yearsToShow, years.length));
 }
 
 function YearlyTable({ columns, accommodatedLabel, shareLabel, originsByKey, locale, t }) {
@@ -328,22 +166,12 @@ function RegionBlock({ tourism, capacity, origins, region, residency, yearsToSho
       alert: COVID_YEARS.has(y),
     };
   });
-  const eeGuests = years.map((y) => likeForLike(tourism.get("OCC_ARR", "EE", residency), tourism.periods, y).value);
-  const regionGuests = years.map((y) => likeForLike(tourism.get("OCC_ARR", region.code, residency), tourism.periods, y).value);
-  const share = years.map((_, i) => (regionGuests[i] != null && eeGuests[i] ? (regionGuests[i] / eeGuests[i]) * 100 : null));
-  const occ = years.map((y) => meanInYear(capacity.get("OCC_OR_BEDR", region.code), capacity.periods, y));
-  const cost = years.map((y) => meanInYear(capacity.get("OCC_NI_COST", region.code), capacity.periods, y));
-  const revpar = years.map((_, i) => (occ[i] != null && cost[i] != null ? (occ[i] / 100) * cost[i] : null));
+  const shareSeries = shareChartSeries({ tourism, code: region.code, years, res: residency });
+  const eeGuests = shareSeries.national;
+  const share = shareSeries.sharePct;
+  const { occ, arr: cost, revpar } = occupancyChartSeries({ capacity, code: region.code, years });
 
-  const originsByKey = useMemo(() => {
-    if (!origins) return null;
-    const map = new Map();
-    for (const c of columns) {
-      const codes = c.kind === "year" ? origins.periods.filter((p) => p.startsWith(`${c.year}M`)) : [c.key];
-      map.set(c.key, rankOrigins(origins, codes, locale));
-    }
-    return map;
-  }, [origins, columns, locale]);
+  const originsByKey = useMemo(() => (origins ? originsByColumn(origins, columns, locale) : null), [origins, columns, locale]);
 
   if (!columns.length) return null;
   const range = [columns[0].label, columns[columns.length - 1].label];

@@ -26,12 +26,14 @@ import { formatPeriodLabel } from "../src/i18n/format.js";
 import { COUNTIES, CITIES } from "../src/data/counties.js";
 import { detectFindings, rankFindings, findingsByRegionCode } from "./lib/findings.mjs";
 import { runPrePublishChecks } from "./lib/qa.mjs";
+import { ytdFigures, sectorFigures } from "./narrativeYtd.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = path.join(__dirname, "..", "public", "data", "narrative.json");
 
 const MAJUTUS_PATH = ["majandus", "turism-ja-majutus", "majutus"];
 const REISIMINE_PATH = ["majandus", "turism-ja-majutus", "eesti-elanike-reisimine"];
+const TURISM_MAJANDUS_PATH = ["majandus", "turism-ja-majutus", "turismi-ja-majutuse-majandusnaitajad"];
 
 const ALL_REGIONS = [...COUNTIES, ...CITIES];
 
@@ -165,6 +167,9 @@ async function computeDashboardMetrics() {
       cumulativeGuestsYoyPct: cumulativeGuestsPrev
         ? ((cumulativeGuests - cumulativeGuestsPrev) / cumulativeGuestsPrev) * 100
         : null,
+      // Guests, nights, domestic and foreign for Jan–latest month; the texts
+      // lead with these (see the YTD rule in the system prompts).
+      ytd: ytdFigures(byPeriod, periods, periods[latestIdx]),
     };
   }
 
@@ -194,16 +199,27 @@ function cumulativeRangeLabel(period) {
   return `Jan–${EN_MONTH_ABBR[Number(month) - 1]} ${year}`;
 }
 
+// Year-to-date block, listed first in the dashboard and region prompts:
+// the texts lead with how the year is going, not the single latest month.
+function ytdLines(m) {
+  const y = m.ytd;
+  if (!y) return "";
+  return `- YEAR TO DATE, ${cumulativeRangeLabel(m.period)} (lead with these; changes are vs. the same months last year):
+  - Guests accommodated: ${abbrev(y.guests)} (${fmtPct(y.guestsYoyPct)})
+  - Nights spent: ${abbrev(y.nights)} (${fmtPct(y.nightsYoyPct)})
+  - Domestic guests: ${abbrev(y.domestic)} (${fmtPct(y.domesticYoyPct)}); foreign guests: ${abbrev(y.foreign)} (${fmtPct(y.foreignYoyPct)})`;
+}
+
 function buildDashboardPrompt(m) {
   return `Dashboard / "Ülevaade" tab (source: Statistikaamet, table TU131) — national overview:
-- Period: ${m.periodLabel}
-- Total guests accommodated: ${abbrev(m.totalGuests)} (YoY: ${fmtPct(m.totalGuestsYoyPct)})
-- Total nights spent: ${abbrev(m.totalNights)} (YoY: ${fmtPct(m.totalNightsYoyPct)})
-- Domestic (Estonian resident) guests: ${abbrev(m.domesticGuests)}
-- Foreign visitor guests: ${abbrev(m.foreignGuests)}
-- Average nights per guest: ${m.avgNightsPerGuest.toFixed(2)} (YoY: ${fmtPct(m.avgNightsPerGuestYoyPct)})
-- Cumulative guests accommodated, ${cumulativeRangeLabel(m.period)}: ${abbrev(m.cumulativeGuests)} (YoY vs. same months last year: ${fmtPct(m.cumulativeGuestsYoyPct)})
-${m.topCounty ? `- Most-visited county this period: ${m.topCounty.label}, ${abbrev(m.topCounty.value)} guests (YoY: ${fmtPct(m.topCounty.yoyPct)})` : ""}`;
+${ytdLines(m)}
+- LATEST MONTH, ${m.periodLabel} (secondary; changes are vs. the same month last year):
+  - Total guests accommodated: ${abbrev(m.totalGuests)} (YoY: ${fmtPct(m.totalGuestsYoyPct)})
+  - Total nights spent: ${abbrev(m.totalNights)} (YoY: ${fmtPct(m.totalNightsYoyPct)})
+  - Domestic (Estonian resident) guests: ${abbrev(m.domesticGuests)}
+  - Foreign visitor guests: ${abbrev(m.foreignGuests)}
+  - Average nights per guest: ${m.avgNightsPerGuest.toFixed(2)} (YoY: ${fmtPct(m.avgNightsPerGuestYoyPct)})
+${m.topCounty ? `  - Most-visited county this month: ${m.topCounty.label}, ${abbrev(m.topCounty.value)} guests (YoY: ${fmtPct(m.topCounty.yoyPct)})` : ""}`;
 }
 
 // One prompt block per selectable region/city — grounds the region-specific
@@ -212,13 +228,13 @@ ${m.topCounty ? `- Most-visited county this period: ${m.topCounty.label}, ${abbr
 function buildRegionDashboardPrompt(region, m, divergenceFinding) {
   if (!m) return null;
   return `Region: ${region.et} (code: ${region.code})
-- Period: ${m.periodLabel}
-- Cumulative guests accommodated, ${cumulativeRangeLabel(m.period)}: ${abbrev(m.cumulativeGuests)} (YoY vs. same months last year: ${fmtPct(m.cumulativeGuestsYoyPct)})
-- Guests accommodated: ${abbrev(m.totalGuests)} (YoY: ${fmtPct(m.totalGuestsYoyPct)})
-- Nights spent: ${abbrev(m.totalNights)} (YoY: ${fmtPct(m.totalNightsYoyPct)})
-- Domestic vs foreign guests: ${abbrev(m.domesticGuests)} domestic, ${fmtPct(m.domesticGuestsYoyPct)} YoY; ${abbrev(m.foreignGuests)} foreign, ${fmtPct(m.foreignGuestsYoyPct)} YoY
-- Average nights per guest: ${m.avgNightsPerGuest.toFixed(2)} (YoY: ${fmtPct(m.avgNightsPerGuestYoyPct)})
-- Share of Estonia's total guests this period: ${m.shareOfNationalPct != null ? m.shareOfNationalPct.toFixed(1) + "%" : "n/a"}${
+${ytdLines(m)}
+- LATEST MONTH, ${m.periodLabel} (secondary; changes are vs. the same month last year):
+  - Guests accommodated: ${abbrev(m.totalGuests)} (YoY: ${fmtPct(m.totalGuestsYoyPct)})
+  - Nights spent: ${abbrev(m.totalNights)} (YoY: ${fmtPct(m.totalNightsYoyPct)})
+  - Domestic vs foreign guests: ${abbrev(m.domesticGuests)} domestic, ${fmtPct(m.domesticGuestsYoyPct)} YoY; ${abbrev(m.foreignGuests)} foreign, ${fmtPct(m.foreignGuestsYoyPct)} YoY
+  - Average nights per guest: ${m.avgNightsPerGuest.toFixed(2)} (YoY: ${fmtPct(m.avgNightsPerGuestYoyPct)})
+  - Share of Estonia's total guests this month: ${m.shareOfNationalPct != null ? m.shareOfNationalPct.toFixed(1) + "%" : "n/a"}${
     divergenceFinding ? `\n- Pre-verified noteworthy contrast for this region: ${divergenceFinding.text}` : ""
   }`;
 }
@@ -644,6 +660,31 @@ function buildExpensesPrompt(m) {
 - Largest spending category: ${m.topCategory.label}, €${m.topCategory.value.toFixed(0)} average per trip`;
 }
 
+// ---- Accommodation sector economy (TU410) ------------------------------------
+
+// Same query as the site's useSector (prototype/src/data/datasets.js).
+async function computeSectorMetrics() {
+  const data = await fetchTableData(
+    TURISM_MAJANDUS_PATH,
+    "TU410.PX",
+    [
+      { code: "Näitaja", selection: { filter: "item", values: ["CUB_SERV"] } },
+      { code: "Teenuse liik", selection: { filter: "item", values: ["I55"] } },
+      { code: "Vaatlusperiood", selection: { filter: "top", values: ["12"] } },
+    ],
+    { locale: "et" }
+  );
+  return sectorFigures(flattenToRows(data));
+}
+
+function buildSectorPrompt(m) {
+  if (!m) return "";
+  return `Accommodation sector economy / "Majutussektori majandus" (source: Statistikaamet, table TU410) — accommodation services turnover (I55), quarterly:
+- Latest quarter ${m.latestQuarterLabel ?? m.latestQuarter}: turnover €${m.turnoverMeur.toFixed(1)} million (vs. the same quarter a year earlier: ${fmtPct(m.yoyPct)})
+- Change vs. the same quarter a year earlier, last four quarters: ${m.lastFour.map((q) => `${q.period} ${fmtPct(q.pct)}`).join("; ")}
+- These are nominal (current-price) figures; do not call them profit.`;
+}
+
 // ---- Claude calls -----------------------------------------------------------
 
 // `highlight: true` adds a short one-sentence digest of the section, used
@@ -688,7 +729,7 @@ async function callClaude(anthropic, model, prompts, findings) {
         .join("\n")}`
     : "";
 
-  const combinedPrompt = `Here is this period's data for five sections of an Estonian tourism statistics site ("Eesti Turism"). Write one short blurb per section using the emit_narrative tool.
+  const combinedPrompt = `Here is this period's data for six sections of an Estonian tourism statistics site ("Eesti Turism"). Write one short blurb per section using the emit_narrative tool.
 
 ${findingsBlock}
 
@@ -700,7 +741,9 @@ ${prompts.purpose}
 
 ${prompts.capacity}
 
-${prompts.expenses}`;
+${prompts.expenses}
+
+${prompts.sector}`;
 
   const response = await anthropic.messages.create({
     model,
@@ -727,21 +770,24 @@ ${prompts.expenses}`;
       "- Keep facts and any framing visibly separate: state the number and its comparison first, in plain terms, " +
       "before any characterization of what it means.\n" +
       `- Never use these exact phrases or close paraphrases of them, in Estonian or English: ${BANNED_PHRASES_ET.join("; ")}.\n\n` +
-      "You also owe two things beyond the five section blurbs, both read directly from the ranked findings list " +
+      "You also owe two things beyond the six section blurbs, both read directly from the ranked findings list " +
       "above, not independently chosen: a one-sentence 'headline' restating the #1 ranked finding (this becomes " +
       "the PDF report's main header — it must be the single most important development, not a generic summary " +
       "like 'tourism statistics updated'), and exactly 3 'keyInsights' sentences pulled from elsewhere in the " +
       "ranked list, favoring the most interesting contrasts over restating single numbers the KPI cards already " +
       "show.\n\n" +
-      "Four of the five sections (all but dashboard) also need a short 'highlight' sentence — this is a compact " +
+      "Five of the six sections (all but dashboard) also need a short 'highlight' sentence — this is a compact " +
       "digest for a printed monthly newsletter page, not a teaser for the full blurb, so it must stand alone and " +
       "still make sense to someone who never reads the full blurb. The highlight must lead with the most recent " +
       "year-over-year comparison available (this year vs. last year) and must NOT reference distant historical " +
       "baselines (e.g. growth multiples since a decades-old base year like 1992) — that kind of long-horizon " +
       "framing belongs only in the full blurb, never the highlight, since a monthly reader cares about what " +
-      "changed recently, not multi-decade trends. The dashboard blurb specifically must also report the " +
-      "cumulative year-to-date figure given (how the year is tracking overall, e.g. 'so far this year, X guests " +
-      "have been recorded, Y% versus the same months last year'), not only the single latest month. " +
+      "changed recently, not multi-decade trends. The dashboard blurb must LEAD with the year-to-date period " +
+      "(January through the latest month, e.g. 'jaanuarist augustini'): accommodated guests, nights, and " +
+      "domestic vs foreign guests, each with its change versus the same months last year. Only after that, " +
+      "briefly, the latest single month. The sector blurb reports the latest quarter's accommodation services " +
+      "turnover and its change versus the same quarter a year earlier, plus how the last four quarters moved; " +
+      "it is nominal turnover, never profit. " +
       FORMATTING_RULES,
     messages: [{ role: "user", content: combinedPrompt }],
     tools: [
@@ -787,8 +833,9 @@ ${prompts.expenses}`;
             purpose: sectionSchema("Eesmärk ja kestus (purpose & duration) blurb", { highlight: true }),
             capacity: sectionSchema("Mahutavus (capacity) blurb", { highlight: true }),
             expenses: sectionSchema("Reisikulutused (travel expenses) blurb", { highlight: true }),
+            sector: sectionSchema("Majutussektori majandus (accommodation sector turnover) blurb", { highlight: true }),
           },
-          required: ["headline", "keyInsights", "dashboard", "map", "purpose", "capacity", "expenses"],
+          required: ["headline", "keyInsights", "dashboard", "map", "purpose", "capacity", "expenses", "sector"],
         },
       },
     ],
@@ -847,8 +894,9 @@ async function callClaudeRegions(anthropic, model, regions, promptBlocks) {
         "Ground every sentence strictly in the numbers given for THAT region, and in that region's pre-verified " +
         "noteworthy contrast where one is given — never invent, round loosely, or borrow a number from another " +
         "region. Each blurb is 130-190 words of plain prose (no headings, no bullet points, no markdown), and " +
-        "must report BOTH the latest single month's year-over-year change AND the cumulative year-to-date figure " +
-        "given (how the region's year is tracking overall, not just the one month). Produce independently " +
+        "must LEAD with the region's year-to-date period (January through the latest month): accommodated " +
+        "guests, nights, and domestic vs foreign guests, each with its change versus the same months last year. " +
+        "Only after that, briefly, the latest single month's figures. Produce independently " +
         "well-written Estonian and English versions of each (not literal translations of each other, though they " +
         "must report the same facts). Estonian must read naturally to a native speaker. Vary sentence structure " +
         "across regions rather than repeating the same template for every one.\n\n" +
@@ -1039,13 +1087,14 @@ async function main() {
     return;
   }
 
-  const [map, purpose, capacity, expenses, nationalYearlyResidency, regionalOccPrice] = await Promise.all([
+  const [map, purpose, capacity, expenses, nationalYearlyResidency, regionalOccPrice, sector] = await Promise.all([
     computeMapMetrics(dashboard),
     computePurposeMetrics(),
     computeCapacityMetrics(),
     computeExpensesMetrics(),
     computeNationalYearlyTrend(),
     computeRegionalOccupancyPrice(),
+    computeSectorMetrics(),
   ]);
 
   // Stage 1 of the two-stage pipeline (Task 2.4): every number in a
@@ -1080,6 +1129,7 @@ async function main() {
     console.log(buildPurposePrompt(purpose));
     console.log(buildCapacityPrompt(capacity));
     console.log(buildExpensesPrompt(expenses));
+    console.log(buildSectorPrompt(sector));
     console.log("--- region prompts ---");
     console.log(regionPromptBlocks.join("\n\n"));
     return;
@@ -1092,7 +1142,7 @@ async function main() {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
 
-  console.log("Calling Claude to generate all five section blurbs…");
+  console.log("Calling Claude to generate all six section blurbs…");
   const sections = await callClaude(
     anthropic,
     model,
@@ -1102,6 +1152,7 @@ async function main() {
       purpose: buildPurposePrompt(purpose),
       capacity: buildCapacityPrompt(capacity),
       expenses: buildExpensesPrompt(expenses),
+      sector: buildSectorPrompt(sector),
     },
     rankedFindings
   );

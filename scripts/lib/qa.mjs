@@ -64,7 +64,7 @@ function checkStructuralCompleteness(output, allRegionCodes) {
   need(output.periodLabel?.et && output.periodLabel?.en, "output.periodLabel is missing an et or en value.");
 
   const s = output.sections ?? {};
-  for (const key of ["dashboard", "map", "purpose", "capacity", "expenses"]) {
+  for (const key of ["dashboard", "map", "purpose", "capacity", "expenses", "sector"]) {
     need(s[key]?.et && s[key]?.en, `sections.${key} is missing an et or en blurb.`);
   }
   need(s.headline?.et && s.headline?.en, "sections.headline is missing an et or en value.");

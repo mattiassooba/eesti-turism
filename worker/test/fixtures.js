@@ -1,11 +1,11 @@
 import { RANGE_COLUMNS } from "../../src/lib/askShape.js";
 
 // A small, valid request body shaped like the browser's packet.
-export const region = () => ({
-  names: ["Hiiu maakond", "Hiiumaa", "Hiiu", "Hiiu County"],
+export const region = (names = ["Hiiu maakond", "Hiiumaa", "Hiiu", "Hiiu County"]) => ({
+  names,
   years: [
-    [2024, 40000, 90000, 30000, 10000, 3.2, 1.1, 4.4, 51.5, 38.2],
-    [2025, 41000, null, 30500, 10500, 2.5, null, 5, 52, 39],
+    [2024, 40000, 90000, 30000, 10000, 25, 3.2, 1.1, 4.4, 51.5, 38.2],
+    [2025, 41000, null, 30500, 10500, 25.6, 2.5, null, 5, 52, 39],
   ],
   latest: [5000, 4.9, 9000, 6.4, 3500, 1500, -2.1],
   months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -24,7 +24,7 @@ export const validBody = () => ({
     latest: "2026M08",
     lastFullYear: 2025,
     partialYear: { year: 2026, months: 8 },
-    regions: { ee: region(), hiiu: region() },
+    regions: { ee: region(["Eesti", "Estonia"]), hiiu: region() },
     rankings: { year: 2025, byGuests: [["hiiu", 41000]], byGrowthPct: [["hiiu", 2.5]], bySummerSharePct: [["hiiu", 45.5]] },
     range: {
       from: 2015,

@@ -2,7 +2,7 @@
 // packet it computed itself; anything that isn't exactly that shape (numbers,
 // known region ids, short name strings) is rejected, so the only free text
 // that reaches the model is the visitor's question.
-import { REGION_IDS, YEAR_COLUMNS, LATEST_COLUMNS, RANGE_COLUMNS, CAPACITY_COLUMNS, MAX_QUESTION, MIN_QUESTION } from "../../src/lib/askShape.js";
+import { REGION_IDS, REGION_NAMES, YEAR_COLUMNS, LATEST_COLUMNS, RANGE_COLUMNS, CAPACITY_COLUMNS, MAX_QUESTION, MIN_QUESTION } from "../../src/lib/askShape.js";
 
 const IDS = new Set(REGION_IDS);
 
@@ -17,16 +17,18 @@ const isMonthOrNull = (v) => v === null || isInt(v, 1, 12);
 const isId = (v) => typeof v === "string" && IDS.has(v);
 const isRow = (v, len) => Array.isArray(v) && v.length === len && v.every(isNumOrNull);
 const isList = (v, max, check) => Array.isArray(v) && v.length <= max && v.every(check);
-const idMap = (v, check) => isObj(v) && Object.entries(v).every(([k, x]) => IDS.has(k) && check(x));
+const idMap = (v, check) => isObj(v) && Object.entries(v).every(([k, x]) => IDS.has(k) && check(x, k));
 
 const isYearRow = (r) => isRow(r, YEAR_COLUMNS.length) && isYear(r[0]);
 const isRanking = (v) => isList(v, REGION_IDS.length, (e) => Array.isArray(e) && e.length === 2 && isId(e[0]) && isNum(e[1]));
 const isName = (s) => typeof s === "string" && s.length > 0 && s.length <= 60;
+const allowedNames = (id) => new Set([...REGION_NAMES[id].et, ...REGION_NAMES[id].en]);
 
-function isRegion(r) {
+function isRegion(r, id) {
+  const allowed = allowedNames(id);
   return (
     exactKeys(r, ["names", "years", "latest", "months", "busiestMonth", "quietestMonth", "summerSharePct", "capacity"]) &&
-    isList(r.names, 6, isName) &&
+    isList(r.names, 6, (n) => isName(n) && allowed.has(n)) &&
     r.names.length > 0 &&
     isList(r.years, 80, isYearRow) &&
     isRow(r.latest, LATEST_COLUMNS.length) &&

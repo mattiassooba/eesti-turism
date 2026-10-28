@@ -169,7 +169,7 @@ describe("handleRequest", () => {
   });
 
   test("system prompt documents every packet column", () => {
-    for (const col of ["guestsYoyPct", "roomOccPct", "guestsChangePct", "peakYear", "establishments", "foreignYoyPct"]) {
+    for (const col of ["foreignSharePct", "guestsYoyPct", "roomOccPct", "guestsChangePct", "peakYear", "establishments", "foreignYoyPct"]) {
       expect(SYSTEM_PROMPT).toContain(col);
     }
   });

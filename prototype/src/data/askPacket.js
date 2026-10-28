@@ -6,6 +6,7 @@
 // its per-room vs per-person basis is unconfirmed.
 import { annualTotals, annualMeans, summerShare, pctChange, monthYoy, ytd, at } from "./derive.js";
 import { REGIONS } from "../lib/regions.js";
+import { REGION_NAMES } from "@prod/lib/askShape.js";
 
 const round1 = (v) => (v == null || !Number.isFinite(v) ? null : Math.round(v * 10) / 10);
 const roundInt = (v) => (v == null || !Number.isFinite(v) ? null : Math.round(v));
@@ -17,12 +18,11 @@ export function detectYears(question) {
   return { from: Math.min(...years), to: Math.max(...years) };
 }
 
-// Every name a visitor might use, the visitor's language first. Counties
-// also get the everyday "Hiiumaa" form, which the official names lack.
+// Every name a visitor might use, the visitor's language first. Taken from
+// the shared allowlist, which the Worker enforces.
 function namesFor(region, locale) {
-  const et = [region.et, region.kind === "county" ? `${region.shortEt}maa` : null, region.shortEt];
-  const en = [region.en, region.shortEn];
-  return [...new Set((locale === "en" ? [...en, ...et] : [...et, ...en]).filter(Boolean))];
+  const { et, en } = REGION_NAMES[region.id];
+  return [...new Set(locale === "en" ? [...en, ...et] : [...et, ...en])];
 }
 
 function byYear(entries) {
@@ -33,7 +33,10 @@ function monthIndexes(periods, year) {
   return Array.from({ length: 12 }, (_, m) => periods.indexOf(`${year}M${String(m + 1).padStart(2, "0")}`));
 }
 
+// Month number (1–12) of the extreme value, or null if any month is
+// unpublished: the missing one could be the true extreme.
 function argExtreme(values, better) {
+  if (values.some((v) => v == null)) return null;
   let best = null;
   values.forEach((v, i) => {
     if (v != null && (best == null || better(v, values[best]))) best = i;
@@ -61,12 +64,15 @@ function regionSeries(tourism, capacity, code) {
   };
 }
 
-function yearRows(s, tourism, partialYear) {
+// Only complete years plus the flagged current year: the data window
+// usually starts mid-year, and that first stub must not pass as a full year.
+function yearRows(s, tourism, partialYear, keep) {
   const val = (map, y) => map.get(y)?.value ?? null;
   // A partial year's change is year-to-date vs the same months a year earlier.
   const yoy = (map, arr, y) =>
     partialYear && y === partialYear.year ? ytd(arr, tourism.periods, tourism.latestIdx).change : pctChange(val(map, y), val(map, y - 1));
   return [...s.G.keys()]
+    .filter((y) => keep.has(y))
     .sort((a, b) => a - b)
     .map((y) => [
       y,
@@ -74,6 +80,7 @@ function yearRows(s, tourism, partialYear) {
       roundInt(val(s.N, y)),
       roundInt(val(s.D, y)),
       roundInt(val(s.F, y)),
+      round1(val(s.F, y) != null && val(s.G, y) ? (val(s.F, y) / val(s.G, y)) * 100 : null),
       round1(yoy(s.G, s.g, y)),
       round1(yoy(s.N, s.n, y)),
       round1(yoy(s.F, s.gFOR, y)),
@@ -103,6 +110,7 @@ export function buildPacket({ tourism, capacity, locale, question }) {
   const lastFullYear = fullYears.length ? fullYears[fullYears.length - 1] : null;
   const last = national[national.length - 1];
   const partialYear = last?.partial ? { year: last.year, months: last.months } : null;
+  const keepYears = new Set(partialYear ? [...fullYears, partialYear.year] : fullYears);
 
   const series = new Map(REGIONS.map((r) => [r.id, regionSeries(tourism, capacity, r.code)]));
   const regions = {};
@@ -112,7 +120,7 @@ export function buildPacket({ tourism, capacity, locale, question }) {
     const cap = (ind) => roundInt(at(capacity.get(ind, r.code), capacity.latestIdx));
     regions[r.id] = {
       names: namesFor(r, locale),
-      years: yearRows(s, tourism, partialYear),
+      years: yearRows(s, tourism, partialYear, keepYears),
       latest: [
         roundInt(at(s.g, latestIdx)),
         round1(monthYoy(s.g, latestIdx)),

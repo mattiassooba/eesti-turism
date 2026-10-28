@@ -26,7 +26,39 @@ export const REGION_IDS = [
   "tartu-linn",
 ];
 
-export const YEAR_COLUMNS = ["year", "guests", "nights", "domestic", "foreign", "guestsYoyPct", "nightsYoyPct", "foreignYoyPct", "roomOccPct", "bedOccPct"];
+// The only names a region may carry in a packet. The Worker rejects any
+// other string, so region names can't smuggle free text to the model.
+// Counties also get the everyday "Hiiumaa" form. A test checks these
+// against prototype/src/lib/regions.js.
+const COUNTY_SHORT = {
+  harju: "Harju",
+  hiiu: "Hiiu",
+  "ida-viru": "Ida-Viru",
+  jogeva: "Jõgeva",
+  jarva: "Järva",
+  laane: "Lääne",
+  "laane-viru": "Lääne-Viru",
+  polva: "Põlva",
+  parnu: "Pärnu",
+  rapla: "Rapla",
+  saare: "Saare",
+  tartu: "Tartu",
+  valga: "Valga",
+  viljandi: "Viljandi",
+  voru: "Võru",
+};
+
+export const REGION_NAMES = {
+  ee: { et: ["Eesti"], en: ["Estonia"] },
+  ...Object.fromEntries(
+    Object.entries(COUNTY_SHORT).map(([id, s]) => [id, { et: [`${s} maakond`, `${s}maa`, s], en: [`${s} County`, s] }])
+  ),
+  tallinn: { et: ["Tallinn"], en: ["Tallinn"] },
+  "parnu-linn": { et: ["Pärnu linn"], en: ["Pärnu city"] },
+  "tartu-linn": { et: ["Tartu linn"], en: ["Tartu city"] },
+};
+
+export const YEAR_COLUMNS = ["year", "guests", "nights", "domestic", "foreign", "foreignSharePct", "guestsYoyPct", "nightsYoyPct", "foreignYoyPct", "roomOccPct", "bedOccPct"];
 export const LATEST_COLUMNS = ["guests", "guestsYoyPct", "nights", "nightsYoyPct", "domestic", "foreign", "foreignYoyPct"];
 export const RANGE_COLUMNS = [
   "guestsFrom",

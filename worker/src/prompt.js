@@ -19,7 +19,7 @@ Rules:
 Packet guide:
 - latest: newest month in the data ("2026M08" = August 2026). lastFullYear: newest complete calendar year. partialYear: the current incomplete year and how many months it has, or null.
 - regions.<id>.names: the region's names in Estonian and English. ee = all of Estonia; tallinn, parnu-linn and tartu-linn are cities inside the harju, parnu and tartu counties.
-- regions.<id>.years: one row per calendar year, oldest first, columns: ${cols(YEAR_COLUMNS)}. guests = accommodated guests; nights = nights spent; domestic and foreign = guests resident in Estonia and abroad; guestsYoyPct, nightsYoyPct and foreignYoyPct = % change from the previous year (for a partial year: year-to-date vs the same months a year earlier); roomOccPct and bedOccPct = average room and bed occupancy %. null = not published.
+- regions.<id>.years: one row per calendar year, oldest first, columns: ${cols(YEAR_COLUMNS)}. guests = accommodated guests; nights = nights spent; domestic and foreign = guests resident in Estonia and abroad; foreignSharePct = foreign guests as % of all guests; guestsYoyPct, nightsYoyPct and foreignYoyPct = % change from the previous year (for a partial year: year-to-date vs the same months a year earlier); roomOccPct and bedOccPct = average room and bed occupancy %. null = not published.
 - regions.<id>.latest: the latest month, columns: ${cols(LATEST_COLUMNS)}; guestsYoyPct, nightsYoyPct and foreignYoyPct = % change from the same month a year earlier.
 - regions.<id>.months: guests in each month, January to December, of lastFullYear. busiestMonth and quietestMonth are month numbers 1–12.
 - regions.<id>.summerSharePct: share of lastFullYear's guests who stayed in June–August.

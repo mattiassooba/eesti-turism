@@ -1,16 +1,17 @@
 import { describe, expect, test } from "vitest";
 import { detectYears, buildPacket } from "./askPacket.js";
 import { REGIONS } from "../lib/regions.js";
-import { REGION_IDS, RANGE_COLUMNS, YEAR_COLUMNS, MAX_BODY_BYTES } from "@prod/lib/askShape.js";
+import { REGION_IDS, REGION_NAMES, RANGE_COLUMNS, YEAR_COLUMNS, MAX_BODY_BYTES } from "@prod/lib/askShape.js";
 import { validateRequest } from "../../../worker/src/validate.js";
 
 const HIIU = "EE00390000000000";
 const HARJU = "EE00370000000000";
 
-function monthPeriods(fromYear, toYear, toMonth) {
+function monthPeriods(fromYear, toYear, toMonth, fromMonth = 1) {
   const out = [];
   for (let y = fromYear; y <= toYear; y++) {
     for (let m = 1; m <= 12; m++) {
+      if (y === fromYear && m < fromMonth) continue;
       if (y === toYear && m > toMonth) break;
       out.push(`${y}M${String(m).padStart(2, "0")}`);
     }
@@ -25,8 +26,8 @@ function spread(total) {
 }
 
 // Builds objects shaped like useTourism().data / useCapacity().data.
-function makeFixture({ fromYear, toYear, toMonth, annual }) {
-  const periods = monthPeriods(fromYear, toYear, toMonth);
+function makeFixture({ fromYear, fromMonth = 1, toYear, toMonth, annual }) {
+  const periods = monthPeriods(fromYear, toYear, toMonth, fromMonth);
   const series = new Map();
   const put = (key, arr) => series.set(key, arr);
   for (const [code, byYear] of Object.entries(annual)) {
@@ -110,6 +111,18 @@ describe("buildPacket", () => {
     expect(REGION_IDS).toEqual(REGIONS.map((r) => r.id));
   });
 
+  test("every region's names come from the shared allowlist, and every county has its …maa form", () => {
+    for (const locale of ["et", "en"]) {
+      const p = buildPacket({ ...small, locale, question: "" });
+      for (const r of REGIONS) {
+        const allowed = [...REGION_NAMES[r.id].et, ...REGION_NAMES[r.id].en];
+        expect(p.regions[r.id].names.every((n) => allowed.includes(n))).toBe(true);
+        expect(p.regions[r.id].names).toEqual(expect.arrayContaining([r.et, r.en]));
+        if (r.kind === "county") expect(p.regions[r.id].names).toContain(`${r.shortEt}maa`);
+      }
+    }
+  });
+
   test("county names include the everyday …maa form", () => {
     const p = buildPacket({ ...small, locale: "et", question: "" });
     expect(p.regions.hiiu.names).toEqual(expect.arrayContaining(["Hiiu maakond", "Hiiumaa", "Hiiu County"]));
@@ -159,6 +172,34 @@ describe("buildPacket", () => {
     const y19 = row(YEAR_COLUMNS, p.regions.hiiu.years.find((r) => r[0] === 2019));
     expect(y19.foreignYoyPct).toBe(Math.round(((y19.foreign - y18.foreign) / y18.foreign) * 1000) / 10);
     expect(y19.foreignYoyPct).toBeGreaterThan(30);
+  });
+
+  test("year rows carry the foreign guests' share, precomputed", () => {
+    const p = buildPacket({ ...small, locale: "et", question: "" });
+    for (const id of ["ee", "hiiu"]) {
+      const y = row(YEAR_COLUMNS, p.regions[id].years.find((r) => r[0] === 2024));
+      expect(y.foreignSharePct).toBe(Math.round((y.foreign / y.guests) * 1000) / 10);
+    }
+    const harju2018 = row(YEAR_COLUMNS, p.regions.harju.years.find((r) => r[0] === 2018));
+    expect(harju2018.foreignSharePct).toBeNull();
+  });
+
+  test("busiest and quietest month are unknown when any month of the year is unpublished", () => {
+    const f = makeFixture({ fromYear: 2024, toYear: 2026, toMonth: 8, annual: { EE: () => 2_400_000, [HIIU]: () => 1100 } });
+    f.tourism.get("OCC_ARR", HIIU)[f.tourism.periods.indexOf("2025M02")] = null;
+    const p = buildPacket({ ...f, locale: "et", question: "" });
+    expect(p.regions.hiiu.busiestMonth).toBeNull();
+    expect(p.regions.hiiu.quietestMonth).toBeNull();
+    expect(p.regions.ee.busiestMonth).toBe(1);
+  });
+
+  test("a partial first year in the data window gets no year row", () => {
+    // PxWeb's sliding 260-month window usually starts mid-year.
+    const f = makeFixture({ fromYear: 2013, fromMonth: 2, toYear: 2026, toMonth: 8, annual: { EE: () => 2_400_000, [HIIU]: () => 1100 } });
+    const p = buildPacket({ ...f, locale: "et", question: "" });
+    expect(p.regions.hiiu.years[0][0]).toBe(2014);
+    expect(p.regions.ee.years.map((r) => r[0])).not.toContain(2013);
+    expect(p.regions.ee.years.at(-1)[0]).toBe(2026);
   });
 
   test("suppressed annual values stay null, not zero", () => {

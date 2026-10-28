@@ -51,6 +51,11 @@ municipality/county staff, journalists.
   launch, run ~10 real questions (ET and EN) through Haiku and Claude Sonnet 5.5
   (`claude-sonnet-5-5`) and show the owner both. Switching model must be a
   one-line config change.
+
+  **Outcome (2026-10-28):** both models answered all 14 test questions with
+  correct figures and declined the out-of-scope and injection questions.
+  Sonnet's Estonian was more fluent, while Haiku made occasional spelling
+  slips. The owner confirmed **Haiku** for launch.
 - **Global limit: 50 questions per day.**
 - **UI: a side panel** (mockup option B). Desktop: slides in from the right
   over a dimmed page. Mobile: rises as a bottom sheet covering most of the

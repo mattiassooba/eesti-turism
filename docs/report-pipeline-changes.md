@@ -20,6 +20,29 @@ hidden) from computation, the UI, and all labels, in
 own definition and explicitly noting the per-room-vs-per-person ambiguity is
 unresolved.
 
+**Update — 2026-10-27:** a separate effort outside this engagement (via
+Cursor, commit "Add RevPAR and wage-share lines to operator charts",
+2026-10-25) added RevPAR back on the site's new Operator page
+(`prototype/src/pages/Operator.jsx` — see the status note in
+`docs/superpowers/specs/2026-10-22-accommodation-sector-design.md` for how
+that frontend relates to this one), computed the same way (occupancy % ×
+average cost per night) from the same input whose per-room-vs-per-person
+basis was never confirmed by Statistikaamet. The original
+`OperatorInsights.jsx` referenced above is itself now orphaned (same
+frontend swap) and still has RevPAR removed. Noting this for awareness, not
+changing it unilaterally — it may have been a deliberate call made with
+context this engagement doesn't have.
+
+**Update — 2026-10-28 (owner ruling):** the site owner states that
+`OCC_NI_COST` (keskmine ööpäevamaksumus) is a **per-room** price. On that
+basis RevPAR (occupancy % × average price per night) is treated as valid and
+is reinstated in the newsletter PDF's yearly tables. The PDF's table footnote
+says "per room" accordingly. See
+`docs/superpowers/specs/2026-10-28-newsletter-pdf-ytd-design.md`. The
+Operator page's own footnote (`operatorPage.footnote` in
+`prototype/src/i18n/pages.js`) still describes the basis as unconfirmed and
+has not been changed.
+
 **Partial-year comparisons are now flagged, not silently shown.** Two
 independent bugs let a partial (still in-progress) year sit next to full
 prior years with no visual distinction: `OperatorInsights.jsx`'s yearly bar

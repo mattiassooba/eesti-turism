@@ -1,8 +1,9 @@
-﻿import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { UNSAFE_LocationContext as LocationContext } from "react-router-dom";
 import { useApp } from "../state/AppState.jsx";
-import { useNarrative, useTourism, useCapacity, useResidents, useSector, useLongRun } from "../data/datasets.js";
-import { COUNTY_LIST, regionName } from "../lib/regions.js";
+import { useNarrative, useTourism, useCapacity, useResidents, useSector, useLongRun, useOriginHistory } from "../data/datasets.js";
+import { buildNewsletterPdfData } from "../data/newsletterPdfData.js";
+import { COUNTY_LIST, regionByCode, regionName } from "../lib/regions.js";
 import { fmtPeriod } from "../lib/format.js";
 import { LocaleProvider } from "@prod/i18n/LocaleContext.jsx";
 import { RegionProvider } from "@prod/context/RegionContext.jsx";
@@ -48,6 +49,31 @@ function ThemeHighlights() {
   );
 }
 
+// Tables and charts for the PDF, from the same data and functions as the
+// Operator page. Page 2 covers the selected region, or else the county the
+// narrative pipeline featured this period. null until everything loads.
+function usePdfData(selected) {
+  const { t, locale } = useApp();
+  const narrative = useNarrative();
+  const pageRegion = selected ?? regionByCode(narrative.data?.featuredRegionCode ?? COUNTY_LIST[0].code);
+  const tourism = useTourism();
+  const capacity = useCapacity();
+  const sector = useSector();
+  const origins = useOriginHistory(pageRegion.code);
+  return useMemo(() => {
+    if (!tourism.data || !capacity.data || !sector.data || !origins.data) return null;
+    return buildNewsletterPdfData({
+      tourism: tourism.data,
+      capacity: capacity.data,
+      sector: sector.data,
+      origins: origins.data,
+      region: pageRegion,
+      locale,
+      t,
+    });
+  }, [tourism.data, capacity.data, sector.data, origins.data, pageRegion, locale, t]);
+}
+
 // Production's PDF generator, rendered unchanged. It reads the region from
 // production's own URL scheme, so it is mounted under the legacy path for
 // the region currently selected in the prototype.
@@ -56,6 +82,7 @@ function ProductionPdf() {
   const slug = locale === "en" ? region.legacySlugEn : region.legacySlugEt;
   const pathname = slug ? (locale === "en" ? `/en/county/${slug}` : `/maakond/${slug}`) : locale === "en" ? "/en" : "/";
   const explicit = region.kind !== "country";
+  const pdfData = usePdfData(explicit ? region : null);
   return (
     <div className="report-pdf">
       <div className="report-pdf-cover" aria-hidden="true">
@@ -92,7 +119,7 @@ function ProductionPdf() {
           <LocationContext.Provider value={{ location: { pathname, search: "", hash: "", state: null, key: "pdf" }, navigationType: "POP" }}>
             <LocaleProvider>
               <RegionProvider>
-                <NewsletterPdfButton />
+                <NewsletterPdfButton pdfData={pdfData} />
               </RegionProvider>
             </LocaleProvider>
           </LocationContext.Provider>

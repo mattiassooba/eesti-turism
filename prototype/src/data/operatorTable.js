@@ -2,9 +2,17 @@
 // vaade"), shared with the newsletter PDF so both show identical numbers.
 import { ORIGIN_CODES } from "./datasets.js";
 import { pctChange, sumRange, at } from "./derive.js";
-import { monthName, parsePeriod, countryName } from "../lib/format.js";
+import { fmtDec, fmtInt, monthName, parsePeriod, countryName } from "../lib/format.js";
 
 export const MIN_TABLE_YEAR = 2020;
+
+export function fmtTableNum(n, locale) {
+  if (n == null || Number.isNaN(n)) return "—";
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return `${fmtDec(n / 1e6, locale, 1)}${locale === "et" ? " milj." : "M"}`;
+  if (abs >= 1e3) return `${fmtDec(n / 1e3, locale, 1)}${locale === "et" ? " tuh." : "k"}`;
+  return fmtInt(n, locale);
+}
 
 export function monthColLabel(period, locale) {
   const p = parsePeriod(period);

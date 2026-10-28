@@ -4,6 +4,7 @@ import { useTourism, useCapacity, useSector, useOriginHistory } from "../data/da
 import {
   MIN_TABLE_YEAR,
   buildColumns,
+  fmtTableNum,
   chartYears,
   yearIndexes,
   yearsIn,
@@ -42,14 +43,6 @@ const RESIDENCY = [
   { value: "EE", labelKey: "common.domestic" },
   { value: "FOR", labelKey: "common.foreign" },
 ];
-
-function fmtTableNum(n, locale) {
-  if (n == null || Number.isNaN(n)) return "—";
-  const abs = Math.abs(n);
-  if (abs >= 1e6) return `${fmtDec(n / 1e6, locale, 1)}${locale === "et" ? " milj." : "M"}`;
-  if (abs >= 1e3) return `${fmtDec(n / 1e3, locale, 1)}${locale === "et" ? " tuh." : "k"}`;
-  return fmtInt(n, locale);
-}
 
 function YearlyTable({ columns, accommodatedLabel, shareLabel, originsByKey, locale, t }) {
   const colDefs = [

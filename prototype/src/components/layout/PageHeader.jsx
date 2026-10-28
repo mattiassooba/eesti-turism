@@ -7,9 +7,11 @@ export default function PageHeader({ kicker, title, lead, aside, tabs, children 
   return (
     <>
       <header className="page-head" data-theme="dark">
-        <svg className="page-head-art" viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
-          <path d={HERO_OUTLINE} />
-        </svg>
+        <div className="page-head-backdrop" aria-hidden="true">
+          <svg className="page-head-art" viewBox={`0 0 ${w} ${h}`}>
+            <path d={HERO_OUTLINE} />
+          </svg>
+        </div>
         <div className="container">
           <div className="page-head-grid">
             <div>

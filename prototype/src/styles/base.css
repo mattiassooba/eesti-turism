@@ -88,7 +88,8 @@ main {
 .skip-link {
   position: fixed;
   left: 16px;
-  top: -60px;
+  /* Far enough up that the drop shadow can't peek into view. */
+  top: -120px;
   z-index: 1000;
   padding: 10px 16px;
   background: var(--surface);

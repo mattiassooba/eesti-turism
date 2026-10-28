@@ -578,13 +578,22 @@
 }
 
 /* ── Page header (dedicated pages) ──────────────────────────────────── */
+/* Not clipped, so the region picker's panel can open over the sticky tabs
+   (z 40); kept below the sticky site header (z 50). Only the decorative
+   map is clipped, by .page-head-backdrop. */
 .page-head {
   position: relative;
-  z-index: 50;
+  z-index: 45;
   background: var(--navy-900);
   color: var(--on-dark);
   padding: clamp(48px, 7vw, 96px) 0 clamp(40px, 5vw, 72px);
   overflow: visible;
+}
+.page-head-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 .page-head-grid {
   display: grid;

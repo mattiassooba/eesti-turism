@@ -51,7 +51,8 @@ describe("buildNewsletterPdfData", () => {
       "Muutus (aasta varasemaga)",
       "RevPAR (täituvus × ööpäevamaksumus)",
     ]);
-    expect(d.national.columns).toEqual(["2020", "2021", "2022", "2023", "2024", "2025", "2024 AUGUST", "2025 AUGUST", "2026 AUGUST"]);
+    // Month headers on two lines keep those columns narrow in the PDF.
+    expect(d.national.columns).toEqual(["2020", "2021", "2022", "2023", "2024", "2025", "2024\nAUGUST", "2025\nAUGUST", "2026\nAUGUST"]);
     expect(d.national.rows.every((r) => r.cells.length === d.national.columns.length)).toBe(true);
   });
 
@@ -62,7 +63,8 @@ describe("buildNewsletterPdfData", () => {
     expect(labels).toContain("Tartu maakond osakaal Eestist");
     expect(labels.filter((l) => l.startsWith("Top "))).toEqual(["Top 1 päritoluriik", "Top 2 päritoluriik", "Top 3 päritoluriik"]);
     const top1 = d.region.rows.find((r) => r.label === "Top 1 päritoluriik").cells[0];
-    expect(top1).toMatch(/^Soome \(/);
+    // Country and nights on separate lines, so the column stays narrow in the PDF.
+    expect(top1).toMatch(/^Soome\n[\d\s,]+( tuh\.)?$/);
   });
 
   test("missing values render as an em dash, never NaN, null or undefined", () => {
@@ -84,7 +86,7 @@ describe("buildNewsletterPdfData", () => {
 
   test("en locale gives English month headers and number formats", () => {
     const d = build("en");
-    expect(d.national.columns.at(-1)).toBe("AUGUST 2026");
+    expect(d.national.columns.at(-1)).toBe("AUGUST\n2026");
     expect(d.national.rows[0].cells[0]).toBe("3.3M");
     expect(d.national.rows[0].label).toBe("Accommodated in Estonia");
   });
@@ -95,6 +97,13 @@ describe("buildNewsletterPdfData", () => {
     expect(d.region.shareChart.partial.at(-1)).toBe(true);
     expect(d.region.shareChart.categories.at(-1)).toBe("2026*");
     expect(d.region.occChart.lines.map((l) => l.label)).toEqual(["RevPAR", "Keskmine ööpäevamaksumus"]);
+  });
+
+  test("axis labels keep a decimal when the axis steps by less than 1", () => {
+    const { shareChart } = build().region;
+    expect(shareChart.rightFormat(0.5, 0.5)).toBe("0,5%");
+    expect(shareChart.rightFormat(1, 0.5)).toBe("1,0%");
+    expect(shareChart.rightFormat(20, 10)).toBe("20%");
   });
 
   test("growth chart is the last 36 quarters with a year label on each Q1", () => {

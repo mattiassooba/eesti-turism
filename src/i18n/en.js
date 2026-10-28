@@ -46,14 +46,16 @@ export default {
     generating: "Generating PDF…",
     intro:
       "This PDF collects AI-written summaries based on Statistikaamet's latest data — not an official Statistikaamet product. Accommodation statistics cover establishments with at least five bed places and do not capture every trip made in Estonia.",
+    preparing: "Preparing data…",
+    sectorHeading: "Accommodation sector economy",
+    spendingHeading: "Trip spending in Estonia",
+    tableNote: "* partial year · Cumulative = January through the month shown · RevPAR = occupancy × average price per night (per room)",
     generatedOn: "Generated:",
     estoniaHeading: "Estonia overview",
-    nationalChartTitle: "Estonian residents vs. foreign visitors, by year",
     partialYearNote: "* partial year — not directly comparable to full years",
     regionSubheading: "Detailed regional overview",
     keyInsightsHeading: "Key insights",
     regionSnapshotHeading: "Region at a glance",
-    viewChartsOnSite: "This region's detailed charts and tables are available on turismistatistika.ee by selecting that county.",
     pageLabel: "Page",
     kpi: {
       guests: "Guests",

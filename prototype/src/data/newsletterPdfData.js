@@ -46,7 +46,8 @@ function tableRows(columns, { accommodatedLabel, shareLabel, origins, locale, t 
           t("operatorPage.topOrigin", rank + 1),
           (c) => {
             const item = origins.get(c.key)?.[rank];
-            return item ? `${item.label} (${fmtTableNum(item.value, locale)})` : "—";
+            // Two lines (country, nights) keep the PDF column narrow.
+            return item ? `${item.label}\n${fmtTableNum(item.value, locale)}` : "—";
           },
           rank > 0
         )
@@ -55,6 +56,10 @@ function tableRows(columns, { accommodatedLabel, shareLabel, origins, locale, t 
   }
   return rows;
 }
+
+// "2024 AUGUST" → "2024\nAUGUST": month headers on two lines keep those
+// columns narrow enough for the whole table to fit an A4 page.
+const columnLabel = (c) => (c.kind === "month" ? c.label.replace(" ", "\n") : c.label);
 
 function categories(years, partial) {
   return years.map((y, i) => (partial[i] ? `${y}*` : String(y)));
@@ -79,14 +84,14 @@ export function buildNewsletterPdfData({ tourism, capacity, sector, origins, reg
   return {
     national: {
       title: t("operatorPage.nationalHeading", span),
-      columns: nationalCols.map((c) => c.label),
+      columns: nationalCols.map(columnLabel),
       rows: tableRows(nationalCols, { accommodatedLabel: t("operatorPage.accommodatedEstonia"), locale, t }),
     },
     region: {
       code: region.code,
       name,
       title: t("operatorPage.yearlyHeading", [name, ...span]),
-      columns: regionCols.map((c) => c.label),
+      columns: regionCols.map(columnLabel),
       rows: tableRows(regionCols, {
         accommodatedLabel: t("operatorPage.accommodatedRegion", name),
         shareLabel: isCountry ? null : t("operatorPage.shareOfEstonia", name),
@@ -103,7 +108,7 @@ export function buildNewsletterPdfData({ tourism, capacity, sector, origins, reg
         bars: { label: t("operatorPage.totalEstonia"), values: share.national },
         lines: [{ label: t("operatorPage.shareOf", name), values: isCountry ? share.national.map(() => 100) : share.sharePct }],
         leftFormat: (v) => fmtAxis(v, locale),
-        rightFormat: (v) => fmtPct(v, locale, 0),
+        rightFormat: (v, step = 1) => fmtPct(v, locale, step < 1 ? 1 : 0),
       },
       occChart: {
         title: t("operatorPage.kpiTitle", name),
@@ -116,7 +121,7 @@ export function buildNewsletterPdfData({ tourism, capacity, sector, origins, reg
           { label: t("operatorPage.revparShort"), values: occ.revpar, valueFormat: eur0 },
           { label: t("operatorPage.avgNightRate"), values: occ.arr },
         ],
-        leftFormat: (v) => `${fmtInt(v, locale)}%`,
+        leftFormat: (v, step = 1) => fmtPct(v, locale, step < 1 ? 1 : 0),
         rightFormat: (v) => `${fmtInt(v, locale)} €`,
       },
     },

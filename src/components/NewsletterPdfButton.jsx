@@ -3,13 +3,19 @@ import { useTranslation } from "../i18n/LocaleContext.jsx";
 import { useRegion } from "../context/RegionContext.jsx";
 import { countyLabelByCode } from "../data/counties";
 import { loadNarrative } from "../data/narrative";
+import {
+  COLORS,
+  drawTable,
+  tableHeight,
+  drawBarLineChart,
+  barLineChartHeight,
+  drawSignedBarChart,
+  signedBarChartHeight,
+  pdfText,
+} from "./pdfDraw.js";
 
 const MARGIN = 48;
 const LINE_HEIGHT = 14;
-// Match DOMESTIC_COLOR / FOREIGN_COLOR from src/theme.js, used everywhere
-// else in the app for this exact residents-vs-foreign-visitors split.
-const DOMESTIC_BAR_COLOR = [91, 107, 122];
-const FOREIGN_BAR_COLOR = [217, 142, 43];
 // Match --ink / --positive / --alert / --sea from src/styles/tokens.css —
 // jsPDF has no access to CSS custom properties, so these are kept in sync
 // by hand the same way the chart colors above already are.
@@ -18,17 +24,12 @@ const POSITIVE_COLOR = [31, 122, 82];
 const NEGATIVE_COLOR = [156, 59, 38];
 const SEA_COLOR = [43, 108, 163];
 
-// Blends an [r,g,b] toward white — used to mute a partial (still
-// in-progress) year's bar so it doesn't read as a like-for-like comparison
-// against full prior years.
-function lighten([r, g, b], amount) {
-  return [r, g, b].map((c) => Math.round(c + (255 - c) * amount));
-}
-
 // Only enabled once narrative.json is confirmed present — same
 // graceful-degradation stance as NarrativeBlock (no error UI, just no
 // button, before the first scheduled generation has ever run).
-export default function NewsletterPdfButton() {
+// pdfData: the tables and charts, prepared by the prototype's Reports page
+// (prototype/src/data/newsletterPdfData.js); null until its data loads.
+export default function NewsletterPdfButton({ pdfData = null }) {
   const { t, locale } = useTranslation();
   const { region, isExplicitRegion } = useRegion();
   const [narrative, setNarrative] = useState(null);
@@ -181,11 +182,8 @@ export default function NewsletterPdfButton() {
         y += height + 16;
       }
 
-      // A lean, fully-vector label/value/delta table (Task 3.4's "leaner
-      // tables") for the region page — unlike the html2canvas table
-      // capture below it, this one is correct for ANY region regardless of
-      // which county is actually selected on screen, since it's built
-      // straight from narrative.json's `facts`, not a DOM screenshot.
+      // A lean, fully-vector label/value/delta table for the region page,
+      // built straight from narrative.json's `facts`.
       function leanKpiTable(rows) {
         const rowHeight = 18;
         const valueX = MARGIN + maxWidth * 0.52;
@@ -217,30 +215,7 @@ export default function NewsletterPdfButton() {
         y += 8;
       }
 
-      // Fits the canvas to maxWidth, paginating first if it wouldn't fit on
-      // the remaining space of the current page.
-      function image(canvas, { maxHeight = 260, gap = 16 } = {}) {
-        let drawWidth = maxWidth;
-        let drawHeight = (canvas.height / canvas.width) * drawWidth;
-        if (drawHeight > maxHeight) {
-          drawHeight = maxHeight;
-          drawWidth = (canvas.width / canvas.height) * drawHeight;
-        }
-        ensureSpace(drawHeight);
-        const x = MARGIN + (maxWidth - drawWidth) / 2;
-        // JPEG at high (not max) quality — this is a chart/table screenshot
-        // with small text, where compression artifacts read as blur, but a
-        // lossless PNG at this resolution ran 10+ MB.
-        doc.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", x, y, drawWidth, drawHeight);
-        y += drawHeight + gap;
-      }
-
-      // Drawn with jsPDF's own vector primitives, not a DOM screenshot — the
-      // only fully-national charts in the app live on the lazy-mounted Map
-      // tab, so a live capture would frequently just be missing. This has
-      // no DOM dependency at all and works regardless of which tab is open.
-      // "1.2M" / "650k" — kept locale-agnostic and as short as possible,
-      // since these are squeezed into narrow bar segments, not prose.
+      // "1.2M" / "650k": kept short for the KPI tiles.
       function abbrevShort(n) {
         if (n == null) return "";
         if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -248,92 +223,28 @@ export default function NewsletterPdfButton() {
         return String(Math.round(n));
       }
 
-      // Stacked bars: domestic (bottom) + foreign (top) per year, same
-      // residents-vs-visitors split and colors used everywhere else in the
-      // app (see DOMESTIC_COLOR/FOREIGN_COLOR in src/theme.js). Each bar is
-      // labeled with its total, and each segment with its own value where
-      // there's room — otherwise the chart only shows relative shape, not
-      // the actual scale of guests involved.
-      function nationalResidencyChart(series, { height = 110, gap = 12 } = {}) {
-        if (!Array.isArray(series) || !series.length) return;
-        const topPadding = 11;
-        ensureSpace(height + topPadding + 34);
-        const top = y + topPadding;
-        const max = Math.max(...series.map((d) => d.domestic + d.foreign), 1);
-        const barGap = 6;
-        const barWidth = (maxWidth - barGap * (series.length - 1)) / series.length;
-        const axisY = top + height;
+      // Heading + paragraph for an optional narrative field: skipped when an
+      // older narrative.json doesn't have it yet.
+      function optionalParagraph(heading, text) {
+        if (!text) return false;
+        ensureSpace(LINE_HEIGHT * 4);
+        paragraph(heading, { font: "bold", size: 12, gap: 4 });
+        paragraph(text, { size: 9.5, gap: 8 });
+        return true;
+      }
 
-        doc.setDrawColor(210);
-        doc.setLineWidth(0.5);
-        doc.line(MARGIN, axisY, MARGIN + maxWidth, axisY);
+      function table(tbl) {
+        if (!tbl) return;
+        ensureSpace(tableHeight(tbl.rows, tbl.columns) + 40);
+        paragraph(tbl.title, { font: "bold", size: 10.5, gap: 2 });
+        y = drawTable(doc, { x: MARGIN, y, width: maxWidth, columns: tbl.columns, rows: tbl.rows }) + 6;
+        paragraph(t("newsletterPdf.tableNote"), { font: "italic", size: 7, color: 130, gap: 10 });
+      }
 
-        series.forEach((d, i) => {
-          const domesticHeight = (d.domestic / max) * (height - 4);
-          const foreignHeight = (d.foreign / max) * (height - 4);
-          const barX = MARGIN + i * (barWidth + barGap);
-          const barCenterX = barX + barWidth / 2;
-
-          // A partial (still in-progress) year's bar is muted — otherwise a
-          // January-through-August bar sits next to full-year bars with no
-          // visual sign it isn't a like-for-like comparison.
-          const domesticColor = d.partial ? lighten(DOMESTIC_BAR_COLOR, 0.45) : DOMESTIC_BAR_COLOR;
-          const foreignColor = d.partial ? lighten(FOREIGN_BAR_COLOR, 0.45) : FOREIGN_BAR_COLOR;
-
-          doc.setFillColor(...domesticColor);
-          doc.rect(barX, axisY - domesticHeight, barWidth, domesticHeight, "F");
-          doc.setFillColor(...foreignColor);
-          doc.rect(barX, axisY - domesticHeight - foreignHeight, barWidth, foreignHeight, "F");
-
-          // Segment value labels, white-on-color, only where the segment is
-          // tall enough to hold a legible line of text without overflowing.
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(6.5);
-          doc.setTextColor(255);
-          if (domesticHeight >= 12) {
-            doc.text(abbrevShort(d.domestic), barCenterX, axisY - domesticHeight / 2 + 2, { align: "center" });
-          }
-          if (foreignHeight >= 12) {
-            doc.text(abbrevShort(d.foreign), barCenterX, axisY - domesticHeight - foreignHeight / 2 + 2, {
-              align: "center",
-            });
-          }
-
-          // Total, above the bar.
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(7);
-          doc.setTextColor(60);
-          doc.text(abbrevShort(d.domestic + d.foreign), barCenterX, axisY - domesticHeight - foreignHeight - 3, {
-            align: "center",
-          });
-
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(7.5);
-          doc.setTextColor(110);
-          doc.text(d.partial ? `${d.year} *` : String(d.year), barCenterX, axisY + 10, { align: "center" });
-        });
-        doc.setTextColor(0);
-
-        const legendY = axisY + 26;
-        doc.setFillColor(...DOMESTIC_BAR_COLOR);
-        doc.rect(MARGIN, legendY - 7, 8, 8, "F");
-        doc.setFontSize(8.5);
-        doc.text(t("common.domestic"), MARGIN + 12, legendY);
-        const legendGap = MARGIN + 12 + doc.getTextWidth(t("common.domestic")) + 16;
-        doc.setFillColor(...FOREIGN_BAR_COLOR);
-        doc.rect(legendGap, legendY - 7, 8, 8, "F");
-        doc.text(t("common.foreign"), legendGap + 12, legendY);
-
-        y = legendY + gap;
-
-        if (series.some((d) => d.partial)) {
-          doc.setFont("helvetica", "italic");
-          doc.setFontSize(7);
-          doc.setTextColor(140);
-          doc.text(t("newsletterPdf.partialYearNote"), MARGIN, legendY + 14);
-          doc.setTextColor(0);
-          y += 12;
-        }
+      function barLineChart(chart, colors) {
+        if (!chart) return;
+        ensureSpace(barLineChartHeight(115));
+        y = drawBarLineChart(doc, { x: MARGIN, y, width: maxWidth, height: 115, chart, ...colors }) + 12;
       }
 
       const periodLabel = narrative.periodLabel?.[locale] ?? narrative.periodLabel?.et;
@@ -342,27 +253,16 @@ export default function NewsletterPdfButton() {
       const headlineText = narrative.sections.headline?.[locale] ?? narrative.sections.headline?.et;
       const keyInsights = (narrative.sections.keyInsights ?? []).map((k) => k[locale] ?? k.et).filter(Boolean);
 
-      // Which county page 2 covers: if the reader explicitly picked one
-      // (they're on /maakond/:slug), that choice is preserved exactly as
-      // before. Otherwise (the generic root dashboard) it falls back to
-      // the most newsworthy county this period, computed from the ranked
-      // findings server-side, instead of always defaulting to Harju —
-      // see RegionContext.jsx's isExplicitRegion and the spec's "PDF
-      // always defaults to Harju" complaint.
-      const effectiveRegionCode = isExplicitRegion ? region : narrative.featuredRegionCode ?? region;
-      const regionLabel = countyLabelByCode(effectiveRegionCode, locale);
+      // Page 2's region comes with the prepared data (the reader's selected
+      // region, else the county the narrative pipeline featured), so its text,
+      // KPIs, charts and table always describe the same place.
+      const fallbackCode = isExplicitRegion ? region : narrative.featuredRegionCode ?? region;
+      const effectiveRegionCode = pdfData?.region.code ?? fallbackCode;
+      const regionLabel = pdfData?.region.name ?? countyLabelByCode(effectiveRegionCode, locale);
       const regionBlurb = narrative.sections.dashboardByRegion?.[effectiveRegionCode];
       const regionFacts = facts?.regions?.[effectiveRegionCode] ?? null;
-
-      // The on-screen Ülevaade charts/tables only ever show the region
-      // currently selected in the "Vali maakond" selector (`region`) — so
-      // a DOM screenshot is only trustworthy when that's the SAME region
-      // this PDF page is actually about. When the PDF has picked a more
-      // newsworthy county than what happens to be on screen, the lean
-      // native table below (built from `facts`, not the DOM) is used
-      // instead, so the numbers and the region name never contradict.
-      const canCaptureRegionDom = effectiveRegionCode === region;
-      const { chartsCanvas, nationalTableCanvas, regionTableCanvas } = await captureOperatorSnapshots();
+      const pick = (section) => section?.[locale] ?? section?.et;
+      const expensesHighlight = narrative.sections.expenses?.[locale === "en" ? "highlightEn" : "highlightEt"];
 
       const footerNotes = [];
 
@@ -405,10 +305,18 @@ export default function NewsletterPdfButton() {
       paragraph(t("newsletterPdf.estoniaHeading"), { font: "bold", size: 13, gap: 5 });
       if (dashboard) paragraph(dashboard[locale] ?? dashboard.et, { size: 9.5, gap: 8 });
 
-      paragraph(t("newsletterPdf.nationalChartTitle"), { font: "bold", size: 10.5, gap: 3 });
-      nationalResidencyChart(dashboard?.nationalYearlyResidency, { height: 95, gap: 14 });
+      table(pdfData?.national);
 
-      if (nationalTableCanvas) image(nationalTableCanvas, { maxHeight: 135, gap: 10 });
+      // The turnover chart shows even before the narrative has a sector
+      // paragraph (older narrative.json).
+      if (pdfData?.growth.values.length) {
+        ensureSpace(signedBarChartHeight(105) + LINE_HEIGHT * 6);
+        paragraph(t("newsletterPdf.sectorHeading"), { font: "bold", size: 12, gap: 4 });
+        const sectorText = pick(narrative.sections.sector);
+        if (sectorText) paragraph(sectorText, { size: 9.5, gap: 6 });
+        y = drawSignedBarChart(doc, { x: MARGIN, y, width: maxWidth, height: 105, chart: pdfData.growth }) + 12;
+      }
+      optionalParagraph(t("newsletterPdf.spendingHeading"), expensesHighlight);
 
       const generatedDate = new Date(narrative.generatedAt).toLocaleDateString(
         locale === "en" ? "en-US" : "et-EE"
@@ -452,13 +360,11 @@ export default function NewsletterPdfButton() {
         );
       }
 
-      if (canCaptureRegionDom && chartsCanvas) image(chartsCanvas, { maxHeight: 190 });
-      if (canCaptureRegionDom && regionTableCanvas) image(regionTableCanvas, { maxHeight: 200 });
-      if (!canCaptureRegionDom) {
-        paragraph(t("newsletterPdf.viewChartsOnSite"), { font: "italic", size: 8.5, color: 130, gap: 0 });
-      }
+      barLineChart(pdfData?.region.shareChart, { barColor: COLORS.c1, lineColors: [COLORS.foreign] });
+      barLineChart(pdfData?.region.occChart, { barColor: COLORS.c3, lineColors: [COLORS.c1, COLORS.c2] });
+      table(pdfData?.region);
 
-      footerNotes.push(`${t("source.prefix")} ${t("source.agency")}, ${t("source.tables")} TU131.PX, TU122.PX`);
+      footerNotes.push(`${t("source.prefix")} ${t("source.agency")}, ${t("source.tables")} TU131, TU122, TU410, TU552`);
 
       // ---- Page numbers + footer link on every page ----------------------
       const totalPages = doc.internal.getNumberOfPages();
@@ -491,72 +397,8 @@ export default function NewsletterPdfButton() {
   }
 
   return (
-    <button type="button" className="newsletter-pdf-button" onClick={download} disabled={generating}>
-      {generating ? t("newsletterPdf.generating") : t("newsletterPdf.download")}
+    <button type="button" className="newsletter-pdf-button" onClick={download} disabled={generating || !pdfData}>
+      {generating ? t("newsletterPdf.generating") : pdfData ? t("newsletterPdf.download") : t("newsletterPdf.preparing")}
     </button>
   );
-}
-
-// Captures the Ülevaade tab's operator charts and its two yearly tables
-// (Estonia-only and region-specific) as live snapshots (same technique as
-// ExportButtons' PNG export: rasterize what's actually on screen).
-// Best-effort: these nodes only exist once the scroll view has rendered at
-// least once this session (OperatorInsights lives inside the non-lazy
-// Dashboard, so in practice that's true whenever the site is open at all),
-// so a missing node just returns null for that entry rather than failing
-// the whole download.
-async function captureOperatorSnapshots() {
-  const chartsRow = document.querySelector("#operator-yearly-card .tile-row-split");
-  const nationalTable = document.querySelector("#operator-yearly-national .data-grid-wrapper");
-  const regionTable = document.querySelector("#operator-yearly-card .data-grid-wrapper");
-
-  if (!chartsRow && !nationalTable && !regionTable) {
-    return { chartsCanvas: null, nationalTableCanvas: null, regionTableCanvas: null };
-  }
-
-  try {
-    const html2canvas = (await import("html2canvas")).default;
-    // scale: 3 (not the default 1 or the old 1.5) — these tables carry small
-    // (11-12px) text that reads as blurry once rasterized and squeezed to
-    // page width; a higher source resolution keeps that text sharp at the
-    // size it's actually printed at.
-    const capture = (node) => (node ? html2canvas(node, { scale: 3, backgroundColor: "#ffffff" }) : null);
-    // Both yearly tables scroll horizontally on screen (many year columns)
-    // — a plain capture only grabs the visible viewport and silently drops
-    // whatever's scrolled out of view. Forcing the clone's width to the
-    // wrapper's full scrollWidth (and disabling its overflow clipping)
-    // makes html2canvas render — and capture — every column.
-    const captureFullWidthTable = (node, { onclone } = {}) =>
-      node
-        ? html2canvas(node, {
-            scale: 3,
-            backgroundColor: "#ffffff",
-            width: node.scrollWidth,
-            windowWidth: node.scrollWidth,
-            onclone: (_doc, el) => {
-              el.style.overflow = "visible";
-              el.style.width = `${node.scrollWidth}px`;
-              onclone?.(el);
-            },
-          })
-        : null;
-
-    const [chartsCanvas, nationalTableCanvas, regionTableCanvas] = await Promise.all([
-      capture(chartsRow),
-      captureFullWidthTable(nationalTable),
-      // The region table's own "top origin country" rows show 5 ranks
-      // on-screen (one row per rank) — trimmed to the top 3 for the PDF.
-      captureFullWidthTable(regionTable, {
-        onclone: (el) => {
-          el.querySelectorAll(".operator-origin-row").forEach((row, i) => {
-            if (i >= 3) row.remove();
-          });
-        },
-      }),
-    ]);
-    return { chartsCanvas, nationalTableCanvas, regionTableCanvas };
-  } catch (err) {
-    console.warn("Newsletter PDF: skipping charts/table capture —", err);
-    return { chartsCanvas: null, nationalTableCanvas: null, regionTableCanvas: null };
-  }
 }

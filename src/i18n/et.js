@@ -46,14 +46,16 @@ export default {
     generating: "Koostan PDF-i…",
     intro:
       "Käesolev PDF koondab tehisintellekti kokkuvõtted Statistikaameti uusimate andmete põhjal — AI-kirjutatud, mitte Statistikaameti ametlik toode. Majutusstatistika põhineb vähemalt viie voodikohaga majutusettevõtete andmetel ega kajasta kõiki Eestis tehtud turismireise.",
+    preparing: "Valmistan andmeid ette…",
+    sectorHeading: "Majutussektori majandus",
+    spendingHeading: "Reisikulud Eestis",
+    tableNote: "* osaline aasta · Kumulatiivne = jaanuarist kuni näidatud kuuni · RevPAR = täituvus × keskmine ööpäevamaksumus (toa kohta)",
     generatedOn: "Koostatud:",
     estoniaHeading: "Eesti üldpilt",
-    nationalChartTitle: "Eesti elanikud vs väliskülastajad, aastate lõikes",
     partialYearNote: "* osaline aasta — ei ole otseselt võrreldav täisaastatega",
     regionSubheading: "Piirkonna detailne ülevaade",
     keyInsightsHeading: "Peamised tähelepanekud",
     regionSnapshotHeading: "Piirkonna näitajad",
-    viewChartsOnSite: "Selle piirkonna üksikasjalikud graafikud ja tabelid on nähtaval veebilehel turismistatistika.ee, kui valid vastava maakonna.",
     pageLabel: "Lehekülg",
     kpi: {
       guests: "Külastajaid",

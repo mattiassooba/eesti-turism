@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { assertComplete, requireSector } from "./guards.mjs";
+import { assertComplete, requireSector, normalizeSections } from "./guards.mjs";
 
 describe("assertComplete", () => {
   test("passes a response that finished normally", () => {
@@ -24,5 +24,16 @@ describe("requireSector", () => {
 
   test("refuses to continue without TU410 data rather than ask for an ungrounded paragraph", () => {
     expect(() => requireSector(null)).toThrow(/TU410/);
+  });
+});
+
+describe("normalizeSections", () => {
+  test("keeps objects and parses sections that came back as JSON strings", () => {
+    const out = normalizeSections({ a: { et: "x", en: "y" }, b: '{"et":"p","en":"q"}' });
+    expect(out).toEqual({ a: { et: "x", en: "y" }, b: { et: "p", en: "q" } });
+  });
+
+  test("names the section and shows what came back when a string isn't JSON", () => {
+    expect(() => normalizeSections({ sector: "placeholder text from the model" })).toThrow(/sections\.sector.*placeholder text from the model/);
   });
 });

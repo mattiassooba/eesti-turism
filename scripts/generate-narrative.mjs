@@ -27,7 +27,7 @@ import { COUNTIES, CITIES } from "../src/data/counties.js";
 import { detectFindings, rankFindings, findingsByRegionCode } from "./lib/findings.mjs";
 import { runPrePublishChecks } from "./lib/qa.mjs";
 import { ytdFigures, sectorFigures } from "./narrativeYtd.mjs";
-import { assertComplete, requireSector } from "./lib/guards.mjs";
+import { assertComplete, requireSector, normalizeSections } from "./lib/guards.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = path.join(__dirname, "..", "public", "data", "narrative.json");
@@ -851,19 +851,6 @@ ${prompts.sector}`;
   return normalizeSections(toolUse.input);
 }
 
-// Claude's tool-calling doesn't always respect a nested-object schema for
-// every property in one call — observed in practice returning some
-// sections as a real {et, en} object and others as a JSON-encoded STRING
-// containing the same shape (e.g. "map": "{\"et\": ..., \"en\": ...}").
-// Normalize defensively rather than trust the schema was followed exactly.
-function normalizeSections(sections) {
-  const normalized = {};
-  for (const [key, value] of Object.entries(sections)) {
-    normalized[key] = typeof value === "string" ? JSON.parse(value) : value;
-  }
-  return normalized;
-}
-
 // Separate call (own token budget) for the 18 region/city variants of the
 // dashboard blurb — kept apart from callClaude's 5-section call so neither
 // call's output risks truncating the other, and so a failure here doesn't
@@ -953,7 +940,7 @@ async function callClaudeRegions(anthropic, model, regions, promptBlocks) {
   assertComplete(response, "region narrative");
   const toolUse = response.content.find((block) => block.type === "tool_use");
   if (!toolUse) throw new Error("Claude did not return a tool_use block for regions");
-  // Same defensive parsing as normalizeSections above — Claude's tool-calling
+  // Same defensive parsing as normalizeSections (lib/guards.mjs) — Claude's tool-calling
   // doesn't always respect the schema's array type, observed here returning
   // a JSON-encoded string instead in some runs.
   const list = typeof toolUse.input.regions === "string" ? JSON.parse(toolUse.input.regions) : toolUse.input.regions;

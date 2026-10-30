@@ -16,3 +16,23 @@ export function requireSector(sector) {
   }
   return sector;
 }
+
+// Claude's tool calls sometimes return a nested section as a JSON-encoded
+// string instead of an object; parse those. A string that isn't JSON is
+// reported with its section name and opening text, so a failed run says
+// what actually came back.
+export function normalizeSections(sections) {
+  const normalized = {};
+  for (const [key, value] of Object.entries(sections)) {
+    if (typeof value !== "string") {
+      normalized[key] = value;
+      continue;
+    }
+    try {
+      normalized[key] = JSON.parse(value);
+    } catch {
+      throw new Error(`sections.${key} came back as plain text instead of an object: ${JSON.stringify(value.slice(0, 400))}`);
+    }
+  }
+  return normalized;
+}

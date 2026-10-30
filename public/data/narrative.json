@@ -1,164 +1,626 @@
 {
-  "generatedAt": "2026-10-16T10:46:00.533Z",
+  "generatedAt": "2026-10-30T21:54:50.289Z",
   "period": "2026M08",
   "periodLabel": {
     "et": "2026 august",
     "en": "August 2026"
   },
   "sections": {
-    "capacity": {
-      "et": "2025. aastal oli Eestis kokku 61,1 tuh. voodikohta, mis on 9,9x rohkem kui 1992. aastal. Samal ajal jäi voodikohtade täituvus suhteliselt madalaks, ulatudes 35,0 protsendini. See tähendab, et majutusettevõtted pakuvad küll rohkelt kohti, kuid üle kahe kolmandiku voodikohtadest seisab keskmiselt kasutamata. Pikaajaline võrdlus näitab, kui palju majutussektor on aastakümnetega kasvanud, ent täituvusnäitaja annab märku, et pakkumine on nõudlusest endiselt mõnevõrra ees.",
-      "en": "In 2025 Estonia had a total of 61.1 th beds available in accommodation establishments, 9.9x more than back in 1992. Despite this long-term expansion of supply, the bed occupancy rate stood at just 35.0% for the year. That means roughly two-thirds of available beds went unused on an average day. While capacity has grown dramatically over the decades, the occupancy figure suggests supply continues to run well ahead of demand nationally.",
-      "highlightEt": "2025. aastal oli Eestis 61,1 tuh. voodikohta ja voodikohtade täituvus oli vaid 35,0 protsenti.",
-      "highlightEn": "In 2025 Estonia had 61.1 th beds available, yet bed occupancy reached only 35.0% for the year."
+    "headline": {
+      "et": "Suurbritannia turistide arv kasvas aastaga 21,5%, enim kõigi välisturgude seas.",
+      "en": "British visitor numbers jumped 21.5% year-over-year, the biggest move of any foreign market."
     },
+    "keyInsights": [
+      {
+        "et": "Tartu maakonnas kasvas külastajate arv 7,9%, kuid keskmine hind öö kohta langes 6,1% — kasv ei toonud kaasa kallimat majutust.",
+        "en": "Tartu county saw guest numbers rise 7.9%, yet average cost per night fell 6.1% — growth did not translate into higher prices."
+      },
+      {
+        "et": "Viljandi maakonnas vähenes külastajate arv 6,8%, samal ajal kui keskmine hind öö kohta tõusis 13,2% — vastupidine liikumine võrreldes Tartuga.",
+        "en": "Viljandi county's guest numbers dropped 6.8% while average cost per night rose 13.2% — the opposite pattern to Tartu's."
+      },
+      {
+        "et": "Ida-Viru maakond kasvatas külastajate arvu enim kõigi maakondade seas, 11,1% aastaga, samas kui Viljandi langes kõige rohkem.",
+        "en": "Ida-Viru county posted the strongest guest growth of any county, up 11.1% year-over-year, while Viljandi fell the most."
+      }
+    ],
     "dashboard": {
-      "et": "2026. aasta augustis majutati Eestis 481,6 tuh. külastajat, mis on 4,9% rohkem kui aasta tagasi samal kuul. Ööbimiste arv kasvas veelgi kiiremini, ulatudes 873,6 tuh.-ni ehk 6,4% võrra enam kui mullu. Külastajatest oli 222,2 tuh. Eesti elanikud ja 259,4 tuh. välisturistid, mis näitab, et välismaised külastajad moodustasid veidi üle poole kogunäitajast. Keskmine ööbimiste arv külastaja kohta tõusis 1,81-ni, kasvades aastaga 1,5%. Jaanuarist augustini kokku on majutatud 2,7 milj. külastajat, mis on 4,0% rohkem kui eelmisel aastal samal perioodil. Enim külastatud maakond oli Harju maakond 233,9 tuh. külastajaga, kasvades aastaga 9,0%.",
-      "en": "In August 2026, Estonia recorded 481.6 th accommodated guests, up 4.9% year on year. Nights spent grew even faster, reaching 873.6 th, a 6.4% increase. Of total guests, 222.2 th were domestic residents and 259.4 th were foreign visitors, with foreigners making up slightly more than half. Average nights per guest rose to 1.81, up 1.5% from last year. For the year to date, January through August, 2.7 million guests have been recorded, 4.0% ahead of the same period last year. Harju county remained the most visited region with 233.9 th guests, up a strong 9.0% year on year.",
+      "et": "Jaanuarist augustini 2026 majutati Eestis 2,7 miljonit külastajat, 4,0% rohkem kui eelmisel aastal samal perioodil, ning ööbimiste arv küündis 4,9 miljonini (+5,1%). Kodumaiste külastajate arv kasvas 2,1%ni 1,2 miljonile, välisturistide oma aga 5,8%ni 1,4 miljonile. Augustis endas majutati 481,6 tuhat külastajat (+4,9% aastatagusega võrreldes) ja 873,6 tuhat ööbimist (+6,4%). Kuu jooksul jagunesid külastajad peaaegu võrdselt: 222,2 tuhat kodumaist ja 259,4 tuhat välismaist külastajat. Keskmine ööbimiste arv külastaja kohta tõusis 1,81ni (+1,5%). Enim külastatud maakond oli Harjumaa 233,9 tuhande külastajaga, kasvades aastaga 9,0%.",
+      "en": "From January through August 2026, Estonia accommodated 2.7 million guests, up 4.0% on the same months last year, while nights spent reached 4.9 million (+5.1%). Domestic guests rose 2.1% to 1.2 million and foreign guests climbed 5.8% to 1.4 million. In August alone, 481.6 thousand guests stayed (+4.9% year-over-year), generating 873.6 thousand nights (+6.4%). The monthly split was 222.2 thousand domestic versus 259.4 thousand foreign guests, and the average nights per guest rose to 1.81 (+1.5%). Harju county remained the most-visited area, with 233.9 thousand guests, up 9.0% year-over-year.",
       "nationalYearlyResidency": [
         {
           "year": "2017",
           "domestic": 1388785,
-          "foreign": 2156147
+          "foreign": 2156147,
+          "partial": false
         },
         {
           "year": "2018",
           "domestic": 1450960,
-          "foreign": 2140535
+          "foreign": 2140535,
+          "partial": false
         },
         {
           "year": "2019",
           "domestic": 1536526,
-          "foreign": 2253429
+          "foreign": 2253429,
+          "partial": false
         },
         {
           "year": "2020",
           "domestic": 1296065,
-          "foreign": 676066
+          "foreign": 676066,
+          "partial": false
         },
         {
           "year": "2021",
           "domestic": 1575563,
-          "foreign": 562783
+          "foreign": 562783,
+          "partial": false
         },
         {
           "year": "2022",
           "domestic": 1785939,
-          "foreign": 1466959
+          "foreign": 1466959,
+          "partial": false
         },
         {
           "year": "2023",
           "domestic": 1755905,
-          "foreign": 1669825
+          "foreign": 1669825,
+          "partial": false
         },
         {
           "year": "2024",
           "domestic": 1755327,
-          "foreign": 1855063
+          "foreign": 1855063,
+          "partial": false
         },
         {
           "year": "2025",
           "domestic": 1743622,
-          "foreign": 1949843
+          "foreign": 1949843,
+          "partial": false
         },
         {
           "year": "2026",
           "domestic": 1234253,
-          "foreign": 1428644
+          "foreign": 1428644,
+          "partial": true
         }
       ]
     },
-    "expenses": {
-      "et": "2025. aastal kulutas Eesti elanik keskmiselt 163 eurot ühe siseriikliku reisi kohta, mis on 11,9% vähem kui aasta varem. Kulutuste languse taustal püsis suurimaks kuluartikliks siiski majutus, millele kulus keskmiselt 49 eurot reisi kohta. See tähendab, et peaaegu kolmandik kogu reisieelarvest läks ööbimise peale, ülejäänu jagunes muude kulutuste vahel. Aastane langus reisikulutustes viitab sellele, et Eesti elanikud kas reisisid odavamalt või lühemaid reise, kuigi andmed ei näita otsest põhjust muutuse taga.",
-      "en": "In 2025, the average domestic trip by an Estonian resident cost €163, down 11.9% from the previous year. Despite this decline, accommodation remained the largest spending category, averaging €49 per trip. That single category accounted for roughly three-tenths of total trip spending, with the remainder split across other expenses. The notable year-on-year drop in overall spending suggests residents were either traveling more cheaply or taking shorter trips, though the data itself does not indicate the specific cause.",
-      "highlightEt": "2025. aastal kulutati siseriiklikule reisile keskmiselt 163 eurot, 11,9% vähem kui aasta varem; suurim kuluartikkel oli majutus 49 euroga.",
-      "highlightEn": "In 2025, average domestic trip spending fell to €163, down 11.9% year on year, with accommodation the top cost at €49 per trip."
-    },
     "map": {
-      "et": "Viimase 24 kuu jooksul koguneis enim ööbimisi Harju maakonda, kokku 7,5 milj. ööd, kinnitades pealinnaregiooni rolli Eesti turismi keskusena. Välisturistide seas on viimase 12 kuu suurim päritoluriik Soome, kust pärines 684,9 tuh. külastajat. 2026. aasta augusti seisuga jagunesid külastajad peaaegu võrdselt: 222,2 tuh. kodumaist ja 259,4 tuh. välismaist külastajat, mis näitab, et välisturistide osakaal on viimasel ajal kodumaistest veidi suurem. Need näitajad koos joonistavad pildi Eesti turismi geograafiast, kus Harju maakond domineerib majutuse osas ja Soome püsib peamise välisturuna.",
-      "en": "Over the past 24 months, Harju county accumulated the most nights spent nationally, totaling 7.5 million nights, underscoring its role as Estonia's tourism hub. Among foreign visitors, Finland was the top country of origin over the last 12 months, contributing 684.9 th guests. As a snapshot, in August 2026 guests split almost evenly between 222.2 th domestic and 259.4 th foreign visitors, with foreigners slightly ahead. Together these figures highlight Harju's dominance in accommodation nights and Finland's continued position as Estonia's leading source market abroad.",
-      "highlightEt": "Harju maakond kogus 24 kuuga 7,5 milj. ööbimist ja Soome püsib suurima välispäritoluga 684,9 tuh. külastajaga 12 kuu jooksul.",
-      "highlightEn": "Harju county logged 7.5 million nights over 24 months, while Finland remained the top source country with 684.9 th guests in the last 12 months."
+      "et": "Viimase 24 kuu jooksul kogunes kõige rohkem ööbimisi Harju maakonda — 7,5 miljonit ööd. Peamine välisriigi päritolumaa on jätkuvalt Soome, kust viimase 12 kuu jooksul saabus 684,9 tuhat külastajat. Suurima muutuse välisturgude seas tegi aga Suurbritannia, kelle külastajate arv kasvas 72,5 tuhandelt 88,1 tuhandele ehk 21,5% aastaga. Augustis jagunesid külastajad peaaegu pooleks: 222,2 tuhat kodumaist ja 259,4 tuhat välismaist külastajat. Ida-Viru maakond paistis maakondade seas silma kõige kiirema kasvuga (+11,1%), samas kui Viljandi maakonnas vähenes külastajate arv enim (-6,8%).",
+      "en": "Over the last 24 months, Harju county accumulated the most nights spent of any county, at 7.5 million. Finland remains the top country of origin for foreign visitors, with 684.9 thousand guests in the past 12 months. The sharpest mover among source markets, however, was Britain, whose guest numbers rose from 72.5 thousand to 88.1 thousand, a 21.5% year-over-year increase. In August the guest mix split nearly evenly, with 222.2 thousand domestic and 259.4 thousand foreign visitors. Among counties, Ida-Viru posted the fastest growth at +11.1%, while Viljandi saw the steepest decline at -6.8%.",
+      "highlightEt": "Suurbritannia külastajate arv kasvas aastaga 72,5 tuhandelt 88,1 tuhandele (+21,5%) — suurim muutus välisturgude seas.",
+      "highlightEn": "British visitor numbers rose from 72.5 thousand to 88.1 thousand (+21.5%) year-over-year, the biggest shift among foreign markets."
     },
     "purpose": {
-      "et": "Viimase 24 kuu andmed näitavad, et puhkusereisid domineerivad selgelt Eesti majutusstatistikas, moodustades 58% kõigist ööbimistest. See kinnitab, et vaba aja veetmine, mitte töö- või muu eesmärk, on peamine põhjus Eestis ööbimiseks. Kestuse osas oli 2026. aasta II kvartalis kõige levinum reisi pikkus 1 kuni 3 ööd, mida tehti kokku 761,9 tuh. korral, hõlmates nii kodu- kui välismaiseid reise. See viitab sellele, et enamik reisijaid eelistab lühikesi, mõne-ööpäevaseid puhkusi pikematele viibimistele.",
-      "en": "Data from the last 24 months show that leisure travel clearly dominates Estonia's accommodation statistics, accounting for 58% of all nights spent. This confirms that recreation, rather than business or other purposes, remains the primary driver of overnight stays. In terms of duration, the most common trip length in Q2 2026 was 1 to 3 nights, recorded 761.9 th times across both domestic and foreign trips combined. This points to a strong preference among travelers for short getaways over extended stays.",
-      "highlightEt": "Puhkusereisid moodustasid 58% kõigist ööbimistest 24 kuu jooksul, ning levinuim reisi pikkus II kvartalis oli 1–3 ööd 761,9 tuh. korral.",
-      "highlightEn": "Leisure trips made up 58% of all nights over 24 months, and the most common trip length in Q2 was 1-3 nights, with 761.9 th such trips."
+      "et": "Viimase 24 kuu ööbimistest moodustas puhkusereis valdava osa — 58% kõigist ööbimistest, mis näitab vaba aja reisimise ülekaalu töö- ja muude reiside ees. 2026. aasta II kvartalis oli levinuim reisi pikkus (kodu- ja välisreisid kokku) 1 kuni 3 ööd, millega seotud oli 761,9 tuhat reisi. See viitab, et enamik Eestis tehtud reise on lühikesed, pigem lühipuhkuse kui pikema puhkusereisi vormis. Need kaks näitajat koos annavad pildi reisimisharjumustest: enamasti lühikesed puhkusereisid, mitte pikad äri- või muul eesmärgil reisid.",
+      "en": "Over the last 24 months, holiday travel (puhkusereis) accounted for the majority of nights spent, at 58% of the total, indicating leisure trips outweigh other purposes. In the second quarter of 2026, the most common trip length, combining domestic and foreign trips, was 1 to 3 nights, with 761.9 thousand trips of that length. Together these point to a pattern of short getaways rather than extended holidays, with most recorded trips wrapping up within a few days rather than stretching into longer stays.",
+      "highlightEt": "Puhkusereisid moodustasid 58% kõigist ööbimistest viimase 24 kuu jooksul, enamik reise kestis vaid 1 kuni 3 ööd.",
+      "highlightEn": "Holiday trips made up 58% of all nights spent over the last 24 months, with most trips lasting just 1 to 3 nights."
+    },
+    "capacity": {
+      "et": "2025. aastal oli Eestis kokku 61,1 tuhat majutuskohta, 9,9x rohkem kui 1992. aastal. Voodikohtade täituvus jäi aastaga samale tasemele, 35,0% (muutus 0,0 protsendipunkti), mis tähendab, et suurem pakkumine ei ole viimasel aastal täituvust tõstnud. Samal ajal tõusis keskmine hind öö kohta 51 euroni, kasvades aastaga 8,5%. Need arvud kirjeldavad majutuspakkumise mahtu ja hinnataset, mitte sektori kasumlikkust.",
+      "en": "Estonia had 61.1 thousand beds available in 2025, 9.9x more than in 1992. Bed occupancy held at 35.0% for the year, unchanged by 0.0 percentage points, meaning the larger supply has not pushed occupancy higher over the past year. Meanwhile the average cost per night rose to €51, up 8.5% year-over-year. These figures describe the scale and pricing of accommodation supply, not sector profitability.",
+      "highlightEt": "2025. aastal püsis voodikohtade täituvus 35,0% juures (muutus 0,0 pp), kuigi keskmine ööhind tõusis 8,5% 51 euroni.",
+      "highlightEn": "Bed occupancy held at 35.0% in 2025 (0.0 pp change), even as the average cost per night rose 8.5% to €51."
+    },
+    "expenses": {
+      "et": "2025. aastal kulutas Eesti elanik kodumaisele reisile keskmiselt 163 eurot, mis on 11,9% vähem kui aasta varem. Suurim kuluartikkel oli majutus, millele kulus keskmiselt 49 eurot reisi kohta. See tähendab, et majutus moodustas ligikaudu kolmandiku kogu reisieelarvest, samal ajal kui üldine reisikulu vähenes võrreldes eelmise aastaga.",
+      "en": "In 2025, the average Estonian resident spent €163 per domestic trip, down 11.9% from the previous year. The largest spending category was accommodation, averaging €49 per trip. That means lodging accounted for roughly a third of the overall trip budget, even as total spending per trip declined compared with the prior year.",
+      "highlightEt": "Kodumaise reisi keskmine kulu langes 2025. aastal 11,9%, 163 euroni, millest 49 eurot kulus majutusele.",
+      "highlightEn": "Average spend per domestic trip fell 11.9% in 2025 to €163, with €49 of that going to accommodation."
+    },
+    "sector": {
+      "et": "Majutusteenuste käive ulatus 2026. aasta II kvartalis 83,5 miljoni euroni, kasvades aastatagusega võrreldes 12,1%. Viimase nelja kvartali käik näitab kasvava tempoga muutust: 2025. aasta III kvartalis +0,7%, IV kvartalis +3,4%, 2026. aasta I kvartalis +22,5% ja II kvartalis +12,1%. Tegemist on jooksevhindades käibega, mitte kasumiga, ning see kajastab sektori rahalist mahtu, mitte tasuvust.",
+      "en": "Accommodation services turnover reached €83.5 million in the second quarter of 2026, up 12.1% from the same quarter a year earlier. Over the last four quarters, year-over-year change moved from +0.7% in Q3 2025, to +3.4% in Q4 2025, +22.5% in Q1 2026, and +12.1% in Q2 2026. These are nominal, current-price figures reflecting the sector's financial volume, not its profitability.",
+      "highlightEt": "Majutusteenuste käive kasvas II kvartalis 12,1% (83,5 milj. eurot), pärast I kvartali 22,5% kasvu.",
+      "highlightEn": "Accommodation turnover grew 12.1% in Q2 2026 to €83.5 million, following a 22.5% jump in Q1."
     },
     "dashboardByRegion": {
       "EE00370000000000": {
-        "et": "Harju maakond püsis 2026. aasta augustis Eesti turismi kindla veduriga, majutades 233,9 tuh. külastajat ehk 9,0% rohkem kui mullu samal ajal, ning ööbimiste arv kasvas veelgi kiiremini, 13,1% võrra 461,1 tuhandeni. Külastajatest oli 181,0 tuh. välismaalased ja 52,9 tuh. kodumaised turistid, mis näitab maakonna tugevat rahvusvahelist tõmmet. Keskmine ööbimiste arv küündis 1,97-ni, kasvades 3,7%. Harju osakaal kõigist Eestis majutatud külastajatest oli 48,6%, mis tähendab, et peaaegu iga teine külastaja ööbis just siin. Perioodi jaanuarist augustini kogunes kokku 1,4 milj. külastajat, mis on 7,3% rohkem kui eelmisel aastal samal perioodil – kasv on olnud püsiv, mitte vaid ühe kuu juhuslik hüpe. Harjumaa jääb Eesti turismisektori selgeks veduriks, ühendades suure mahu kiirenenud kasvuga nii külastajate arvus kui ka ööbimiste kestuses.",
-        "en": "Harju county remained Estonia's dominant tourism hub in August 2026, drawing 233.9 th accommodated guests, up 9.0% year-on-year, and 461.1 th nights spent, a stronger 13.1% rise. Of these guests, 181.0 th were foreign visitors against 52.9 th domestic travellers, underlining the county's pull for international tourism. The average stay lengthened slightly to 1.97 nights per guest, up 3.7%. With a 48.6% share of all guests accommodated in Estonia this month, nearly one in two overnight visitors nationwide stayed here. Looking at the broader picture, cumulative guests from January through August 2026 reached 1.4 million, a solid 7.3% increase over the same period last year, confirming that growth has been consistent rather than a one-month spike. Harju's performance continues to anchor the national tourism sector, combining high volume with accelerating momentum in both visitor numbers and length of stay, making it the clear engine of Estonia's accommodation statistics this year."
+        "et": "Jaanuarist augustini 2026 võõrustas Harju maakond 1,4 miljonit külastajat (+7,3% võrreldes eelmise aasta sama perioodiga) ning öötuste arv küündis 2,7 miljonini (+9,6%). Kodumaiseid külalisi oli 364,1 tuh. (+6,3%) ja välismaiseid 1,0 miljonit (+7,7%), mis tähendab, et kasv tuli valdavalt välisturistidelt. Augustis endas registreeriti 233,9 tuh. külastajat (+9,0% aastatagusega võrreldes) ja 461,1 tuh. ööbimist (+13,1%). Kodumaiste külaliste arv kasvas kuus 2,7% (52,9 tuh.), välismaiste aga 11,0% (181,0 tuh.). Keskmine ööbimiste arv külastaja kohta tõusis 1,97-ni (+3,7%). Harju maakonna osakaal kogu Eesti augustikuu külastajatest oli 48,6%, mis kinnitab maakonna keskset rolli Eesti turismis. Nii aasta algusest kui ka augustis püsis kasv positiivne mitmes näitajas korraga, mis viitab laiapõhjalisele tõusule.",
+        "en": "From January through August 2026, Harju County welcomed 1.4 million guests, up 7.3% from the same period last year, while nights spent reached 2.7 million, up 9.6%. Domestic guests numbered 364.1 th (+6.3%) and foreign guests 1.0 million (+7.7%), with the growth weighted more heavily toward international visitors. In August alone, the county recorded 233.9 th guests (+9.0% year-on-year) and 461.1 th nights (+13.1%). Domestic guests that month rose 2.7% to 52.9 th, while foreign guests climbed 11.0% to 181.0 th. The average length of stay increased to 1.97 nights per guest, up 3.7%. Harju accounted for 48.6% of all guests accommodated in Estonia that month, underscoring its central position in national tourism. With both the year-to-date and monthly figures moving upward across guests, nights, and both visitor origins, the region shows broad-based growth over this period."
       },
       "EE00390000000000": {
-        "et": "Hiiu maakonnas oli 2026. aasta august selgelt tagasihoidlikum: majutatud külastajate arv langes 13,4% võrra 4,8 tuhandeni ning ööbimiste arv kahanes veelgi enam, 15,5% võrra 7,5 tuhandeni. Külastajaskond oli endiselt valdavalt kodumaine – 4,2 tuh. Eesti turisti seisis vastu vaid 583 välismaise külalisega, mis peegeldab saare pigem kohalikku kui rahvusvahelist tõmmet. Keskmine ööbimiste arv langes pisut, 2,5% võrra 1,55-ni. Hiiumaa osakaal kõigist Eesti külastajatest jäi vaid 1,0% juurde, mis näitab maakonna väikest mahtu võrreldes mandri maakondadega. Aasta algusest augustini kogunenud 20,0 tuh. külastajat kinnitab sama trendi – langus on 13,4%, võrreldes mullu sama perioodiga. Nii kuu kui ka kumulatiivsed näitajad viitavad püsivale külastatavuse vähenemisele Hiiumaal, ilma selgete märkideta pöördest kummagi, kodu- või välismaise nõudluse osas.",
-        "en": "Hiiu county saw a notable pullback in August 2026, with 4.8 th guests accommodated, down 13.4% from a year earlier, and nights spent falling even more steeply by 15.5% to 7.5 th. The visitor base remained overwhelmingly domestic, with 4.2 th Estonian travellers against just 583 foreign guests, reflecting the island's niche appeal mainly to local tourists. Average length of stay slipped slightly to 1.55 nights, down 2.5%. Hiiu accounted for only 1.0% of all guests accommodated in Estonia this period, reflecting its small scale relative to the mainland counties. The year-to-date trend confirms the softer pattern: cumulative guests from January through August totalled 20.0 th, a 13.4% decline compared to the same months last year. Together, the monthly and cumulative figures point to a consistent contraction in visitor activity on Hiiumaa this year, with little sign yet of a turnaround in either domestic or foreign demand."
+        "et": "Jaanuarist augustini 2026 vähenes Hiiu maakonna külastajate arv 20,0 tuhandeni (-13,4%) ning ööbimiste arv 35,0 tuhandeni (-6,3%) võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv kahanes 17,4 tuhandeni (-12,8%) ja välismaiste külaliste arv 2,5 tuhandeni (-17,4%), mis näitab langust mõlemas rühmas. Augustis oli külastajaid 4,8 tuh. (-13,4% aastatagusega võrreldes) ja ööbimisi 7,5 tuh. (-15,5%). Kodumaiste külaliste arv oli 4,2 tuh. (-10,2%) ja välismaiste 583 (-31,0%), mis tähendab, et välisturistide langus oli kuu lõikes järsem. Keskmine ööbimiste arv külastaja kohta oli 1,55 (-2,5%). Hiiu maakonna osakaal kogu Eesti augustikuu külastajatest oli 1,0%. Nii aasta algusest kui ka augustis on külastajate ja ööbimiste arv vähenenud mõlemas kodu- ja välismaiste külaliste rühmas, mis viitab laiapõhjalisele langusele perioodi vältel.",
+        "en": "From January through August 2026, Hiiu County saw guest numbers fall to 20.0 th (-13.4%) and nights spent drop to 35.0 th (-6.3%) compared with the same period last year. Domestic guests declined to 17.4 th (-12.8%) and foreign guests to 2.5 th (-17.4%), showing a downturn across both visitor groups. In August, the county recorded 4.8 th guests (-13.4% year-on-year) and 7.5 th nights (-15.5%). Domestic guests numbered 4.2 th (-10.2%) while foreign guests fell more sharply to 583 (-31.0%). The average length of stay was 1.55 nights per guest, down 2.5%. Hiiu accounted for 1.0% of all guests accommodated in Estonia that month. With both the year-to-date totals and the latest month showing declines across domestic and foreign guest counts alike, the region has experienced a broad-based pullback over this period."
       },
       "EE00450000000000": {
-        "et": "Ida-Viru maakond näitas 2026. aasta augustis kindlat kasvu: majutatud külastajate arv tõusis 11,1% võrra 27,5 tuhandeni ning ööbimiste arv kasvas 8,2% võrra 48,8 tuhandeni. Enamik külastajaid olid kodumaised – 23,6 tuh. – samas kui välismaiseid külalisi oli 3,9 tuhat, mis näitab piirkonna turismi tugevat kohalikku iseloomu. Keskmine ööbimiste arv langes veidi, 2,6% võrra 1,77-ni, hoolimata külastajate arvu kasvust. Maakonna osakaal kõigist Eesti külastajatest oli 5,7%. Pikemas vaates kogunes jaanuarist augustini 146,5 tuh. külastajat, mis on vaid 2,6% rohkem kui eelmisel aastal samal perioodil – see viitab, et augusti tugev tulemus ületas aasta keskmist tempot. Kokkuvõttes näitavad numbrid, et Ida-Virumaa on viimasel ajal hoogu kogunud, kuigi terve aasta kasv on seni olnud tagasihoidlikum, ning kodumaine turism jääb piirkonna külastajaskonna selgeks tugisambaks.",
-        "en": "Ida-Viru county posted solid growth in August 2026, with 27.5 th guests accommodated, up 11.1% year-on-year, and nights spent climbing 8.2% to 48.8 th. Domestic travellers made up the bulk of visitors at 23.6 th, while foreign guests numbered 3.9 th, showing the region's tourism base leans heavily local. Average length of stay eased slightly to 1.77 nights, down 2.6% despite the overall growth in guest numbers. The county held a 5.7% share of all guests accommodated in Estonia this period. Over the longer run, cumulative guests from January through August 2026 reached 146.5 th, up a more modest 2.6% compared with the same period last year, suggesting August's strong performance outpaced the year's average pace. Taken together, the figures point to Ida-Viru gaining momentum recently even as its full-year growth remains comparatively measured, with domestic tourism continuing to anchor the region's visitor numbers."
+        "et": "Jaanuarist augustini 2026 kasvas Ida-Viru maakonna külastajate arv 146,5 tuhandeni (+2,6%) ja ööbimiste arv 261,2 tuhandeni (+2,8%) võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv tõusis 123,5 tuhandeni (+3,8%), samas kui välismaiste külaliste arv langes 23,0 tuhandeni (-3,6%), mis tähendab, et kasv tuli peamiselt kodumaistelt turistidelt. Augustis külastas maakonda 27,5 tuh. inimest (+11,1% aastatagusega võrreldes) ja ööbimisi registreeriti 48,8 tuh. (+8,2%). Kodumaiste külaliste arv oli 23,6 tuh. (+15,5%), välismaiste 3,9 tuh. (-9,3%) — seega jätkus sama suund nagu aasta algusest. Keskmine ööbimiste arv külastaja kohta oli 1,77 (-2,6%). Ida-Viru maakonna osakaal kogu Eesti augustikuu külastajatest oli 5,7%. Mõlemal vaadeldud perioodil on kodumaiste külaliste arv kasvanud ja välismaiste kahanenud, mis viitab selgele erinevusele külastajagruppide arengus.",
+        "en": "From January through August 2026, Ida-Viru County recorded 146.5 th guests (+2.6%) and 261.2 th nights spent (+2.8%) compared with the same period last year. Domestic guests rose to 123.5 th (+3.8%), while foreign guests fell to 23.0 th (-3.6%), meaning the overall growth came chiefly from domestic travelers. In August, the county saw 27.5 th guests (+11.1% year-on-year) and 48.8 th nights (+8.2%). Domestic guests reached 23.6 th (+15.5%) while foreign guests dropped to 3.9 th (-9.3%), continuing the same pattern seen since the start of the year. The average length of stay was 1.77 nights per guest, down 2.6%. Ida-Viru accounted for 5.7% of all guests accommodated in Estonia that month. With domestic guest numbers rising and foreign numbers falling in both periods examined, the region shows a consistent divergence between the two visitor groups."
       },
       "EE00500000000000": {
-        "et": "Jõgeva maakonnas oli 2026. aasta august tagasihoidlikum: majutatud külastajate arv langes 7,1% võrra 3,7 tuhandeni, samas kui ööbimiste arv liikus vastupidises suunas, kasvades 5,5% võrra 7,2 tuhandeni. Külastajaskonnas domineerisid kodumaised turistid – 3,5 tuh. – võrreldes vaid 245 välismaise külalisega, mis näitab maakonna sõltuvust kohalikest reisijatest. Tähelepanuväärselt kasvas keskmine ööbimiste arv 13,6% võrra 1,94-ni, mis viitab sellele, et kuigi külastajaid oli vähem, jäid nad pikemaks ajaks. Jõgevamaa osakaal kõigist Eesti külastajatest oli 0,8%, peegeldades maakonna tagasihoidlikku mahtu. Aasta algusest augustini kogunenud 13,8 tuh. külastajat kinnitab sama suunda – langus 5,8% võrreldes mullu sama perioodiga. Kokkuvõttes iseloomustab maakonna tänavust turismiaastat vähemate, kuid pikemate visiitide muster, mis kehtib nii viimase kuu kui ka kumulatiivsete andmete puhul, viidates pigem käitumismustri muutusele kui ühekordsele langusele.",
-        "en": "Jõgeva county faced a softer August 2026, with guests accommodated falling 7.1% year-on-year to 3.7 th, even as nights spent moved in the opposite direction, rising 5.5% to 7.2 th. Domestic visitors dominated the mix at 3.5 th against just 245 foreign guests, highlighting the county's reliance on local travellers. Notably, average length of stay jumped 13.6% to 1.94 nights, suggesting that although fewer people visited, those who did stayed considerably longer. Jõgeva's share of Estonia's total guests this period stood at 0.8%, reflecting its modest scale. The year-to-date figures echo the softer monthly trend, with cumulative guests from January through August reaching 13.8 th, down 5.8% compared to the same months last year. Overall, the county's tourism activity this year has been marked by fewer but longer visits, a pattern consistent across both the latest month and the cumulative data, pointing to a shift in visitor behaviour rather than a sudden one-off dip."
+        "et": "Jaanuarist augustini 2026 vähenes Jõgeva maakonna külastajate arv 13,8 tuhandeni (-5,8%) ja ööbimiste arv 23,6 tuhandeni (-13,5%) võrreldes eelmise aasta sama perioodiga. Nii kodumaiste (12,3 tuh., -5,8%) kui ka välismaiste (1,6 tuh., -5,9%) külaliste arv kahanes peaaegu võrdses tempos. Augustis oli külastajaid 3,7 tuh. (-7,1% aastatagusega võrreldes), kuid ööbimiste arv tõusis 7,2 tuhandeni (+5,5%), mis erineb aasta algusest nähtud langustrendist. Kodumaiseid külalisi oli kuu jooksul 3,5 tuh. (-5,4%) ja välismaiseid 245 (-26,2%). Keskmine ööbimiste arv külastaja kohta tõusis 1,94-ni (+13,6%). Jõgeva maakonna osakaal kogu Eesti augustikuu külastajatest oli 0,8%. Kuigi aasta algusest on külastajate ja ööbimiste arv olnud langustrendis, näitas august ööbimiste osas erisuunalist liikumist võrreldes üldise perioodi mustriga.",
+        "en": "From January through August 2026, Jõgeva County recorded 13.8 th guests (-5.8%) and 23.6 th nights spent (-13.5%) compared with the same period last year. Both domestic guests (12.3 th, -5.8%) and foreign guests (1.6 th, -5.9%) declined at nearly matching rates. In August, guest numbers were 3.7 th (-7.1% year-on-year), yet nights spent rose to 7.2 th (+5.5%), a departure from the declining pattern seen over the year to date. Domestic guests for the month totaled 3.5 th (-5.4%) and foreign guests 245 (-26.2%). The average length of stay climbed to 1.94 nights per guest, up 13.6%. Jõgeva accounted for 0.8% of all guests accommodated in Estonia that month. While the year-to-date figures point to a decline in guests and nights, August's nights figure moved in the opposite direction from that broader pattern."
       },
       "EE00520000000000": {
-        "et": "Järva maakonnas oli 2026. aasta august selgelt languses: majutatud külastajate arv kahanes 8,2% võrra 3,9 tuhandeni ning ööbimiste arv langes veelgi enam, 11,9% võrra 5,4 tuhandeni. Kodumaised reisijad moodustasid valdava enamuse, 3,5 tuh., võrreldes vaid 407 välismaise külalisega, mis rõhutab maakonna sõltuvust kohalikust nõudlusest. Ka keskmine ööbimiste arv langes, 4,0% võrra 1,39-ni, mis on üks lühemaid viibimisaegu käesoleval perioodil. Järvamaa osakaal kõigist Eestis majutatud külastajatest oli vaid 0,8%. Aasta algusest augustini kogunenud 16,6 tuh. külastajat näitab veelgi sügavamat langust – 18,8% võrreldes mullu sama perioodiga, mis on üks suuremaid kumulatiivseid langusi maakondade seas. Nii kuu kui ka kumulatiivsed näitajad kinnitavad järjepidevat turismiaktiivsuse kahanemist Järvamaal, kus nii lühenenud viibimisajad kui ka vähenenud külastajate arv mõjutavad piirkonna tulemusi.",
-        "en": "Järva county recorded a notable decline in August 2026, with guests accommodated down 8.2% year-on-year to 3.9 th and nights spent falling further, by 11.9%, to 5.4 th. Domestic travellers made up the vast majority at 3.5 th, compared with 407 foreign guests, underscoring the county's reliance on local demand. Average length of stay also dipped, down 4.0% to 1.39 nights, the shortest stay duration among many counties this period. Järva's share of Estonia's total guests accommodated was just 0.8%. The year-to-date picture is even weaker, with cumulative guests from January through August totalling 16.6 th, down 18.8% compared with the same months last year, the steepest cumulative drop among counties reported this period. Together, the monthly and cumulative figures paint a consistent picture of contracting tourism activity in Järva county this year, with both shorter stays and fewer overall visitors weighing on the region's results."
+        "et": "Jaanuarist augustini 2026 vähenes Järva maakonna külastajate arv 16,6 tuhandeni (-18,8%) ja ööbimiste arv 26,1 tuhandeni (-17,8%) võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv langes 14,8 tuhandeni (-19,0%), välismaiste külaliste arv 1,9 tuhandeni (-17,1%) — mõlemad rühmad kahanesid sarnases ulatuses. Augustis oli külastajaid 3,9 tuh. (-8,2% aastatagusega võrreldes) ja ööbimisi 5,4 tuh. (-11,9%). Kodumaiseid külalisi oli 3,5 tuh. (-9,7%), samas kui välismaiste külaliste arv kasvas 407-ni (+8,0%), mis erineb aasta algusest nähtud langusest selles rühmas. Keskmine ööbimiste arv külastaja kohta oli 1,39 (-4,0%). Järva maakonna osakaal kogu Eesti augustikuu külastajatest oli 0,8%. Kuigi aasta algusest on mõlemad külalisrühmad vähenenud, näitas august välismaiste külaliste osas vastupidist liikumist.",
+        "en": "From January through August 2026, Järva County recorded 16.6 th guests (-18.8%) and 26.1 th nights spent (-17.8%) compared with the same period last year. Domestic guests fell to 14.8 th (-19.0%) and foreign guests to 1.9 th (-17.1%), with both groups declining by a similar margin. In August, the county saw 3.9 th guests (-8.2% year-on-year) and 5.4 th nights (-11.9%). Domestic guests numbered 3.5 th (-9.7%), while foreign guests actually rose to 407 (+8.0%), diverging from the decline seen in that group over the year to date. The average length of stay was 1.39 nights per guest, down 4.0%. Järva accounted for 0.8% of all guests accommodated in Estonia that month. While both visitor groups have declined since the start of the year, August showed an opposite movement among foreign guests."
       },
       "EE00560000000000": {
-        "et": "Lääne maakonnas oli 2026. aasta august vastuoluline: majutatud külastajate arv kasvas 2,8% võrra 17,5 tuhandeni, kuid ööbimiste arv langes 1,5% võrra 25,8 tuhandeni, mis viitab lühenenud keskmisele viibimisajale. Tõepoolest, keskmine ööbimiste arv kahanes 4,2% võrra 1,47-ni. Külastajaskonnas domineerisid kodumaised turistid – 13,1 tuh. – võrreldes 4,4 tuhande välismaise külalisega. Lääne maakonna osakaal kõigist Eesti külastajatest oli 3,6%. Aasta tervikpilti vaadates kogunes jaanuarist augustini 81,6 tuh. külastajat, mis on 6,5% vähem kui mullu samal perioodil – see näitab, et hoolimata augusti kasvust on aasta üldine trend jäänud negatiivseks. Positiivse kuunäitaja ja negatiivse kumulatiivse tulemuse vastuolu viitab sellele, et Lääne maakonnas võib olla alanud taastumine pärast nõrgemat aasta algust, kuigi ööbimiste arv ja viibimisaeg pole veel sama suunda võtnud.",
-        "en": "Lääne county showed a mixed picture in August 2026: guests accommodated rose 2.8% year-on-year to 17.5 th, yet nights spent slipped 1.5% to 25.8 th, suggesting shorter average visits. Indeed, average length of stay fell 4.2% to 1.47 nights. The visitor mix leaned domestic, with 13.1 th Estonian guests compared to 4.4 th foreign travellers. Lääne accounted for 3.6% of all guests accommodated in Estonia this period. Looking at the year as a whole, cumulative guests from January through August 2026 reached 81.6 th, down 6.5% versus the same months last year, indicating that despite the uptick in August arrivals, the broader annual trend remains negative. The contrast between a positive monthly guest count and a negative year-to-date total suggests Lääne county may be seeing early signs of recovery after a weaker start to the year, though nights spent and stay duration have yet to follow the same upward path."
+        "et": "Jaanuarist augustini 2026 vähenes Lääne maakonna külastajate arv 81,6 tuhandeni (-6,5%) ja ööbimiste arv 127,4 tuhandeni (-4,5%) võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv langes 63,3 tuhandeni (-5,2%) ja välismaiste külaliste arv 18,3 tuhandeni (-10,8%), mis tähendab, et välisturistide langus oli selgelt järsem. Augustis aga kasvas külastajate arv 17,5 tuhandeni (+2,8% aastatagusega võrreldes), samas kui ööbimiste arv langes 25,8 tuhandeni (-1,5%). Kodumaiseid külalisi oli kuu jooksul 13,1 tuh. (+5,5%) ja välismaiseid 4,4 tuh. (-4,5%). Keskmine ööbimiste arv külastaja kohta oli 1,47 (-4,2%). Lääne maakonna osakaal kogu Eesti augustikuu külastajatest oli 3,6%. Augustikuu külastajate kasv erineb aasta algusest nähtud langustrendist, kuigi ööbimiste näitaja jäi mõlemal perioodil negatiivseks.",
+        "en": "From January through August 2026, Lääne County recorded 81.6 th guests (-6.5%) and 127.4 th nights spent (-4.5%) compared with the same period last year. Domestic guests fell to 63.3 th (-5.2%) and foreign guests to 18.3 th (-10.8%), with the decline among foreign visitors noticeably steeper. In August, however, guest numbers rose to 17.5 th (+2.8% year-on-year), while nights spent still fell to 25.8 th (-1.5%). Domestic guests for the month totaled 13.1 th (+5.5%) and foreign guests 4.4 th (-4.5%). The average length of stay was 1.47 nights per guest, down 4.2%. Lääne accounted for 3.6% of all guests accommodated in Estonia that month. August's guest growth stands apart from the year-to-date decline, though nights spent remained negative in both periods."
       },
       "EE00600000000000": {
-        "et": "Lääne-Viru maakonnas langes 2026. aasta augustis külastajate arv 6,0% võrra 16,8 tuhandeni ning ööbimiste arv kahanes 2,2% võrra 26,4 tuhandeni. Hoolimata väiksemast külastajate arvust kasvas keskmine ööbimiste arv 4,1% võrra 1,57-ni, mis tähendab, et need, kes tulid, jäid pisut kauemaks. Külastajaskond oli valdavalt kodumaine – 12,6 tuh. Eesti turisti võrreldes 4,2 tuhande välismaise külalisega. Maakonna osakaal kõigist Eesti külastajatest oli sel perioodil 3,5%. Aasta laiemas plaanis kogunes jaanuarist augustini 85,0 tuh. külastajat, mis on 2,3% vähem kui mullu samal perioodil – see langus on leebem kui viimase kuu oma. See näitab, et augusti tagasilangus oli pisut järsem kui aasta üldine trend, kuigi Lääne-Viru maakonna suund on 2026. aastal jäänud kergelt negatiivseks, kusjuures külastajate arv on pehmenenud, samal ajal kui üksikute viibimiste kestus on pisut pikenenud.",
-        "en": "Lääne-Viru county experienced a decline in August 2026, with guests accommodated down 6.0% year-on-year to 16.8 th and nights spent falling 2.2% to 26.4 th. Despite fewer visitors, average length of stay actually rose 4.1% to 1.57 nights, meaning those who came tended to stay a bit longer. The guest base was mostly domestic, with 12.6 th Estonian travellers versus 4.2 th foreign visitors. The county's share of Estonia's total guests accommodated this period was 3.5%. Looking at the broader year, cumulative guests from January through August 2026 totalled 85.0 th, down 2.3% compared with the same months last year, a milder decline than seen in the latest month alone. This suggests August's dip was somewhat sharper than the general trend for the year, though the overall direction for Lääne-Viru county has remained modestly negative throughout 2026, with visitor numbers softening even as individual stays have lengthened slightly."
+        "et": "Jaanuarist augustini 2026 vähenes Lääne-Viru maakonna külastajate arv 85,0 tuhandeni (-2,3%) ja ööbimiste arv 137,9 tuhandeni (-1,0%) võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv langes 67,6 tuhandeni (-2,6%) ja välismaiste külaliste arv 17,4 tuhandeni (-1,4%). Augustis oli külastajaid 16,8 tuh. (-6,0% aastatagusega võrreldes) ja ööbimisi 26,4 tuh. (-2,2%), kodumaiseid külalisi 12,6 tuh. (-7,2%) ja välismaiseid 4,2 tuh. (-2,4%). Keskmine ööbimiste arv külastaja kohta tõusis 1,57-ni (+4,1%). Lääne-Viru maakonna osakaal kogu Eesti augustikuu külastajatest oli 3,5%. Tähelepanuväärne on, et samal ajal kui külastajate arv augustis langes 6,0%, liikus keskmine maksumus öö kohta vastupidises suunas, tõustes 4,3%, mis tähendab, et külastajate vähenemine ei toonud kaasa täituvuse ega hinnataseme langust.",
+        "en": "From January through August 2026, Lääne-Viru County recorded 85.0 th guests (-2.3%) and 137.9 th nights spent (-1.0%) compared with the same period last year. Domestic guests fell to 67.6 th (-2.6%) and foreign guests to 17.4 th (-1.4%). In August, guest numbers were 16.8 th (-6.0% year-on-year) and nights spent 26.4 th (-2.2%), with 12.6 th domestic guests (-7.2%) and 4.2 th foreign guests (-2.4%). The average length of stay rose to 1.57 nights per guest, up 4.1%. Lääne-Viru accounted for 3.5% of all guests accommodated in Estonia that month. Notably, while August guest numbers fell 6.0% year-on-year, the average cost per night moved in the opposite direction, rising 4.3% — indicating that the drop in visitors did not translate into lower occupancy or pricing."
       },
       "EE00640000000000": {
-        "et": "Põlva maakond näitas 2026. aasta augustis silmapaistvat kasvu: majutatud külastajate arv hüppas 22,7% võrra 4,0 tuhandeni ning ööbimiste arv kasvas 2,6% võrra 6,4 tuhandeni. Külastajaskonna tuumiku moodustasid kodumaised reisijad – 3,7 tuh. – samas kui välismaiseid külalisi oli vaid 291. Huvitaval kombel langes keskmine ööbimiste arv järsult, 16,4% võrra 1,60-ni, mis viitab sellele, et külastajate arvu kasv tuli peamiselt lühematest visiitidest. Maakonna osakaal kõigist Eesti külastajatest oli sel perioodil 0,8%. Pikemas vaates kogunes jaanuarist augustini 16,4 tuh. külastajat, mis on vaid 0,8% rohkem kui mullu samal perioodil – see näitab, et augusti tugev tulemus tähistab märkimisväärset hoo kasvu võrdlemisi tasase aasta taustal. Kuu järsu hüppe ja peaaegu muutumatu kumulatiivse näitaja kombinatsioon viitab sellele, et Põlva maakonna turism on hiljuti tõelist hoogu kogunud pärast tagasihoidlikku aasta esimest poolt.",
-        "en": "Põlva county delivered standout growth in August 2026, with guests accommodated surging 22.7% year-on-year to 4.0 th, and nights spent rising 2.6% to 6.4 th. Domestic travellers formed the core of visitors at 3.7 th, with only 291 foreign guests recorded. Interestingly, average length of stay dropped sharply, down 16.4% to 1.60 nights, suggesting the surge in visitor numbers came largely from shorter trips. The county held a 0.8% share of Estonia's total guests accommodated this period. Over the longer stretch, cumulative guests from January through August 2026 reached 16.4 th, up a modest 0.8% compared with the same months last year, showing that August's strong result represents a notable acceleration against a fairly flat year overall. This combination of a sharp monthly jump alongside a nearly stable year-to-date figure suggests Põlva county's tourism gained real momentum recently after a subdued first half of the year."
+        "et": "Jaanuarist augustini 2026 kasvas Põlva maakonna külastajate arv veidi, 16,4 tuhandeni (+0,8%), samas kui ööbimiste arv langes 25,2 tuhandeni (-12,7%) võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv tõusis 14,8 tuhandeni (+5,0%), kuid välismaiste külaliste arv kukkus 1,6 tuhandeni (-26,2%). Augustis oli kasv märkimisväärselt tugevam: külastajaid 4,0 tuh. (+22,7% aastatagusega võrreldes) ja ööbimisi 6,4 tuh. (+2,6%). Kodumaiseid külalisi oli kuu jooksul 3,7 tuh. (+27,4%), välismaiseid aga vaid 291 (-16,4%), mis jätkab aasta algusest nähtud erinevust kahe rühma vahel. Keskmine ööbimiste arv külastaja kohta langes 1,60-ni (-16,4%). Põlva maakonna osakaal kogu Eesti augustikuu külastajatest oli 0,8%. Mõlemal perioodil kasvasid kodumaiste külaliste arvud, samas kui välismaiste külaliste arv on jäänud langusesse.",
+        "en": "From January through August 2026, Põlva County recorded a modest rise in guests to 16.4 th (+0.8%), while nights spent fell to 25.2 th (-12.7%) compared with the same period last year. Domestic guests climbed to 14.8 th (+5.0%), but foreign guests dropped sharply to 1.6 th (-26.2%). In August, growth was notably stronger, with 4.0 th guests (+22.7% year-on-year) and 6.4 th nights (+2.6%). Domestic guests for the month reached 3.7 th (+27.4%), while foreign guests numbered just 291 (-16.4%), continuing the divide between the two groups seen since the start of the year. The average length of stay fell to 1.60 nights per guest, down 16.4%. Põlva accounted for 0.8% of all guests accommodated in Estonia that month. In both periods, domestic guest numbers rose while foreign guest numbers remained in decline."
       },
       "EE00680000000000": {
-        "et": "Pärnu maakonnas oli 2026. aasta august stabiilse kasvuga: majutatud külastajate arv tõusis 3,8% võrra 65,0 tuhandeni ning ööbimiste arv kasvas 1,6% võrra 110,0 tuhandeni. Külastajaskond oli üsna tasakaalus – 36,3 tuh. kodumaist ja 28,7 tuh. välismaist külastajat –, mis peegeldab maakonna laia tõmmet nii kohalike kui ka välisturistide seas. Keskmine ööbimiste arv langes veidi, 2,0% võrra 1,69-ni. Pärnumaa osakaal kõigist Eestis majutatud külastajatest oli märkimisväärsed 13,5%, mis teeb temast ühe riigi juhtiva sihtkoha. Aasta algusest augustini kogunes 334,5 tuh. külastajat, mis on vaid 0,5% rohkem kui mullu samal perioodil – see näitab, et kasv on olnud üldiselt üsna tasane, hoolimata augusti tugevamast tulemusest. See muster viitab, et Pärnumaa turismihooaeg on viimasel ajal hoogu kogunud, kuigi laiem aasta algusest kogunenud trend püsib eelmise aasta tasemele lähedal.",
-        "en": "Pärnu county posted steady gains in August 2026, with guests accommodated up 3.8% year-on-year to 65.0 th, and nights spent rising 1.6% to 110.0 th. The visitor mix was fairly balanced, with 36.3 th domestic and 28.7 th foreign guests, reflecting the county's broad appeal to both local and international travellers. Average length of stay edged down slightly, by 2.0%, to 1.69 nights. Pärnu held a sizeable 13.5% share of all guests accommodated in Estonia this period, making it one of the country's leading destinations. For the year to date, cumulative guests from January through August 2026 reached 334.5 th, up a more modest 0.5% compared with the same months last year, indicating that growth has been fairly flat overall despite August's stronger showing. This pattern suggests Pärnu county's tourism season has been picking up pace more recently, even as the broader year-to-date trend remains close to last year's level."
+        "et": "Jaanuarist augustini 2026 kasvas Pärnu maakonna külastajate arv 334,5 tuhandeni (+0,5%), samas kui ööbimiste arv langes veidi, 595,5 tuhandeni (-1,5%), võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv tõusis 179,1 tuhandeni (+2,0%), välismaiste külaliste arv langes aga 155,3 tuhandeni (-1,2%). Augustis oli külastajaid 65,0 tuh. (+3,8% aastatagusega võrreldes) ja ööbimisi 110,0 tuh. (+1,6%). Kodumaiseid külalisi oli kuu jooksul 36,3 tuh. (+8,2%) ja välismaiseid 28,7 tuh. (-1,3%), mis jätkab aasta algusest nähtud mustrit kodumaise turismi kasvust ja välisturismi kahanemisest. Keskmine ööbimiste arv külastaja kohta oli 1,69 (-2,0%). Pärnu maakonna osakaal kogu Eesti augustikuu külastajatest oli 13,5%, mis näitab maakonna olulist kaalu riigi turismis.",
+        "en": "From January through August 2026, Pärnu County saw guest numbers edge up to 334.5 th (+0.5%), while nights spent slipped slightly to 595.5 th (-1.5%) compared with the same period last year. Domestic guests rose to 179.1 th (+2.0%), whereas foreign guests declined to 155.3 th (-1.2%). In August, guest numbers reached 65.0 th (+3.8% year-on-year) and nights spent 110.0 th (+1.6%). Domestic guests for the month totaled 36.3 th (+8.2%) and foreign guests 28.7 th (-1.3%), continuing the pattern from earlier in the year of domestic growth alongside a foreign-visitor decline. The average length of stay was 1.69 nights per guest, down 2.0%. Pärnu County accounted for 13.5% of all guests accommodated in Estonia that month, reflecting its substantial weight in national tourism."
       },
       "EE00710000000000": {
-        "et": "Rapla maakonnas vähenes 2026. aasta augustis külastajate arv veidi, 3,7% võrra 2,6 tuhandeni, samal ajal kui ööbimiste arv liikus vastupidises suunas, kasvades 0,5% võrra 5,4 tuhandeni. Kodumaised reisijad moodustasid enamuse külastajatest – 2,2 tuh. – võrreldes 415 välismaise külalisega. Keskmine ööbimiste arv kasvas 4,4% võrra 2,05-ni, mis on üks pikemaid viibimisaegu käesoleval perioodil – seega jäi vähem külastajaid keskmiselt pisut kauemaks. Rapla maakonna osakaal kõigist Eesti külastajatest oli 0,5%, mis peegeldab selle väikest mahtu. Pikemas vaates kogunes jaanuarist augustini 11,2 tuh. külastajat, mis on 2,7% vähem kui mullu samal perioodil – langus on üldjoontes kooskõlas viimase kuu näitajaga. Kokkuvõttes viitavad andmed, et Rapla maakonna turismiaktiivsus on aasta jooksul kergelt, kuid järjepidevalt pehmenenud, kusjuures väikest külastajate arvu langust tasakaalustab mõnevõrra pikenenud individuaalne viibimisaeg.",
-        "en": "Rapla county saw a slight contraction in August 2026, with guests accommodated down 3.7% year-on-year to 2.6 th, while nights spent moved in the opposite direction, up 0.5% to 5.4 th. Domestic travellers accounted for the majority of visitors at 2.2 th, against 415 foreign guests. Average length of stay rose 4.4% to 2.05 nights, among the longer stays reported this period, meaning fewer visitors stayed somewhat longer on average. Rapla's share of Estonia's total guests accommodated was 0.5%, reflecting its small scale. Over the longer stretch, cumulative guests from January through August 2026 totalled 11.2 th, down 2.7% compared with the same months last year, a decline broadly in line with the latest month's figure. Taken together, the data suggest Rapla county's tourism activity has softened gently but consistently through the year, with a small drop in visitor numbers offset somewhat by longer individual stays."
+        "et": "Jaanuarist augustini 2026 vähenes Rapla maakonna külastajate arv 11,2 tuhandeni (-2,7%) ja ööbimiste arv langes märgatavalt, 27,4 tuhandeni (-18,2%), võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv kahanes 9,5 tuhandeni (-2,8%) ja välismaiste külaliste arv 1,7 tuhandeni (-2,2%). Augustis oli külastajaid 2,6 tuh. (-3,7% aastatagusega võrreldes), kuid ööbimiste arv tõusis veidi, 5,4 tuhandeni (+0,5%), mis erineb aasta algusest nähtud järsust langusest selles näitajas. Kodumaiseid külalisi oli kuu jooksul 2,2 tuh. (-4,8%) ja välismaiseid 415 (+3,0%). Keskmine ööbimiste arv külastaja kohta tõusis 2,05-ni (+4,4%). Rapla maakonna osakaal kogu Eesti augustikuu külastajatest oli 0,5%. Augustis nähtud ööbimiste kerge kasv seisab vastuolus aasta algusest täheldatud tugeva langusega selles näitajas.",
+        "en": "From January through August 2026, Rapla County recorded 11.2 th guests (-2.7%) and a notable drop in nights spent to 27.4 th (-18.2%) compared with the same period last year. Domestic guests fell to 9.5 th (-2.8%) and foreign guests to 1.7 th (-2.2%). In August, guest numbers were 2.6 th (-3.7% year-on-year), yet nights spent ticked up slightly to 5.4 th (+0.5%), a departure from the sharp year-to-date decline in that figure. Domestic guests for the month totaled 2.2 th (-4.8%) and foreign guests 415 (+3.0%). The average length of stay rose to 2.05 nights per guest, up 4.4%. Rapla accounted for 0.5% of all guests accommodated in Estonia that month. August's slight uptick in nights spent stands in contrast to the steep decline recorded since the start of the year."
       },
       "EE00740000000000": {
-        "et": "Saare maakonnas langes 2026. aasta augustis külastajate arv 6,7% võrra 29,2 tuhandeni, kuid ööbimiste arv pidas paremini vastu, kahanedes vaid 0,9% võrra 51,5 tuhandeni. Tähelepanuväärselt kasvas keskmine ööbimiste arv 6,2% võrra 1,77-ni, mis näitab, et hoolimata väiksemast külastajate arvust jäid turistid keskmiselt oluliselt kauemaks. Külastajaskond jagunes 17,4 tuhande kodumaise ja 11,8 tuhande välismaise reisija vahel, mis näitab tugevat tõmmet mõlemal turul. Saaremaa osakaal kõigist Eesti külastajatest oli 6,1%. Pikemas plaanis kogunes jaanuarist augustini 131,6 tuh. külastajat, mis on vaid 1,5% vähem kui mullu samal perioodil – see näitab, et augusti langus oli pisut järsem kui aasta üldine tempo. Vähemate, kuid pikemate viibimiste kombinatsioon viitab sellele, et Saaremaa turism liigub kõrgema väärtusega külastuste suunas, kuigi toornäitajad on aasta jooksul kergelt pehmenenud.",
-        "en": "Saare county experienced a dip in August 2026, with guests accommodated falling 6.7% year-on-year to 29.2 th, though nights spent held up better, down just 0.9% to 51.5 th. Notably, average length of stay increased 6.2% to 1.77 nights, suggesting that despite fewer arrivals, visitors stayed considerably longer on average. The guest base split between 17.4 th domestic and 11.8 th foreign travellers, showing strong appeal to both markets. Saare accounted for 6.1% of all guests accommodated in Estonia this period. Over the longer run, cumulative guests from January through August 2026 reached 131.6 th, down a more modest 1.5% compared with the same months last year, indicating August's decline was somewhat sharper than the year's overall pace. The combination of fewer but longer stays suggests Saare county's tourism profile is shifting toward higher-value visits even as raw visitor numbers soften slightly across the year."
+        "et": "Jaanuarist augustini 2026 vähenes Saare maakonna külastajate arv veidi, 131,6 tuhandeni (-1,5%), samas kui ööbimiste arv kasvas 226,4 tuhandeni (+0,9%), võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv langes 86,4 tuhandeni (-4,5%), välismaiste külaliste arv aga tõusis 45,1 tuhandeni (+5,0%). Augustis oli külastajate arv 29,2 tuh. (-6,7% aastatagusega võrreldes) ja ööbimisi 51,5 tuh. (-0,9%). Kodumaiseid külalisi oli kuu jooksul 17,4 tuh. (-14,5%), välismaiseid aga 11,8 tuh. (+8,0%), mis jätkab aasta algusest nähtud mustrit. Keskmine ööbimiste arv külastaja kohta oli 1,77 (+6,2%). Saare maakonna osakaal kogu Eesti augustikuu külastajatest oli 6,1%. Tähelepanuväärne on, et augustis külastajate arv langes 6,7%, kuid keskmine maksumus öö kohta tõusis samal ajal 6,5%, mis tähendab, et külastajate vähenemine ei toonud kaasa täituvuse ega hinnataseme langust.",
+        "en": "From January through August 2026, Saare County saw guest numbers dip slightly to 131.6 th (-1.5%), while nights spent rose to 226.4 th (+0.9%) compared with the same period last year. Domestic guests fell to 86.4 th (-4.5%), while foreign guests rose to 45.1 th (+5.0%). In August, guest numbers were 29.2 th (-6.7% year-on-year) and nights spent 51.5 th (-0.9%). Domestic guests for the month totaled 17.4 th (-14.5%), while foreign guests reached 11.8 th (+8.0%), continuing the pattern seen since the start of the year. The average length of stay was 1.77 nights per guest, up 6.2%. Saare County accounted for 6.1% of all guests accommodated in Estonia that month. Notably, while August guests fell 6.7% year-on-year, the average cost per night rose 6.5% over the same period — indicating the drop in visitors did not translate into lower occupancy or pricing."
       },
       "EE00790000000000": {
-        "et": "Tartu maakonnas oli 2026. aasta august tugeva kasvuga: majutatud külastajate arv tõusis 7,9% võrra 37,9 tuhandeni ning ööbimiste arv kasvas 2,9% võrra 56,9 tuhandeni. Külastajaskond jagunes peaaegu võrdselt – 19,5 tuh. kodumaist ja 18,4 tuh. välismaist külastajat –, mis peegeldab maakonna tasakaalustatud atraktiivsust. Keskmine ööbimiste arv langes 4,6% võrra 1,50-ni, mis tähendab, et külastajate arvu kasv ületas ööbimiste kasvu. Tartumaa osakaal kõigist Eesti külastajatest oli sel perioodil 7,9%. Aastat tervikuna vaadates kogunes jaanuarist augustini 218,3 tuh. külastajat, mis on 5,4% rohkem kui mullu samal perioodil, kinnitades, et kasv on olnud tugev ja püsiv, mitte ühekordne augustikuine hüpe. Need näitajad kokku viitavad sellele, et Tartu maakond on 2026. aastal järjepidevalt hoogu kogunud, kusjuures nii rahvusvaheline kui kodumaine turg panustavad olulisel määral kasvavasse külastajaskonda.",
-        "en": "Tartu county enjoyed robust growth in August 2026, with guests accommodated up 7.9% year-on-year to 37.9 th, and nights spent rising 2.9% to 56.9 th. The visitor base was nearly evenly split, with 19.5 th domestic and 18.4 th foreign guests, reflecting the county's balanced appeal. Average length of stay fell 4.6% to 1.50 nights, meaning the growth in guest numbers outpaced growth in overnight stays. Tartu held a 7.9% share of Estonia's total guests accommodated this period. Looking at the year overall, cumulative guests from January through August 2026 reached 218.3 th, up 5.4% compared with the same months last year, confirming that growth has been strong and sustained rather than a one-off August spike. Together, these figures point to Tartu county building consistent momentum through 2026, with both international and domestic markets contributing meaningfully to its expanding visitor base."
+        "et": "Jaanuarist augustini 2026 kasvas Tartu maakonna külastajate arv 218,3 tuhandeni (+5,4%) ja ööbimiste arv 366,2 tuhandeni (+5,8%) võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv tõusis 121,6 tuhandeni (+5,3%) ja välismaiste külaliste arv 96,7 tuhandeni (+5,4%) — mõlemad rühmad kasvasid peaaegu võrdses tempos. Augustis oli külastajaid 37,9 tuh. (+7,9% aastatagusega võrreldes) ja ööbimisi 56,9 tuh. (+2,9%). Kodumaiseid külalisi oli kuu jooksul 19,5 tuh. (+10,1%) ja välismaiseid 18,4 tuh. (+5,7%). Keskmine ööbimiste arv külastaja kohta langes 1,50-ni (-4,6%). Tartu maakonna osakaal kogu Eesti augustikuu külastajatest oli 7,9%. Tähelepanuväärne on, et augustis kasvas külastajate arv 7,9%, kuid keskmine maksumus öö kohta liikus vastupidises suunas, langedes 6,1%, mis tähendab, et külastajate kasv ei toonud kaasa täituvuse ega hinnataseme tõusu.",
+        "en": "From January through August 2026, Tartu County recorded 218.3 th guests (+5.4%) and 366.2 th nights spent (+5.8%) compared with the same period last year. Domestic guests rose to 121.6 th (+5.3%) and foreign guests to 96.7 th (+5.4%), with both groups growing at nearly the same pace. In August, guest numbers reached 37.9 th (+7.9% year-on-year) and nights spent 56.9 th (+2.9%). Domestic guests for the month totaled 19.5 th (+10.1%) and foreign guests 18.4 th (+5.7%). The average length of stay fell to 1.50 nights per guest, down 4.6%. Tartu County accounted for 7.9% of all guests accommodated in Estonia that month. Notably, while August guests rose 7.9% year-on-year, the average cost per night moved the opposite way, falling 6.1% — indicating that visitor growth did not translate into higher occupancy or pricing."
       },
       "EE00810000000000": {
-        "et": "Valga maakonnas oli 2026. aasta august vastuoluline: majutatud külastajate arv langes 3,7% võrra 15,1 tuhandeni ning ööbimiste arv kahanes veelgi enam, 8,7% võrra 28,9 tuhandeni. Külastajaskonnas domineerisid kodumaised reisijad – 12,4 tuh. – võrreldes 2,8 tuhande välismaise külalisega. Langes ka keskmine ööbimiste arv, 5,2% võrra 1,91-ni. Valgamaa osakaal kõigist Eesti külastajatest oli sel perioodil 3,1%. Samas räägib aasta algusest kogunenud trend hoopis teist lugu: jaanuarist augustini kogunes 94,7 tuh. külastajat, mis on 7,5% rohkem kui mullu samal perioodil. See vastuolu viitab sellele, et hoolimata nõrgemast augustist on Valga maakonnal olnud tervikuna tugev aasta, kus varasemad kuud on ilmselgelt toonud olulise kasvu, mis kaalub üles viimase kuu languse nii külastajate arvus kui ka ööbimistes.",
-        "en": "Valga county presented a contrasting picture in August 2026: guests accommodated fell 3.7% year-on-year to 15.1 th, and nights spent dropped more sharply, by 8.7%, to 28.9 th. Domestic travellers dominated the visitor mix at 12.4 th, compared with 2.8 th foreign guests. Average length of stay also declined, down 5.2% to 1.91 nights. Valga's share of Estonia's total guests accommodated this period stood at 3.1%. Yet the year-to-date trend tells a different story: cumulative guests from January through August 2026 reached 94.7 th, up a solid 7.5% compared with the same months last year. This divergence suggests that despite a weaker August, Valga county has had a genuinely strong year overall, with earlier months evidently driving substantial growth that more than offsets the latest monthly dip in both guest numbers and nights spent."
+        "et": "Jaanuarist augustini 2026 kasvas Valga maakonna külastajate arv 94,7 tuhandeni (+7,5%) ja ööbimiste arv 169,6 tuhandeni (+5,9%) võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv tõusis 78,0 tuhandeni (+3,3%), välismaiste külaliste arv kasvas aga märgatavalt rohkem, 16,7 tuhandeni (+32,9%). Augustis oli olukord teistsugune: külastajaid oli 15,1 tuh. (-3,7% aastatagusega võrreldes) ja ööbimisi 28,9 tuh. (-8,7%). Kodumaiseid külalisi oli kuu jooksul 12,4 tuh. (-8,8%), kuid välismaiste külaliste arv kasvas jätkuvalt, 2,8 tuhandeni (+28,5%). Keskmine ööbimiste arv külastaja kohta langes 1,91-ni (-5,2%). Valga maakonna osakaal kogu Eesti augustikuu külastajatest oli 3,1%. Tähelepanuväärne on, et augustis külastajate arv langes 3,7%, kuid keskmine maksumus öö kohta tõusis 5,3%, mis tähendab, et külastajate vähenemine ei toonud kaasa täituvuse ega hinnataseme langust.",
+        "en": "From January through August 2026, Valga County recorded 94.7 th guests (+7.5%) and 169.6 th nights spent (+5.9%) compared with the same period last year. Domestic guests rose to 78.0 th (+3.3%), while foreign guests grew far more sharply, to 16.7 th (+32.9%). August told a different story, with 15.1 th guests (-3.7% year-on-year) and 28.9 th nights (-8.7%). Domestic guests for the month fell to 12.4 th (-8.8%), while foreign guests continued climbing, reaching 2.8 th (+28.5%). The average length of stay fell to 1.91 nights per guest, down 5.2%. Valga County accounted for 3.1% of all guests accommodated in Estonia that month. Notably, while August guests fell 3.7% year-on-year, the average cost per night rose 5.3% over the same period — indicating the decline in visitors did not translate into lower occupancy or pricing."
       },
       "EE00840000000000": {
-        "et": "Viljandi maakonnas langes 2026. aasta augustis külastajate arv 6,8% võrra 8,2 tuhandeni ning ööbimiste arv kahanes veelgi järsemalt, 11,0% võrra 12,6 tuhandeni. Kodumaised reisijad moodustasid enamuse – 7,0 tuh. – võrreldes 1,2 tuhande välismaise külalisega. Langes ka keskmine ööbimiste arv, 4,5% võrra 1,53-ni. Viljandimaa osakaal kõigist Eesti külastajatest oli sel perioodil 1,7%. Hoolimata nõrgemast augustist on aasta algusest kogunenud näitajad siiski positiivsed: jaanuarist augustini kogunes 39,0 tuh. külastajat, mis on 3,2% rohkem kui mullu samal perioodil. See vastuolu näitab, et Viljandi maakonna turismil on tervikuna olnud päris korralik aasta, kuigi viimane kuu jäi oodatust nõrgemaks – varasem tugevus külastajate arvus on aidanud maakonnal püsida aasta kokkuvõttes positiivses tsoonis.",
-        "en": "Viljandi county saw a decline in August 2026, with guests accommodated down 6.8% year-on-year to 8.2 th, and nights spent falling more steeply, by 11.0%, to 12.6 th. Domestic travellers made up the majority at 7.0 th, compared with 1.2 th foreign guests. Average length of stay also dipped, down 4.5% to 1.53 nights. Viljandi accounted for 1.7% of all guests accommodated in Estonia this period. Despite the softer August, the year-to-date figures remain positive: cumulative guests from January through August 2026 reached 39.0 th, up 3.2% compared with the same months last year. This contrast suggests that Viljandi county's tourism has had a genuinely decent year overall, even though the latest month fell short, with earlier strength in visitor numbers helping the county stay in positive territory for the year as a whole."
+        "et": "Jaanuarist augustini 2026 kasvas Viljandi maakonna külastajate arv 39,0 tuhandeni (+3,2%), samas kui ööbimiste arv langes 62,0 tuhandeni (-5,0%), võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv tõusis 32,5 tuhandeni (+5,0%), välismaiste külaliste arv kahanes aga 6,4 tuhandeni (-5,0%). Augustis olukord pöördus: külastajaid oli 8,2 tuh. (-6,8% aastatagusega võrreldes) ja ööbimisi 12,6 tuh. (-11,0%). Kodumaiseid külalisi oli kuu jooksul 7,0 tuh. (-9,5%), kuid välismaiste külaliste arv kasvas 1,2 tuhandeni (+11,7%), mis erineb aasta algusest nähtud langusest selles rühmas. Keskmine ööbimiste arv külastaja kohta langes 1,53-ni (-4,5%). Viljandi maakonna osakaal kogu Eesti augustikuu külastajatest oli 1,7%. Tähelepanuväärne on, et augustis külastajate arv langes 6,8%, kuid keskmine maksumus öö kohta tõusis seejuures 13,2%, mis tähendab, et külastajate vähenemine ei toonud kaasa täituvuse ega hinnataseme langust.",
+        "en": "From January through August 2026, Viljandi County saw guest numbers rise to 39.0 th (+3.2%), while nights spent fell to 62.0 th (-5.0%) compared with the same period last year. Domestic guests climbed to 32.5 th (+5.0%), while foreign guests declined to 6.4 th (-5.0%). August reversed part of that pattern: guest numbers fell to 8.2 th (-6.8% year-on-year) and nights spent to 12.6 th (-11.0%). Domestic guests for the month totaled 7.0 th (-9.5%), while foreign guests actually rose to 1.2 th (+11.7%), diverging from the year-to-date decline in that group. The average length of stay fell to 1.53 nights per guest, down 4.5%. Viljandi County accounted for 1.7% of all guests accommodated in Estonia that month. Notably, while August guests fell 6.8% year-on-year, the average cost per night rose 13.2% over the same period — indicating the decline in visitors did not translate into lower occupancy or pricing."
       },
       "EE00870000000000": {
-        "et": "Võru maakonnas püsis 2026. aasta august suhteliselt stabiilsena: majutatud külastajate arv langes vaid 0,9% võrra 11,5 tuhandeni ning ööbimiste arv jäi samuti peaaegu muutumatuks, kahanedes 0,9% võrra 19,8 tuhandeni. Kodumaised reisijad domineerisid külastajaskonnas – 10,4 tuh. – võrreldes 1,1 tuhande välismaise külalisega. Keskmine ööbimiste arv jäi praktiliselt samaks, tõustes marginaalselt 0,1% võrra 1,72-ni. Võrumaa osakaal kõigist Eesti külastajatest oli sel perioodil 2,4%. Laiem aasta algusest kogunenud trend on julgustavam: jaanuarist augustini kogunes 57,5 tuh. külastajat, mis on 2,7% rohkem kui mullu samal perioodil. See näitab, et kuigi viimane kuu oli aktiivsuselt praktiliselt muutumatu, on Võru maakonna turism 2026. aastal tervikuna liikunud kergelt positiivses suunas, kusjuures stabiilne kodumaine nõudlus on aasta jooksul jätkuvalt toetanud piirkonna külastajate arvu.",
-        "en": "Võru county held relatively steady in August 2026, with guests accommodated nearly flat, down just 0.9% year-on-year to 11.5 th, and nights spent similarly stable at 19.8 th, also down 0.9%. Domestic travellers dominated the visitor mix at 10.4 th, compared with 1.1 th foreign guests. Average length of stay was essentially unchanged, up a marginal 0.1% to 1.72 nights. Võru's share of Estonia's total guests accommodated this period was 2.4%. The broader year-to-date trend is more encouraging: cumulative guests from January through August 2026 reached 57.5 th, up 2.7% compared with the same months last year. This suggests that while the latest month showed essentially flat activity, Võru county's tourism has been on a modestly positive trajectory overall in 2026, with steady domestic demand continuing to anchor the region's visitor numbers throughout the year."
+        "et": "Jaanuarist augustini 2026 kasvas Võru maakonna külastajate arv 57,5 tuhandeni (+2,7%) ja ööbimiste arv 102,2 tuhandeni (+2,0%) võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv tõusis 49,4 tuhandeni (+2,1%) ja välismaiste külaliste arv kasvas veidi kiiremini, 8,1 tuhandeni (+6,4%). Augustis oli külastajaid 11,5 tuh. (-0,9% aastatagusega võrreldes) ja ööbimisi 19,8 tuh. (-0,9%). Kodumaiseid külalisi oli kuu jooksul 10,4 tuh. (+1,5%), kuid välismaiste külaliste arv langes 1,1 tuhandeni (-19,3%), mis erineb aasta algusest nähtud kasvust selles rühmas. Keskmine ööbimiste arv külastaja kohta oli 1,72 (+0,1%). Võru maakonna osakaal kogu Eesti augustikuu külastajatest oli 2,4%. Tähelepanuväärne on, et augustis külastajate arv langes 0,9%, kuid keskmine maksumus öö kohta tõusis samal ajal 7,3%, mis tähendab, et külastajate vähenemine ei toonud kaasa täituvuse ega hinnataseme langust.",
+        "en": "From January through August 2026, Võru County recorded 57.5 th guests (+2.7%) and 102.2 th nights spent (+2.0%) compared with the same period last year. Domestic guests rose to 49.4 th (+2.1%), while foreign guests grew slightly faster, to 8.1 th (+6.4%). In August, guest numbers were 11.5 th (-0.9% year-on-year) and nights spent 19.8 th (-0.9%). Domestic guests for the month totaled 10.4 th (+1.5%), while foreign guests fell to 1.1 th (-19.3%), a reversal from the growth seen in that group since the start of the year. The average length of stay was 1.72 nights per guest, up 0.1%. Võru County accounted for 2.4% of all guests accommodated in Estonia that month. Notably, while August guests fell 0.9% year-on-year, the average cost per night rose 7.3% over the same period — indicating the slight decline in visitors did not translate into lower occupancy or pricing."
       },
       "EE00370784000004": {
-        "et": "Tallinn näitas 2026. aasta augustis tugevaid tulemusi: majutatud külastajate arv kasvas 8,8% võrra 213,3 tuhandeni ning ööbimiste arv tõusis veelgi kiiremini, 12,7% võrra 424,5 tuhandeni. Pealinna tõmme rahvusvaheliste külastajate seas oli silmapaistev – 174,2 tuh. välismaist külalist jättis kodumaised 39,1 tuh. reisijat selgelt varju. Keskmine ööbimiste arv kasvas 3,6% võrra 1,99-ni, jõudes peaaegu kahe ööbimiseni külastaja kohta. Tallinna osakaal kõigist Eestis majutatud külastajatest oli domineeriv 44,3%, mis peegeldab linna rolli riigi peamise sissepääsuväravana. Pikemas vaates kogunes jaanuarist augustini 1,3 milj. külastajat, mis on 7,8% rohkem kui mullu samal perioodil, kinnitades, et pealinna kasv on olnud tugev ja püsiv terve aasta vältel, mitte vaid ühe tugeva kuu tulemus. Need näitajad kinnitavad Tallinna positsiooni Eesti sissetuleva turismi selge veduriga, kus välisnõudlus kannab nii külastajate mahtu kui ka pikenenud viibimisaega.",
-        "en": "Tallinn posted strong results in August 2026, with guests accommodated rising 8.8% year-on-year to 213.3 th, and nights spent climbing even faster, up 12.7%, to 424.5 th. The capital's appeal to international visitors was striking, with 174.2 th foreign guests dwarfing the 39.1 th domestic travellers. Average length of stay increased 3.6% to 1.99 nights, nearing two full nights per guest on average. Tallinn commanded a dominant 44.3% share of all guests accommodated in Estonia this period, reflecting its role as the country's primary gateway. Over the longer run, cumulative guests from January through August 2026 reached 1.3 million, up 7.8% compared with the same months last year, confirming that the capital's growth has been both strong and sustained across the year, not just a single strong month. Together, these figures underscore Tallinn's position as the clear engine of Estonia's inbound tourism, with foreign demand driving both volume and length of stay upward."
+        "et": "Jaanuarist augustini 2026 võõrustas Tallinn 1,3 miljonit külastajat (+7,8% võrreldes eelmise aasta sama perioodiga) ja ööbimiste arv ulatus 2,5 miljonini (+10,1%). Kodumaiste külaliste arv tõusis 298,4 tuhandeni (+6,6%) ja välismaiste külaliste arv 999,0 tuhandeni (+8,2%), mis tähendab, et kasv tuli valdavalt välisturistidelt. Augustis oli külastajaid 213,3 tuh. (+8,8% aastatagusega võrreldes) ja ööbimisi 424,5 tuh. (+12,7%). Kodumaiste külaliste arv langes kuu jooksul veidi, 39,1 tuhandeni (-0,9%), samas kui välismaiste külaliste arv kasvas 174,2 tuhandeni (+11,3%) — see erineb aasta algusest nähtud mustrist, kus mõlemad rühmad kasvasid. Keskmine ööbimiste arv külastaja kohta tõusis 1,99-ni (+3,6%). Tallinna osakaal kogu Eesti augustikuu külastajatest oli 44,3%, mis kinnitab pealinna kesksust Eesti turismis.",
+        "en": "From January through August 2026, Tallinn welcomed 1.3 million guests, up 7.8% from the same period last year, with nights spent reaching 2.5 million, up 10.1%. Domestic guests rose to 298.4 th (+6.6%) and foreign guests to 999.0 th (+8.2%), with growth weighted more toward international visitors. In August, the city recorded 213.3 th guests (+8.8% year-on-year) and 424.5 th nights (+12.7%). Domestic guests for the month slipped slightly to 39.1 th (-0.9%), while foreign guests rose to 174.2 th (+11.3%), a departure from the year-to-date pattern in which both groups grew. The average length of stay rose to 1.99 nights per guest, up 3.6%. Tallinn accounted for 44.3% of all guests accommodated in Estonia that month, underscoring the capital's central position in national tourism."
       },
       "EE00680624661905": {
-        "et": "Pärnu linnas oli 2026. aasta august kasvuaegne: majutatud külastajate arv tõusis 4,7% võrra 50,2 tuhandeni ning ööbimiste arv kasvas 1,6% võrra 88,5 tuhandeni. Külastajaskond oli üsna tasakaalus – 26,5 tuh. välismaist külalist ületas pisut 23,7 tuhat kodumaist reisijat. Keskmine ööbimiste arv langes 2,9% võrra 1,76-ni, mis viitab sellele, et külastajate arvu kasv tuli peamiselt lühematest visiitidest. Pärnu linna osakaal kõigist Eesti külastajatest oli sel perioodil 10,4%, mis on märkimisväärne osakaal ühe linna kohta. Samas on aasta algusest kogunenud trend praktiliselt muutumatu: jaanuarist augustini kogunes 280,0 tuh. külastajat, mis on vaid 0,1% vähem kui mullu samal perioodil. See peaaegu võrdne tulemus näitab, et augusti kindel kasv tähistab olulist elavnemist pärast aeglasemat varasemat perioodi, ning linna turism näib nüüd naasmas kasvuteele pärast suuresti seisakus aastat.",
-        "en": "Pärnu city saw healthy monthly growth in August 2026, with guests accommodated up 4.7% year-on-year to 50.2 th, and nights spent rising 1.6% to 88.5 th. The visitor base was fairly balanced, with 26.5 th foreign guests slightly outnumbering 23.7 th domestic travellers. Average length of stay fell 2.9% to 1.76 nights, suggesting the guest growth came mainly from shorter visits. Pärnu city accounted for 10.4% of all guests accommodated in Estonia this period, a substantial share for a single city. Yet the year-to-date picture is essentially flat: cumulative guests from January through August 2026 reached 280.0 th, down a marginal 0.1% compared with the same months last year. This near-parity suggests that August's solid gain represents a meaningful pickup after a slower earlier stretch, with the city's tourism now showing signs of returning to growth after a largely stagnant year overall."
+        "et": "Jaanuarist augustini 2026 püsis Pärnu linna külastajate arv peaaegu muutumatuna, 280,0 tuhande juures (-0,1%), samas kui ööbimiste arv langes 511,9 tuhandeni (-2,1%) võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv tõusis veidi, 133,3 tuhandeni (+1,5%), välismaiste külaliste arv aga langes 146,7 tuhandeni (-1,5%). Augustis oli külastajaid 50,2 tuh. (+4,7% aastatagusega võrreldes) ja ööbimisi 88,5 tuh. (+1,6%). Kodumaiseid külalisi oli kuu jooksul 23,7 tuh. (+9,9%) ja välismaiseid 26,5 tuh. (+0,5%), mis erineb aasta algusest nähtud langusest välisturistide osas. Keskmine ööbimiste arv külastaja kohta langes 1,76-ni (-2,9%). Pärnu linna osakaal kogu Eesti augustikuu külastajatest oli 10,4%.",
+        "en": "From January through August 2026, guest numbers in Pärnu town remained nearly flat at 280.0 th (-0.1%), while nights spent declined to 511.9 th (-2.1%) compared with the same period last year. Domestic guests ticked up to 133.3 th (+1.5%), while foreign guests fell to 146.7 th (-1.5%). In August, guest numbers reached 50.2 th (+4.7% year-on-year) and nights spent 88.5 th (+1.6%). Domestic guests for the month totaled 23.7 th (+9.9%) and foreign guests 26.5 th (+0.5%), a shift from the year-to-date decline among foreign visitors. The average length of stay fell to 1.76 nights per guest, down 2.9%. Pärnu town accounted for 10.4% of all guests accommodated in Estonia that month."
       },
       "EE00790793815105": {
-        "et": "Tartu linnas oli 2026. aasta august tugeva kasvuga: majutatud külastajate arv tõusis 10,2% võrra 33,9 tuhandeni ning ööbimiste arv kasvas 4,6% võrra 50,9 tuhandeni. Külastajaskond oli tihedalt tasakaalus – 17,6 tuh. välismaist külalist ületas pisut 16,3 tuhat kodumaist reisijat –, mis peegeldab linna laialdast rahvusvahelist tõmmet. Keskmine ööbimiste arv langes 5,1% võrra 1,50-ni, mis tähendab, et külastajate arvu kasv ületas ööbimiste kasvu. Tartu linna osakaal kõigist Eestis majutatud külastajatest oli sel perioodil 7,0%. Pikemas vaates kogunes jaanuarist augustini 200,7 tuh. külastajat, mis on 5,9% rohkem kui mullu samal perioodil, kinnitades, et kasv on olnud tugev ja püsiv terve aasta vältel, mitte koondunud ühte kuusse. Need näitajad rõhutavad, et Tartu linn on 2026. aastal järjepidevalt kasvav sihtkoht, kus nii kodumaine kui ka välismaine turg panustavad tõusvasse külastajate arvu.",
-        "en": "Tartu city delivered strong growth in August 2026, with guests accommodated up 10.2% year-on-year to 33.9 th, and nights spent rising 4.6% to 50.9 th. The visitor mix was closely balanced, with 17.6 th foreign guests slightly ahead of 16.3 th domestic travellers, reflecting the city's broad international draw. Average length of stay fell 5.1% to 1.50 nights, meaning guest growth outpaced growth in overnight stays. Tartu city held a 7.0% share of all guests accommodated in Estonia this period. Over the longer run, cumulative guests from January through August 2026 reached 200.7 th, up 5.9% compared with the same months last year, confirming that growth has been strong and consistent across the year rather than concentrated in one month. Together, these figures highlight Tartu city as a consistently expanding destination in 2026, with both domestic and foreign markets contributing to its rising visitor numbers."
+        "et": "Jaanuarist augustini 2026 kasvas Tartu linna külastajate arv 200,7 tuhandeni (+5,9%) ja ööbimiste arv 338,2 tuhandeni (+6,9%) võrreldes eelmise aasta sama perioodiga. Kodumaiste külaliste arv tõusis 108,2 tuhandeni (+7,0%) ja välismaiste külaliste arv 92,5 tuhandeni (+4,7%), mis tähendab, et kasv jaotus mõlema rühma vahel, kuid kodumaised külalised kasvasid kiiremini. Augustis oli külastajaid 33,9 tuh. (+10,2% aastatagusega võrreldes) ja ööbimisi 50,9 tuh. (+4,6%). Kodumaiseid külalisi oli kuu jooksul 16,3 tuh. (+16,6%) ja välismaiseid 17,6 tuh. (+5,0%). Keskmine ööbimiste arv külastaja kohta langes 1,50-ni (-5,1%). Tartu linna osakaal kogu Eesti augustikuu külastajatest oli 7,0%, mis näitab linna olulist kaalu riigi turismis.",
+        "en": "From January through August 2026, Tartu town recorded 200.7 th guests (+5.9%) and 338.2 th nights spent (+6.9%) compared with the same period last year. Domestic guests rose to 108.2 th (+7.0%) and foreign guests to 92.5 th (+4.7%), with growth spread across both groups though domestic visitors grew somewhat faster. In August, guest numbers reached 33.9 th (+10.2% year-on-year) and nights spent 50.9 th (+4.6%). Domestic guests for the month totaled 16.3 th (+16.6%) and foreign guests 17.6 th (+5.0%). The average length of stay fell to 1.50 nights per guest, down 5.1%. Tartu town accounted for 7.0% of all guests accommodated in Estonia that month, reflecting its considerable weight in national tourism."
       }
     }
-  }
+  },
+  "facts": {
+    "national": {
+      "period": "2026M08",
+      "periodLabel": "2026 august",
+      "totalGuests": 481646,
+      "totalGuestsYoyPct": 4.8880662020905925,
+      "totalNights": 873626,
+      "totalNightsYoyPct": 6.443826843856574,
+      "domesticGuests": 222213,
+      "domesticGuestsYoyPct": 1.682560310429403,
+      "foreignGuests": 259433,
+      "foreignGuestsYoyPct": 7.79883987634212,
+      "avgNightsPerGuest": 1.8138342267972742,
+      "avgNightsPerGuestYoyPct": 1.4832580083690836,
+      "cumulativeGuests": 2662897,
+      "cumulativeGuestsYoyPct": 4.033474836833416,
+      "occupancyPct": 35,
+      "occupancyPctYoy": 0,
+      "occupancyPeriodLabel": "2025",
+      "avgNightCost": 51,
+      "avgNightCostYoyPct": 8.51063829787234
+    },
+    "regions": {
+      "EE00370000000000": {
+        "label": "Harju maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 233905,
+        "totalGuestsYoyPct": 8.992758823145671,
+        "totalNights": 461137,
+        "totalNightsYoyPct": 13.070887379545399,
+        "domesticGuests": 52861,
+        "domesticGuestsYoyPct": 2.7125230739337414,
+        "foreignGuests": 181044,
+        "foreignGuestsYoyPct": 10.973942785688454,
+        "avgNightsPerGuest": 1.97147132382805,
+        "avgNightsPerGuestYoyPct": 3.741650913724463,
+        "shareOfNationalPct": 48.563675396453,
+        "cumulativeGuests": 1396457,
+        "cumulativeGuestsYoyPct": 7.312291843092533,
+        "occupancyPct": 44,
+        "occupancyPctYoy": -1,
+        "avgNightCost": 55,
+        "avgNightCostYoyPct": 10
+      },
+      "EE00390000000000": {
+        "label": "Hiiu maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 4815,
+        "totalGuestsYoyPct": -13.368118028067649,
+        "totalNights": 7454,
+        "totalNightsYoyPct": -15.497109171295772,
+        "domesticGuests": 4232,
+        "domesticGuestsYoyPct": -10.205813706768513,
+        "foreignGuests": 583,
+        "foreignGuestsYoyPct": -31.005917159763314,
+        "avgNightsPerGuest": 1.5480789200415368,
+        "avgNightsPerGuestYoyPct": -2.4575145948207533,
+        "shareOfNationalPct": 0.9996968728069994,
+        "cumulativeGuests": 19959,
+        "cumulativeGuestsYoyPct": -13.364875423213821,
+        "occupancyPct": 14,
+        "occupancyPctYoy": -1,
+        "avgNightCost": 38,
+        "avgNightCostYoyPct": 11.76470588235294
+      },
+      "EE00450000000000": {
+        "label": "Ida-Viru maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 27500,
+        "totalGuestsYoyPct": 11.124580757263507,
+        "totalNights": 48774,
+        "totalNightsYoyPct": 8.218327046816064,
+        "domesticGuests": 23553,
+        "domesticGuestsYoyPct": 15.478525201019808,
+        "foreignGuests": 3947,
+        "foreignGuestsYoyPct": -9.285221788094692,
+        "avgNightsPerGuest": 1.7736,
+        "avgNightsPerGuestYoyPct": -2.6153112935433684,
+        "shareOfNationalPct": 5.709587539396154,
+        "cumulativeGuests": 146499,
+        "cumulativeGuestsYoyPct": 2.592491438895775,
+        "occupancyPct": 31,
+        "occupancyPctYoy": -1,
+        "avgNightCost": 45,
+        "avgNightCostYoyPct": 4.651162790697675
+      },
+      "EE00500000000000": {
+        "label": "Jõgeva maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 3714,
+        "totalGuestsYoyPct": -7.1499999999999995,
+        "totalNights": 7187,
+        "totalNightsYoyPct": 5.458547322083639,
+        "domesticGuests": 3469,
+        "domesticGuestsYoyPct": -5.425299890948746,
+        "foreignGuests": 245,
+        "foreignGuestsYoyPct": -26.20481927710843,
+        "avgNightsPerGuest": 1.935110393107162,
+        "avgNightsPerGuestYoyPct": 13.579480153024912,
+        "shareOfNationalPct": 0.7711057498660843,
+        "cumulativeGuests": 13817,
+        "cumulativeGuestsYoyPct": -5.808166882541413,
+        "occupancyPct": 11,
+        "occupancyPctYoy": -2,
+        "avgNightCost": 37,
+        "avgNightCostYoyPct": 8.823529411764707
+      },
+      "EE00520000000000": {
+        "label": "Järva maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 3929,
+        "totalGuestsYoyPct": -8.179481187193268,
+        "totalNights": 5442,
+        "totalNightsYoyPct": -11.870445344129553,
+        "domesticGuests": 3522,
+        "domesticGuestsYoyPct": -9.7385955920041,
+        "foreignGuests": 407,
+        "foreignGuestsYoyPct": 7.957559681697612,
+        "avgNightsPerGuest": 1.3850852634258082,
+        "avgNightsPerGuestYoyPct": -4.0197596405014835,
+        "shareOfNationalPct": 0.8157443433559086,
+        "cumulativeGuests": 16613,
+        "cumulativeGuestsYoyPct": -18.77872298816857,
+        "occupancyPct": 14,
+        "occupancyPctYoy": -2,
+        "avgNightCost": 39,
+        "avgNightCostYoyPct": 30
+      },
+      "EE00560000000000": {
+        "label": "Lääne maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 17508,
+        "totalGuestsYoyPct": 2.7887042799272,
+        "totalNights": 25754,
+        "totalNightsYoyPct": -1.5218721321505047,
+        "domesticGuests": 13124,
+        "domesticGuestsYoyPct": 5.46448087431694,
+        "foreignGuests": 4384,
+        "foreignGuestsYoyPct": -4.467204183918065,
+        "avgNightsPerGuest": 1.470984692711903,
+        "avgNightsPerGuestYoyPct": -4.193628514217488,
+        "shareOfNationalPct": 3.6350348596271953,
+        "cumulativeGuests": 81575,
+        "cumulativeGuestsYoyPct": -6.486077516536174,
+        "occupancyPct": 31,
+        "occupancyPctYoy": 0,
+        "avgNightCost": 44,
+        "avgNightCostYoyPct": -2.2222222222222223
+      },
+      "EE00600000000000": {
+        "label": "Lääne-Viru maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 16770,
+        "totalGuestsYoyPct": -6.024096385542169,
+        "totalNights": 26366,
+        "totalNightsYoyPct": -2.196008605979672,
+        "domesticGuests": 12581,
+        "domesticGuestsYoyPct": -7.171843872205416,
+        "foreignGuests": 4189,
+        "foreignGuestsYoyPct": -2.3998136067101585,
+        "avgNightsPerGuest": 1.5722122838401908,
+        "avgNightsPerGuestYoyPct": 4.073478021842149,
+        "shareOfNationalPct": 3.4818102922063088,
+        "cumulativeGuests": 84964,
+        "cumulativeGuestsYoyPct": -2.3278805366195727,
+        "occupancyPct": 24,
+        "occupancyPctYoy": -1,
+        "avgNightCost": 49,
+        "avgNightCostYoyPct": 4.25531914893617
+      },
+      "EE00640000000000": {
+        "label": "Põlva maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 4006,
+        "totalGuestsYoyPct": 22.695252679938744,
+        "totalNights": 6423,
+        "totalNightsYoyPct": 2.5710635579687002,
+        "domesticGuests": 3715,
+        "domesticGuestsYoyPct": 27.356873500171407,
+        "foreignGuests": 291,
+        "foreignGuestsYoyPct": -16.379310344827587,
+        "avgNightsPerGuest": 1.6033449825262107,
+        "avgNightsPerGuestYoyPct": -16.40176672072696,
+        "shareOfNationalPct": 0.831731188466218,
+        "cumulativeGuests": 16362,
+        "cumulativeGuestsYoyPct": 0.8443759630200309,
+        "occupancyPct": 12,
+        "occupancyPctYoy": -2,
+        "avgNightCost": 37,
+        "avgNightCostYoyPct": 8.823529411764707
+      },
+      "EE00680000000000": {
+        "label": "Pärnu maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 65010,
+        "totalGuestsYoyPct": 3.7503989786147462,
+        "totalNights": 109957,
+        "totalNightsYoyPct": 1.6379350187179371,
+        "domesticGuests": 36314,
+        "domesticGuestsYoyPct": 8.154634262568502,
+        "foreignGuests": 28696,
+        "foreignGuestsYoyPct": -1.3340668408747078,
+        "avgNightsPerGuest": 1.6913859406245193,
+        "avgNightsPerGuestYoyPct": -2.0361020108773173,
+        "shareOfNationalPct": 13.49746494313251,
+        "cumulativeGuests": 334458,
+        "cumulativeGuestsYoyPct": 0.4595588235294118,
+        "occupancyPct": 35,
+        "occupancyPctYoy": -1,
+        "avgNightCost": 46,
+        "avgNightCostYoyPct": 2.2222222222222223
+      },
+      "EE00710000000000": {
+        "label": "Rapla maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 2632,
+        "totalGuestsYoyPct": -3.6603221083455346,
+        "totalNights": 5387,
+        "totalNightsYoyPct": 0.5412467338559164,
+        "domesticGuests": 2217,
+        "domesticGuestsYoyPct": -4.8089308716187205,
+        "foreignGuests": 415,
+        "foreignGuestsYoyPct": 2.977667493796526,
+        "avgNightsPerGuest": 2.0467325227963524,
+        "avgNightsPerGuestYoyPct": 4.361202916753171,
+        "shareOfNationalPct": 0.5464594328614792,
+        "cumulativeGuests": 11163,
+        "cumulativeGuestsYoyPct": -2.7019959905865947,
+        "occupancyPct": 17,
+        "occupancyPctYoy": 1,
+        "avgNightCost": 20,
+        "avgNightCostYoyPct": -16.666666666666664
+      },
+      "EE00740000000000": {
+        "label": "Saare maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 29166,
+        "totalGuestsYoyPct": -6.695671646565788,
+        "totalNights": 51506,
+        "totalNightsYoyPct": -0.8985434744963732,
+        "domesticGuests": 17397,
+        "domesticGuestsYoyPct": -14.544650751547303,
+        "foreignGuests": 11769,
+        "foreignGuestsYoyPct": 7.962572241078799,
+        "avgNightsPerGuest": 1.7659603648083384,
+        "avgNightsPerGuestYoyPct": 6.213139598529714,
+        "shareOfNationalPct": 6.055484733601026,
+        "cumulativeGuests": 131566,
+        "cumulativeGuestsYoyPct": -1.4590230238027473,
+        "occupancyPct": 24,
+        "occupancyPctYoy": 0,
+        "avgNightCost": 49,
+        "avgNightCostYoyPct": 6.521739130434782
+      },
+      "EE00790000000000": {
+        "label": "Tartu maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 37859,
+        "totalGuestsYoyPct": 7.888062466159414,
+        "totalNights": 56917,
+        "totalNightsYoyPct": 2.877541798463624,
+        "domesticGuests": 19496,
+        "domesticGuestsYoyPct": 10.066053181279285,
+        "foreignGuests": 18363,
+        "foreignGuestsYoyPct": 5.66808608585568,
+        "avgNightsPerGuest": 1.5033941731160358,
+        "avgNightsPerGuestYoyPct": -4.644184493782536,
+        "shareOfNationalPct": 7.8603372601454184,
+        "cumulativeGuests": 218284,
+        "cumulativeGuestsYoyPct": 5.368745233199139,
+        "occupancyPct": 36,
+        "occupancyPctYoy": -1,
+        "avgNightCost": 46,
+        "avgNightCostYoyPct": -6.122448979591836
+      },
+      "EE00810000000000": {
+        "label": "Valga maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 15119,
+        "totalGuestsYoyPct": -3.6945028345754505,
+        "totalNights": 28899,
+        "totalNightsYoyPct": -8.73807869639361,
+        "domesticGuests": 12365,
+        "domesticGuestsYoyPct": -8.785777515491295,
+        "foreignGuests": 2754,
+        "foreignGuestsYoyPct": 28.511432571161922,
+        "avgNightsPerGuest": 1.9114359415305244,
+        "avgNightsPerGuestYoyPct": -5.23705916096853,
+        "shareOfNationalPct": 3.1390274184774714,
+        "cumulativeGuests": 94736,
+        "cumulativeGuestsYoyPct": 7.504283785163919,
+        "occupancyPct": 24,
+        "occupancyPctYoy": -3,
+        "avgNightCost": 40,
+        "avgNightCostYoyPct": 5.263157894736842
+      },
+      "EE00840000000000": {
+        "label": "Viljandi maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 8211,
+        "totalGuestsYoyPct": -6.841388699795779,
+        "totalNights": 12593,
+        "totalNightsYoyPct": -10.997243621457347,
+        "domesticGuests": 6972,
+        "domesticGuestsYoyPct": -9.513303049967552,
+        "foreignGuests": 1239,
+        "foreignGuestsYoyPct": 11.722272317403066,
+        "avgNightsPerGuest": 1.5336743393009378,
+        "avgNightsPerGuestYoyPct": -4.461052889967735,
+        "shareOfNationalPct": 1.7047790285811573,
+        "cumulativeGuests": 38955,
+        "cumulativeGuestsYoyPct": 3.1811198813370765,
+        "occupancyPct": 17,
+        "occupancyPctYoy": -2,
+        "avgNightCost": 43,
+        "avgNightCostYoyPct": 13.157894736842104
+      },
+      "EE00870000000000": {
+        "label": "Võru maakond",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 11502,
+        "totalGuestsYoyPct": -0.9472959007922839,
+        "totalNights": 19830,
+        "totalNightsYoyPct": -0.8500000000000001,
+        "domesticGuests": 10395,
+        "domesticGuestsYoyPct": 1.5037593984962405,
+        "foreignGuests": 1107,
+        "foreignGuestsYoyPct": -19.25601750547046,
+        "avgNightsPerGuest": 1.7240479916536255,
+        "avgNightsPerGuestYoyPct": 0.09822639540949367,
+        "shareOfNationalPct": 2.388060941023075,
+        "cumulativeGuests": 57489,
+        "cumulativeGuestsYoyPct": 2.67176254174629,
+        "occupancyPct": 23,
+        "occupancyPctYoy": -2,
+        "avgNightCost": 44,
+        "avgNightCostYoyPct": 7.317073170731707
+      },
+      "EE00370784000004": {
+        "label": "Tallinn",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 213319,
+        "totalGuestsYoyPct": 8.81346248998934,
+        "totalNights": 424462,
+        "totalNightsYoyPct": 12.72214491337278,
+        "domesticGuests": 39105,
+        "domesticGuestsYoyPct": -0.8694990874062056,
+        "foreignGuests": 174214,
+        "foreignGuestsYoyPct": 11.252737989565306,
+        "avgNightsPerGuest": 1.9897993146414525,
+        "avgNightsPerGuestYoyPct": 3.5920945202373615,
+        "shareOfNationalPct": 44.28958197514357,
+        "cumulativeGuests": 1297365,
+        "cumulativeGuestsYoyPct": 7.7849161848726505,
+        "occupancyPct": null,
+        "occupancyPctYoy": null,
+        "avgNightCost": null,
+        "avgNightCostYoyPct": null
+      },
+      "EE00680624661905": {
+        "label": "Pärnu linn",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 50205,
+        "totalGuestsYoyPct": 4.689715572608224,
+        "totalNights": 88550,
+        "totalNightsYoyPct": 1.6437475607796324,
+        "domesticGuests": 23661,
+        "domesticGuestsYoyPct": 9.892712832659885,
+        "foreignGuests": 26544,
+        "foreignGuestsYoyPct": 0.4503311258278146,
+        "avgNightsPerGuest": 1.7637685489493078,
+        "avgNightsPerGuestYoyPct": -2.9095198082910483,
+        "shareOfNationalPct": 10.423630633286688,
+        "cumulativeGuests": 279987,
+        "cumulativeGuestsYoyPct": -0.10560754665819903,
+        "occupancyPct": null,
+        "occupancyPctYoy": null,
+        "avgNightCost": null,
+        "avgNightCostYoyPct": null
+      },
+      "EE00790793815105": {
+        "label": "Tartu linn",
+        "period": "2026M08",
+        "periodLabel": "2026 august",
+        "totalGuests": 33871,
+        "totalGuestsYoyPct": 10.228456131215829,
+        "totalNights": 50937,
+        "totalNightsYoyPct": 4.556930845495413,
+        "domesticGuests": 16255,
+        "domesticGuestsYoyPct": 16.56507708856221,
+        "foreignGuests": 17616,
+        "foreignGuestsYoyPct": 4.963355776678783,
+        "avgNightsPerGuest": 1.503852853473473,
+        "avgNightsPerGuestYoyPct": -5.145246050592451,
+        "shareOfNationalPct": 7.032343256250441,
+        "cumulativeGuests": 200667,
+        "cumulativeGuestsYoyPct": 5.909083712019254,
+        "occupancyPct": null,
+        "occupancyPctYoy": null,
+        "avgNightCost": null,
+        "avgNightCostYoyPct": null
+      }
+    },
+    "topCounty": {
+      "code": "EE00370000000000",
+      "label": "Harju maakond",
+      "value": 233905,
+      "yoyPct": 8.992758823145671
+    }
+  },
+  "featuredRegionCode": "EE00790000000000"
 }

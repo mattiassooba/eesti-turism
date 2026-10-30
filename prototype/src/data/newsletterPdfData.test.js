@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { buildNewsletterPdfData } from "./newsletterPdfData.js";
+import { buildNewsletterPdfData, pdfInputs } from "./newsletterPdfData.js";
 import { makeFixture } from "./testFixtures.js";
 import { STRINGS } from "../i18n/strings.js";
 import { REGIONS } from "../lib/regions.js";
@@ -110,5 +110,39 @@ describe("buildNewsletterPdfData", () => {
     const d = build();
     expect(d.growth.values).toHaveLength(36);
     expect(d.growth.labels.filter(Boolean)).toEqual(["2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"]);
+  });
+});
+
+describe("pdfInputs", () => {
+  const ok = (data) => ({ data, error: null, loading: false });
+  const loading = (data = null) => ({ data, error: null, loading: true });
+  const failed = { data: null, error: "boom", loading: false };
+  const all = { tourism: ok(f.tourism), capacity: ok(f.capacity), sector: ok(sector), origins: ok(origins) };
+
+  test("waits (undefined) while anything is still loading, even with stale data from a previous county", () => {
+    expect(pdfInputs({ ...all, origins: loading(origins) })).toBeUndefined();
+    expect(pdfInputs({ ...all, tourism: loading() })).toBeUndefined();
+  });
+
+  test("a failed sector or origins download only drops that part", () => {
+    expect(pdfInputs({ ...all, sector: failed })).toMatchObject({ sector: null, origins });
+    expect(pdfInputs({ ...all, origins: failed })).toMatchObject({ origins: null, sector });
+  });
+
+  test("without tourism or capacity data the PDF is built without tables (null), not blocked", () => {
+    expect(pdfInputs({ ...all, tourism: failed })).toBeNull();
+    expect(pdfInputs({ ...all, capacity: failed })).toBeNull();
+  });
+});
+
+describe("table period follows the narrative", () => {
+  test("columns end at the given latest month, not the newest month in the data", () => {
+    const d = build("et", { latest: "2026M07" });
+    expect(d.national.columns.slice(-3)).toEqual(["2024\nJUULI", "2025\nJUULI", "2026\nJUULI"]);
+    expect(d.national.rows[2].label).toBe("Kumulatiivne (jaan.–juuli)");
+  });
+
+  test("an unknown latest month falls back to the newest month in the data", () => {
+    expect(build("et", { latest: "2031M01" }).national.columns.at(-1)).toBe("2026\nAUGUST");
   });
 });

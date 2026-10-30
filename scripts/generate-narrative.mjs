@@ -27,6 +27,7 @@ import { COUNTIES, CITIES } from "../src/data/counties.js";
 import { detectFindings, rankFindings, findingsByRegionCode } from "./lib/findings.mjs";
 import { runPrePublishChecks } from "./lib/qa.mjs";
 import { ytdFigures, sectorFigures } from "./narrativeYtd.mjs";
+import { assertComplete, requireSector } from "./lib/guards.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = path.join(__dirname, "..", "public", "data", "narrative.json");
@@ -674,7 +675,7 @@ async function computeSectorMetrics() {
     ],
     { locale: "et" }
   );
-  return sectorFigures(flattenToRows(data));
+  return requireSector(sectorFigures(flattenToRows(data)));
 }
 
 function buildSectorPrompt(m) {
@@ -747,7 +748,9 @@ ${prompts.sector}`;
 
   const response = await anthropic.messages.create({
     model,
-    max_tokens: 4096,
+    // Six sections (each et + en, five with highlights) plus headline and
+    // insights; 4096 was close to the edge once the sector section was added.
+    max_tokens: 8192,
     system:
       "You write short 'small text parts' for a personal Estonian tourism statistics site ('Eesti Turism'), " +
       "one per page section, meant to be read scrolling down like a newsletter. Ground every sentence strictly " +
@@ -842,6 +845,7 @@ ${prompts.sector}`;
     tool_choice: { type: "tool", name: "emit_narrative" },
   });
 
+  assertComplete(response, "section narrative");
   const toolUse = response.content.find((block) => block.type === "tool_use");
   if (!toolUse) throw new Error("Claude did not return a tool_use block");
   return normalizeSections(toolUse.input);
@@ -946,6 +950,7 @@ async function callClaudeRegions(anthropic, model, regions, promptBlocks) {
     throw new Error("Region narrative generation was truncated (hit max_tokens) — raise max_tokens and retry.");
   }
 
+  assertComplete(response, "region narrative");
   const toolUse = response.content.find((block) => block.type === "tool_use");
   if (!toolUse) throw new Error("Claude did not return a tool_use block for regions");
   // Same defensive parsing as normalizeSections above — Claude's tool-calling

@@ -65,8 +65,21 @@ function categories(years, partial) {
   return years.map((y, i) => (partial[i] ? `${y}*` : String(y)));
 }
 
-export function buildNewsletterPdfData({ tourism, capacity, sector, origins, region, locale, t }) {
-  const latest = tourism.latest;
+// The datasets' useData states → what buildNewsletterPdfData needs:
+//   undefined while anything is still loading, including when a dataset
+//     still holds stale data from the previous county (loading: true);
+//   null when tourism or capacity failed, so the PDF goes out without tables;
+//   otherwise the data, with a failed sector or origins dataset as null.
+export function pdfInputs({ tourism, capacity, sector, origins }) {
+  if ([tourism, capacity, sector, origins].some((s) => s.loading)) return undefined;
+  if (!tourism.data || !capacity.data) return null;
+  return { tourism: tourism.data, capacity: capacity.data, sector: sector.data ?? null, origins: origins.data ?? null };
+}
+
+// `latest` (the narrative's period) keeps the tables on the same month as the
+// AI text; it falls back to the newest month in the data when unknown.
+export function buildNewsletterPdfData({ tourism, capacity, sector, origins, region, locale, t, latest: textPeriod }) {
+  const latest = tourism.periods.includes(textPeriod) ? textPeriod : tourism.latest;
   const nationalCols = buildColumns({ tourism, capacity, code: "EE", res: "WORLD", latest, locale });
   const regionCols = buildColumns({ tourism, capacity, code: region.code, res: "WORLD", latest, locale });
   const name = regionName(region, locale);

@@ -2,7 +2,7 @@ import { useId, useMemo, useState } from "react";
 import { UNSAFE_LocationContext as LocationContext } from "react-router-dom";
 import { useApp } from "../state/AppState.jsx";
 import { useNarrative, useTourism, useCapacity, useResidents, useSector, useLongRun, useOriginHistory } from "../data/datasets.js";
-import { buildNewsletterPdfData } from "../data/newsletterPdfData.js";
+import { buildNewsletterPdfData, pdfInputs } from "../data/newsletterPdfData.js";
 import { COUNTY_LIST, regionByCode, regionName } from "../lib/regions.js";
 import { fmtPeriod } from "../lib/format.js";
 import { LocaleProvider } from "@prod/i18n/LocaleContext.jsx";
@@ -51,7 +51,8 @@ function ThemeHighlights() {
 
 // Tables and charts for the PDF, from the same data and functions as the
 // Operator page. Page 2 covers the selected region, or else the county the
-// narrative pipeline featured this period. null until everything loads.
+// narrative pipeline featured this period. undefined while loading (button
+// waits); null if the tables can't be built (the PDF goes out text-only).
 function usePdfData(selected) {
   const { t, locale } = useApp();
   const narrative = useNarrative();
@@ -60,18 +61,12 @@ function usePdfData(selected) {
   const capacity = useCapacity();
   const sector = useSector();
   const origins = useOriginHistory(pageRegion.code);
+  const period = narrative.data?.period;
   return useMemo(() => {
-    if (!tourism.data || !capacity.data || !sector.data || !origins.data) return null;
-    return buildNewsletterPdfData({
-      tourism: tourism.data,
-      capacity: capacity.data,
-      sector: sector.data,
-      origins: origins.data,
-      region: pageRegion,
-      locale,
-      t,
-    });
-  }, [tourism.data, capacity.data, sector.data, origins.data, pageRegion, locale, t]);
+    const inputs = pdfInputs({ tourism, capacity, sector, origins });
+    if (!inputs) return inputs;
+    return buildNewsletterPdfData({ ...inputs, region: pageRegion, locale, t, latest: period });
+  }, [tourism, capacity, sector, origins, pageRegion, locale, t, period]);
 }
 
 // Production's PDF generator, rendered unchanged. It reads the region from

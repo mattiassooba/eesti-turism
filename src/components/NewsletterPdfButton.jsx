@@ -28,8 +28,9 @@ const SEA_COLOR = [43, 108, 163];
 // graceful-degradation stance as NarrativeBlock (no error UI, just no
 // button, before the first scheduled generation has ever run).
 // pdfData: the tables and charts, prepared by the prototype's Reports page
-// (prototype/src/data/newsletterPdfData.js); null until its data loads.
-export default function NewsletterPdfButton({ pdfData = null }) {
+// (prototype/src/data/newsletterPdfData.js). undefined while that data loads
+// (button waits); null when it couldn't load (PDF goes out without tables).
+export default function NewsletterPdfButton({ pdfData }) {
   const { t, locale } = useTranslation();
   const { region, isExplicitRegion } = useRegion();
   const [narrative, setNarrative] = useState(null);
@@ -261,8 +262,9 @@ export default function NewsletterPdfButton({ pdfData = null }) {
       const regionLabel = pdfData?.region.name ?? countyLabelByCode(effectiveRegionCode, locale);
       const regionBlurb = narrative.sections.dashboardByRegion?.[effectiveRegionCode];
       const regionFacts = facts?.regions?.[effectiveRegionCode] ?? null;
-      const pick = (section) => section?.[locale] ?? section?.et;
-      const expensesHighlight = narrative.sections.expenses?.[locale === "en" ? "highlightEn" : "highlightEt"];
+      const highlight = (section) => section?.[locale === "en" ? "highlightEn" : "highlightEt"];
+      const expensesHighlight = highlight(narrative.sections.expenses);
+      const sectorHighlight = highlight(narrative.sections.sector);
 
       const footerNotes = [];
 
@@ -307,13 +309,14 @@ export default function NewsletterPdfButton({ pdfData = null }) {
 
       table(pdfData?.national);
 
-      // The turnover chart shows even before the narrative has a sector
-      // paragraph (older narrative.json).
+      // A short comment (the sector section's one-sentence highlight, like the
+      // spending note below) over the turnover chart. The chart shows even
+      // before the narrative has a sector section (older narrative.json).
       if (pdfData?.growth.values.length) {
-        ensureSpace(signedBarChartHeight(105) + LINE_HEIGHT * 6);
+        ensureSpace(signedBarChartHeight(105) + LINE_HEIGHT * 4);
         paragraph(t("newsletterPdf.sectorHeading"), { font: "bold", size: 12, gap: 4 });
-        const sectorText = pick(narrative.sections.sector);
-        if (sectorText) paragraph(sectorText, { size: 9.5, gap: 6 });
+        if (sectorHighlight) paragraph(sectorHighlight, { size: 9.5, gap: 6 });
+        ensureSpace(signedBarChartHeight(105));
         y = drawSignedBarChart(doc, { x: MARGIN, y, width: maxWidth, height: 105, chart: pdfData.growth }) + 12;
       }
       optionalParagraph(t("newsletterPdf.spendingHeading"), expensesHighlight);
@@ -397,8 +400,8 @@ export default function NewsletterPdfButton({ pdfData = null }) {
   }
 
   return (
-    <button type="button" className="newsletter-pdf-button" onClick={download} disabled={generating || !pdfData}>
-      {generating ? t("newsletterPdf.generating") : pdfData ? t("newsletterPdf.download") : t("newsletterPdf.preparing")}
+    <button type="button" className="newsletter-pdf-button" onClick={download} disabled={generating || pdfData === undefined}>
+      {generating ? t("newsletterPdf.generating") : pdfData === undefined ? t("newsletterPdf.preparing") : t("newsletterPdf.download")}
     </button>
   );
 }

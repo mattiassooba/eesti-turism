@@ -27,7 +27,7 @@ import { COUNTIES, CITIES } from "../src/data/counties.js";
 import { detectFindings, rankFindings, findingsByRegionCode } from "./lib/findings.mjs";
 import { runPrePublishChecks } from "./lib/qa.mjs";
 import { ytdFigures, sectorFigures } from "./narrativeYtd.mjs";
-import { assertComplete, requireSector, normalizeSections } from "./lib/guards.mjs";
+import { assertComplete, requireSector, normalizeSections, withRetries, keepFirstInsights } from "./lib/guards.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = path.join(__dirname, "..", "public", "data", "narrative.json");
@@ -708,7 +708,7 @@ function sectionSchema(description, { highlight = false } = {}) {
     };
     required.push("highlightEt", "highlightEn");
   }
-  return { type: "object", description, properties, required };
+  return { type: "object", description, properties, required, additionalProperties: false };
 }
 
 // The exact cliché phrases this site's own earlier output has leaned on —
@@ -811,6 +811,7 @@ ${prompts.sector}`;
                 en: { type: "string", description: "The same fact in English, 8-18 words." },
               },
               required: ["et", "en"],
+              additionalProperties: false,
             },
             keyInsights: {
               type: "array",
@@ -827,9 +828,8 @@ ${prompts.sector}`;
                   en: { type: "string", description: "The same fact in English, 15-30 words." },
                 },
                 required: ["et", "en"],
+                additionalProperties: false,
               },
-              minItems: 3,
-              maxItems: 3,
             },
             dashboard: sectionSchema("Ülevaade (national overview) blurb"),
             map: sectionSchema("Kaart ja hooajalisus (map & seasonality) blurb", { highlight: true }),
@@ -839,7 +839,12 @@ ${prompts.sector}`;
             sector: sectionSchema("Majutussektori majandus (accommodation sector turnover) blurb", { highlight: true }),
           },
           required: ["headline", "keyInsights", "dashboard", "map", "purpose", "capacity", "expenses", "sector"],
+          additionalProperties: false,
         },
+        // The API guarantees the reply matches the schema (no sections as
+        // strings). Exact array lengths aren't enforceable here; see
+        // keepFirstInsights and the QA gate.
+        strict: true,
       },
     ],
     tool_choice: { type: "tool", name: "emit_narrative" },
@@ -848,7 +853,7 @@ ${prompts.sector}`;
   assertComplete(response, "section narrative");
   const toolUse = response.content.find((block) => block.type === "tool_use");
   if (!toolUse) throw new Error("Claude did not return a tool_use block");
-  return normalizeSections(toolUse.input);
+  return keepFirstInsights(normalizeSections(toolUse.input));
 }
 
 // Separate call (own token budget) for the 18 region/city variants of the
@@ -920,13 +925,17 @@ async function callClaudeRegions(anthropic, model, regions, promptBlocks) {
                     en: { type: "string", description: "130-190 word English blurb." },
                   },
                   required: ["code", "et", "en"],
+                  additionalProperties: false,
                 },
-                minItems: regions.length,
-                maxItems: regions.length,
               },
             },
             required: ["regions"],
+            additionalProperties: false,
           },
+          // Strict mode makes the API guarantee the reply matches this
+          // schema (no sections returned as strings). It can't enforce the
+          // array length; the per-region checks below handle missing ones.
+          strict: true,
         },
       ],
       tool_choice: { type: "tool", name: "emit_region_narrative" },
@@ -1134,61 +1143,66 @@ async function main() {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
 
-  console.log("Calling Claude to generate all six section blurbs…");
-  const sections = await callClaude(
-    anthropic,
-    model,
-    {
-      dashboard: buildDashboardPrompt(dashboard),
-      map: buildMapPrompt(map),
-      purpose: buildPurposePrompt(purpose),
-      capacity: buildCapacityPrompt(capacity),
-      expenses: buildExpensesPrompt(expenses),
-      sector: buildSectorPrompt(sector),
-    },
-    rankedFindings
-  );
+  // Claude's replies vary run to run (a banned phrase slips in, a list comes
+  // back the wrong length); one fresh attempt usually clears a failed check.
+  const output = await withRetries(async () => {
+    console.log("Calling Claude to generate all six section blurbs…");
+    const sections = await callClaude(
+      anthropic,
+      model,
+      {
+        dashboard: buildDashboardPrompt(dashboard),
+        map: buildMapPrompt(map),
+        purpose: buildPurposePrompt(purpose),
+        capacity: buildCapacityPrompt(capacity),
+        expenses: buildExpensesPrompt(expenses),
+        sector: buildSectorPrompt(sector),
+      },
+      rankedFindings
+    );
 
-  console.log(`Calling Claude to generate ${ALL_REGIONS.length} region-specific dashboard blurbs…`);
-  sections.dashboardByRegion = await callClaudeRegions(anthropic, model, ALL_REGIONS, regionPromptBlocks);
-  sections.dashboard.nationalYearlyResidency = nationalYearlyResidency;
+    console.log(`Calling Claude to generate ${ALL_REGIONS.length} region-specific dashboard blurbs…`);
+    sections.dashboardByRegion = await callClaudeRegions(anthropic, model, ALL_REGIONS, regionPromptBlocks);
+    sections.dashboard.nationalYearlyResidency = nationalYearlyResidency;
 
-  const output = {
-    generatedAt: new Date().toISOString(),
-    period: dashboard.period,
-    periodLabel: {
-      et: dashboard.periodLabel,
-      en: formatPeriodLabel(dashboard.period, null, "en"),
-    },
-    sections,
-    facts,
-    featuredRegionCode,
-  };
+    const output = {
+      generatedAt: new Date().toISOString(),
+      period: dashboard.period,
+      periodLabel: {
+        et: dashboard.periodLabel,
+        en: formatPeriodLabel(dashboard.period, null, "en"),
+      },
+      sections,
+      facts,
+      featuredRegionCode,
+    };
 
-  // Task 5.4: a hard gate before publishing — a run with any error-level
-  // finding does NOT overwrite the last known-good narrative.json, the
-  // same way a failed test suite blocks a deploy. Task 5.1's change
-  // detection (a plain diff against the previous run's headline numbers)
-  // is logged regardless of pass/fail, for visibility in the CI log.
-  const qa = runPrePublishChecks(output, {
-    previous: existing,
-    allRegionCodes: ALL_REGIONS.map((r) => r.code),
-    bannedPhrases: BANNED_PHRASES_ET,
+    // Task 5.4: a hard gate before publishing — a run with any error-level
+    // finding does NOT overwrite the last known-good narrative.json, the
+    // same way a failed test suite blocks a deploy. Task 5.1's change
+    // detection (a plain diff against the previous run's headline numbers)
+    // is logged regardless of pass/fail, for visibility in the CI log.
+    const qa = runPrePublishChecks(output, {
+      previous: existing,
+      allRegionCodes: ALL_REGIONS.map((r) => r.code),
+      bannedPhrases: BANNED_PHRASES_ET,
+    });
+
+    console.log("--- change since last publish ---");
+    for (const line of qa.changeLog) console.log(`  ${line}`);
+
+    if (qa.warnings.length) {
+      console.log("--- pre-publish QA warnings (not blocking) ---");
+      for (const w of qa.warnings) console.log(`  ⚠ ${w}`);
+    }
+
+    if (qa.errors.length) {
+      console.error("--- pre-publish QA errors — NOT publishing ---");
+      for (const e of qa.errors) console.error(`  ✗ ${e}`);
+      throw new Error(`Pre-publish QA failed with ${qa.errors.length} error(s); narrative.json was not updated.`);
+    }
+    return output;
   });
-
-  console.log("--- change since last publish ---");
-  for (const line of qa.changeLog) console.log(`  ${line}`);
-
-  if (qa.warnings.length) {
-    console.log("--- pre-publish QA warnings (not blocking) ---");
-    for (const w of qa.warnings) console.log(`  ⚠ ${w}`);
-  }
-
-  if (qa.errors.length) {
-    console.error("--- pre-publish QA errors — NOT publishing ---");
-    for (const e of qa.errors) console.error(`  ✗ ${e}`);
-    throw new Error(`Pre-publish QA failed with ${qa.errors.length} error(s); narrative.json was not updated.`);
-  }
 
   await writeFile(OUTPUT_PATH, JSON.stringify(output, null, 2) + "\n", "utf8");
   console.log(`Wrote ${OUTPUT_PATH}`);

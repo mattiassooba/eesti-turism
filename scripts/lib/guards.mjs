@@ -36,3 +36,28 @@ export function normalizeSections(sections) {
   }
   return normalized;
 }
+
+// Runs attempt(n) up to `tries` times, returning the first success. Claude's
+// replies vary run to run (a banned phrase, a malformed section), so one
+// fresh attempt usually clears a failed quality check.
+export async function withRetries(attempt, { tries = 2, log = console.log } = {}) {
+  let lastError;
+  for (let n = 1; n <= tries; n++) {
+    try {
+      return await attempt(n);
+    } catch (err) {
+      lastError = err;
+      if (n < tries) log(`Attempt ${n} failed (${err.message}); retrying.`);
+    }
+  }
+  throw lastError;
+}
+
+// Strict tool mode can't enforce an exact array length; keep the first three
+// key insights when Claude returns more. Fewer is left for the QA gate.
+export function keepFirstInsights(sections) {
+  if (Array.isArray(sections.keyInsights) && sections.keyInsights.length > 3) {
+    return { ...sections, keyInsights: sections.keyInsights.slice(0, 3) };
+  }
+  return sections;
+}
